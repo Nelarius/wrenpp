@@ -1,0 +1,31 @@
+# C++
+#Compiled object files
+*.o
+*.lo
+*.slo
+
+#Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Executables
+*.out
+*.app
+*.exe
+
+# CodeLite project files
+#.codelite/
+#.clang/
+#*.project
+#Makefile
+# I don't think I need this file cluttering the repository.
+# Codelite will generate it anyway based on the project file.
+*.mk
+*.txt
+
+# Project files/folders
+Build/
+Objects/
+modelling
+
