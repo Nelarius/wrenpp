@@ -5,6 +5,11 @@
   <VirtualDirectory Name="src">
     <File Name="src/Wren.cpp"/>
     <File Name="src/Wren.h"/>
+    <File Name="src/File.h"/>
+    <File Name="src/Assert.h"/>
+    <File Name="src/Log.h"/>
+    <File Name="src/Main.cpp"/>
+    <File Name="src/Wrenly.h"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
@@ -95,5 +100,6 @@
   </Settings>
   <VirtualDirectory Name="project">
     <File Name="README.md"/>
+    <File Name="Makefile"/>
   </VirtualDirectory>
 </CodeLite_Project>
