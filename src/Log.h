@@ -1,14 +1,14 @@
 
 #pragma once
 
-#include "utils/Assert.h"
+#include "Assert.h"
 #include <sstream>
 #include <ctime>
 #include <cctype>   // for isspace
 #include <iostream>
 #include <algorithm>
 
-namespace ce {
+namespace wrenly {
 
 enum LogLevel {
 	Inhibit = 0,
