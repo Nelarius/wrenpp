@@ -9,7 +9,7 @@ extern "C" {
 
 namespace wrenly {
 
-using LoadModuleFn = std::function<char*(WrenVM*, const char*)>;
+using LoadModuleFn = std::function<char*( const char*)>;
 
 /**
  * @class Wren

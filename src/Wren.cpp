@@ -16,7 +16,7 @@ namespace {
     }
     
     char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
-        return wrenly::Wren::loadModuleFn( vm, mod );
+        return wrenly::Wren::loadModuleFn( mod );
     }
 }
 
@@ -27,7 +27,7 @@ namespace wrenly {
  * Uses malloc, because our reallocateFn is set to default:
  * it uses malloc, realloc and free.
  * */
-LoadModuleFn Wren::loadModuleFn = []( WrenVM* vm, const char* mod ) -> char* {
+LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     std::string path( mod );
     path += ".wren";
     auto source = wrenly::FileToString( path );
