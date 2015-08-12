@@ -1,14 +1,14 @@
 
 #pragma once
 
-#include "utils/Assert.h"
+#include "Assert.h"
 #include <sstream>
 #include <ctime>
 #include <cctype>   // for isspace
 #include <iostream>
 #include <algorithm>
 
-namespace ce {
+namespace wrenly {
 
 enum LogLevel {
 	Inhibit = 0,
@@ -108,13 +108,13 @@ class Log {
 }
 
 #define LOG(level) \
-if ( level > ce::Log::ReportingLevel() ) ; \
-else ce::Log().get( level )
+if ( level > wrenly::Log::ReportingLevel() ) ; \
+else wrenly::Log().get( level )
 
-#define LOG_ERROR LOG(ce::LogLevel::Error)
-#define LOG_WARNING LOG(ce::LogLevel::Warning)
-#define LOG_INFO LOG(ce::LogLevel::Info)
-#define LOG_DEBUG LOG(ce::LogLevel::Debug)
-#define LOG_DEBUG2 LOG(ce::LogLevel::Debug2)
-#define LOG_DEBUG3 LOG(ce::LogLevel::Debug3)
-#define LOG_DEBUG4 LOG(ce::LogLevel::Debug4)
+#define LOG_ERROR LOG(wrenly::LogLevel::Error)
+#define LOG_WARNING LOG(wrenly::LogLevel::Warning)
+#define LOG_INFO LOG(wrenly::LogLevel::Info)
+#define LOG_DEBUG LOG(wrenly::LogLevel::Debug)
+#define LOG_DEBUG2 LOG(wrenly::LogLevel::Debug2)
+#define LOG_DEBUG3 LOG(wrenly::LogLevel::Debug3)
+#define LOG_DEBUG4 LOG(wrenly::LogLevel::Debug4)
