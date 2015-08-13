@@ -41,7 +41,7 @@ outputs
 
 ## Customize module loading
 
-When the virtual machine encounters an import statement, it executes a callback function, which returns the module source, given a module name. If you want to change the way modules are named, or want some kind of custom file interface, you can change the callback function. Just set give `Wren::loadModuleFn` a new value, which can be a free standing function, or callable object of type `char*( const char* )`.
+When the virtual machine encounters an import statement, it executes a callback function which returns the module source for a given module name. If you want to change the way modules are named, or want some kind of custom file interface, you can change the callback function. Just set give `Wren::loadModuleFn` a new value, which can be a free standing function, or callable object of type `char*( const char* )`.
 
 By default, `Wren::loadModuleFn` has the following value.
 
