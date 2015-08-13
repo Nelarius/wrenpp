@@ -31,6 +31,60 @@ namespace {
 
 namespace wrenly {
 
+Method::Method( WrenVM* vm, WrenMethod* method )
+:   vm_( vm ),
+    method_( method ),
+    refCount_( nullptr ) {
+    refCount_ = new unsigned;
+    *refCount_ = 1u;
+}
+
+Method::Method( const Method& other )
+:   vm_( other.vm_ ),
+    method_( other.method_ ),
+    refCount_( other.refCount_ ) {
+    retain_();
+}
+
+Method::Method( Method&& other )
+:   vm_( other.vm_ ),
+    method_( other.method_ ),
+    refCount_( other.refCount_ ) {
+    other.vm_ = nullptr;
+    other.method_ = nullptr;
+    other.refCount_ = nullptr;
+}
+
+Method::~Method() {
+    release_();
+}
+
+Method& Method::operator=( Method rhs ) {
+    release_();
+    vm_ = rhs.vm_;
+    method_ = rhs.method_;
+    refCount_ = rhs.refCount_;
+    retain_();
+    return *this;
+}
+
+void Method::retain_() {
+    *refCount_ += 1u;
+}
+
+void Method::release_() {
+    if ( refCount_ ) {
+        *refCount_ -= 1u;
+        if ( *refCount_ == 0u ) {
+            wrenReleaseMethod( vm_, method_ );
+            delete refCount_;
+            refCount_ = nullptr;
+        }
+    }
+}
+
+
+
 /*
  * Returns the source as a heap-allocated string.
  * Uses malloc, because our reallocateFn is set to default:
@@ -113,12 +167,20 @@ void Wren::executeModule( const std::string& mod ) {
     auto res = wrenInterpret( vm_, file.c_str(), source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
-        std::cout << "WREN_RESULT_COMPILE_ERROR in module " << mod << std::endl;
+        std::cerr << "WREN_RESULT_COMPILE_ERROR in module " << mod << std::endl;
     }
     
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
-        std::cout << "WREN_RESULT_RUNTIME_ERROR in module " << mod << std::endl;
+        std::cerr << "WREN_RESULT_RUNTIME_ERROR in module " << mod << std::endl;
     }
+}
+
+Method Wren::method( 
+    const std::string& mod,
+    const std::string& var,
+    const std::string& sig
+) {
+    return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
 }
 
 }   // wrenly
