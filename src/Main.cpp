@@ -1,4 +1,4 @@
-#include "Wren.h"
+#include "Wrenly.h"
 
 int main( int argc, char** argv ) {
     wrenly::Wren wren{};

@@ -1,5 +1,5 @@
 
-#include "Wren.h"
+#include "Wrenly.h"
 #include "File.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp
@@ -7,11 +7,20 @@
 
 namespace {
     
+    /*
+     * This function is going to use a global pointer to a bound method tree.
+     * 
+     * When the correspodning wren vm executes a module, it has to bind its instances
+     * of the bound method/class tree to the global variable.
+     * 
+     * There is no way to avoid this static/global function
+     * */
     WrenForeignMethodFn ForeignMethodFnWrapper( WrenVM* vm,
                                  const char* module,
                                  const char* className,
                                  bool isStatic,
                                  const char* signature ) {
+        //
         return NULL;
     }
     
