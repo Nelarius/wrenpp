@@ -175,6 +175,18 @@ void Wren::executeModule( const std::string& mod ) {
     }
 }
 
+void Wren::executeString( const std::string& code ) {
+    auto res = wrenInterpret( vm_, "string", code.c_str() );
+    
+    if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
+        std::cerr << "WREN_RESULT_COMPILE_ERROR in string: " << code << std::endl;
+    }
+    
+    if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
+        std::cerr << "WREN_RESULT_RUNTIME_ERROR in string: " << code << std::endl;
+    }
+}
+
 Method Wren::method( 
     const std::string& mod,
     const std::string& var,

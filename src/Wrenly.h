@@ -63,6 +63,7 @@ class Wren {
         ~Wren();
         
         void executeModule( const std::string& );
+        void executeString( const std::string& );
         
         Method method(
             const std::string& module,

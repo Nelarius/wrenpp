@@ -20,6 +20,12 @@ int main() {
 
 `Wren` is reference-counted, and can be passed around as usual. Module names work the same way by default as the module names of the Wren command line module. You specify the location of the module without the `.wren` postfix.
 
+Strings can also be executed:
+
+```cpp
+wren.executeString( "IO.print(\"Hello from a C++ string!\")" );
+```
+
 ## Accessing Wren from C++
 
 #### Methods
@@ -34,7 +40,7 @@ class Foo {
 }
 ```
 
-you can execute the static method `say` by writing,
+you can execute the static method `say` from C++ by writing,
 
 ```cpp
 wrenly::Wren wren{};
@@ -77,6 +83,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
+* get rid of repetition in the reference counting between Wren and Method
 * add `executeString` method to `Wren`
 * Add foreign method support.
   * Registered foreign methods need to be placed in some kind of tree.
