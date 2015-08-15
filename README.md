@@ -40,7 +40,7 @@ class Foo {
 }
 ```
 
-you can execute the static method `say` from C++ by using `Method`'s `operator( Args&&... )`,
+you can call the static method `say` from C++ by using `void Method::operator( Args&&... )`,
 
 ```cpp
 wrenly::Wren wren{};
@@ -51,6 +51,7 @@ say( "Hello from C++!" );
 ```
 
 `Wren::method` has the following signature:
+
 ```cpp
 Method Wren::method( 
   const std::string& module, 
@@ -59,10 +60,9 @@ Method Wren::method(
 );
 ```
 
-We used the class name `Foo` as the argument `variable`, because we were calling a static method. Normally you would use the variable name that the instance was stored in. The signature must be specified, because Wren supports function overloading by arity.
+`module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
 ## Accessing C++ from Wren
-
 
 ## Customize module loading
 
@@ -84,12 +84,9 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * get rid of repetition in the reference counting between Wren and Method
-* add `executeString` method to `Wren`
 * Add foreign method support.
   * Registered foreign methods need to be placed in some kind of tree.
   * `ForeignMethodFnWrapper` needs to use a global pointer to bound method tree
   * The Wren VM binds its own instance of the tree to the global variable on module execution
   * Functions & methods need to be wrapped in a global method, maybe with templates?
-* Add `WrenMethod` handle
-  * figure out how to build the arg string during compile time.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
