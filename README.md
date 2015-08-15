@@ -40,14 +40,14 @@ class Foo {
 }
 ```
 
-you can execute the static method `say` from C++ by writing,
+you can execute the static method `say` from C++ by using `Method`'s `operator( Args&&... )`,
 
 ```cpp
 wrenly::Wren wren{};
 wren.executeModule( "bar" );
     
-auto say = wren.method( "main", "Foo", "say(_)" );
-say( "s", "Hello from C++!" );
+wrenly::Method say = wren.method( "main", "Foo", "say(_)" );
+say( "Hello from C++!" );
 ```
 
 `Wren::method` has the following signature:

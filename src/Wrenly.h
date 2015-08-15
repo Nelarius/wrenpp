@@ -4,8 +4,11 @@
 extern "C" {
     #include <wren.h>
 }
+#include <sstream>
 #include <string>
+#include <vector>
 #include <functional>
+#include <cstdint>
 
 namespace wrenly {
 
@@ -32,9 +35,23 @@ class Method {
         ~Method();
             
         template<typename... Args>
-        void operator()( const std::string&, Args&&... args );
+        void operator()( Args&&... args );
     
     private:
+        /*
+         * For parsing arguments*/
+        struct Any {
+            Any( bool e )   : type( 'b' ) {}
+            Any( double e ) : type( 'd' ) {}
+            Any( float e )  : type( 'd' ) {}
+            Any( int e )    : type( 'i' ) {}
+            Any( const char* ) : type( 's' ) {}
+            Any( const std::string& ) : type( 's' ) {}
+            
+            char type;
+        };
+        
+        
         void retain_();
         void release_();
     
@@ -86,8 +103,13 @@ class Wren {
 // Method implementation
 /////////////////////////////////////////////////////////////////////////////
 template<typename... Args>
-void Method::operator()( const std::string& argstring, Args&&... args ) {
-    wrenCall( vm_, method_, argstring.c_str(), std::forward<Args>( args )... );
+void Method::operator()( Args&&... args ) {
+    std::vector<Any> vec = { args... };
+    std::stringstream ss;
+    for ( auto a: vec ) {
+        ss << a.type;
+    }
+    wrenCall( vm_, method_, ss.str().c_str(), std::forward<Args>( args )... );
 }
 
 }   // wrenly
