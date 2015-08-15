@@ -8,7 +8,7 @@ A C++ wrapper for the Wren programming language. As the language itself and this
 The Wren virtual machine is contained in the `Wren` class. Here's how you would initialize the virtual machine and execute a module:
 
 ```cpp
-#include "Wren.h"
+#include "Wrenly.h"
 
 int main() {
   wrenly::Wren wren{};
