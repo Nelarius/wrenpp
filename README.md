@@ -85,8 +85,10 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 * get rid of repetition in the reference counting between Wren and Method
 * Add foreign method support.
-  * Registered foreign methods need to be placed in some kind of tree.
+  * Get hash function for string, use `std::hash<std::string>` specialization
+  * All bindings get stored in a tree, along with the WrenForeignMethodFn.
   * `ForeignMethodFnWrapper` needs to use a global pointer to bound method tree
   * The Wren VM binds its own instance of the tree to the global variable on module execution
   * Functions & methods need to be wrapped in a global method, maybe with templates?
+  * See http://stackoverflow.com/a/18171736/2018013 for a possible way of handling WrenForeignMethodFn bindings
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
