@@ -1,7 +1,4 @@
 class Foo {
-  new {
-    //
-  }
   foreign say()
 }
 
