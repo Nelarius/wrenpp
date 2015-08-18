@@ -1,7 +1,9 @@
 class Foo {
-  static say( text ) {
-    IO.print( text)
+  new {
+    //
   }
+  foreign say()
 }
 
-IO.print( "Hello from wren!" )
+var h = Foo.new()
+h.say()

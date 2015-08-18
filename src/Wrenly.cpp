@@ -7,6 +7,22 @@
 
 namespace {
     
+    std::unordered_map<std::size_t, WrenForeignMethodFn>* boundForeignMethods{ nullptr };
+    
+    /*
+     * Get the hash of a Wren foreign method signature
+     * */
+    std::size_t Hash( 
+        const char* module,
+        const char* className,
+        const char* signature ) {
+        std::hash<std::string> strHash;
+        std::string qual( module );
+        qual += className;
+        qual += signature;
+        return strHash( qual );
+    }
+    
     /*
      * This function is going to use a global pointer to a bound method tree.
      * 
@@ -20,8 +36,15 @@ namespace {
                                  const char* className,
                                  bool isStatic,
                                  const char* signature ) {
-        //
-        return NULL;
+        if ( !boundForeignMethods ) {
+            return NULL;
+        }
+        auto it = boundForeignMethods->find( Hash( module, className, signature ) );
+        if ( it == boundForeignMethods->end() ) {
+            return NULL;
+        }
+        
+        return it->second;
     }
     
     char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
@@ -84,7 +107,6 @@ void Method::release_() {
 }
 
 
-
 /*
  * Returns the source as a heap-allocated string.
  * Uses malloc, because our reallocateFn is set to default:
@@ -101,7 +123,8 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 Wren::Wren()
 :   vm_( nullptr ),
-    refCount_( nullptr ) {
+    refCount_( nullptr ),
+    foreignMethods_() {
     refCount_ = new unsigned;
     *refCount_ = 1u;
     
@@ -127,7 +150,8 @@ Wren& Wren::operator=( const Wren& rhs ) {
 
 Wren::Wren( Wren&& other )
 :   vm_( other.vm_ ),
-    refCount_( other.refCount_ ) {
+    refCount_( other.refCount_ ),
+    foreignMethods_() {
     other.vm_ = nullptr;
     other.refCount_ = nullptr;
 }
@@ -161,6 +185,9 @@ void Wren::release_() {
 }
 
 void Wren::executeModule( const std::string& mod ) {
+    // set global variables for the C-callbacks
+    boundForeignMethods = &foreignMethods_;
+    
     std::string file = mod;
     file += ".wren";
     auto source = FileToString( file );
@@ -176,6 +203,9 @@ void Wren::executeModule( const std::string& mod ) {
 }
 
 void Wren::executeString( const std::string& code ) {
+    // set global varibales for the C-callbacks
+    boundForeignMethods = &foreignMethods_;
+    
     auto res = wrenInterpret( vm_, "string", code.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
@@ -193,6 +223,16 @@ Method Wren::method(
     const std::string& sig
 ) {
     return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
+}
+
+void Wren::registerMethod(
+    const std::string& mod,
+    const std::string& cName,
+    const std::string& sig,
+    WrenForeignMethodFn function
+) {
+    std::size_t hash = Hash( mod.c_str(), cName.c_str(), sig.c_str() );
+    foreignMethods_.insert( std::make_pair( hash, function ) );
 }
 
 }   // wrenly

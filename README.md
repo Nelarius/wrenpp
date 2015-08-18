@@ -1,7 +1,11 @@
 
 # wrenly
 
-A C++ wrapper for the Wren programming language. As the language itself and this library are both heavily WIP, expect nothing to work. This will eventually be a library, which you can link to.
+A C++ wrapper for the Wren programming language. As the language itself and this library are both heavily WIP, expect everything in here to change.
+
+## Building
+
+**TODO**
 
 ## Getting started
 
@@ -28,7 +32,7 @@ wren.executeString( "IO.print(\"Hello from a C++ string!\")" );
 
 ## Accessing Wren from C++
 
-#### Methods
+### Methods
 
 You can use the `Wren` instance to get a callable handle for a method implemented in Wren. Given the following class, defined in `bar.wren`, 
 
@@ -63,8 +67,42 @@ Method Wren::method(
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
 ## Accessing C++ from Wren
+### Foreign methods
 
-## Customize module loading
+You can implement a method in a stand-alone C/C++ function. Currently, wrenly simplifies registering with the Wren virtual machine. Here's a small example.
+
+```dart
+// inside foo.wren
+class Bar {
+  foreign say()
+}
+```
+
+```cpp
+#include "Wrenly.h"
+#include <iostream>
+
+void say( WrenVM* vm ) {
+  std::cout << "Hello from C++\n";
+}
+
+int main() {
+  wrenly::Wren wren{};
+  wren.registerMethod( "main", "Bar", "say()", say );
+  wren.executeModule( "foo" );
+
+  return 0;
+}
+```
+
+The implementing function must be of type `void (*)( WrenVM* )`.
+
+**TODO:** automate passing arguments between the vm and the function.
+
+### Foreign classes
+
+## Customize VM behavior
+### Customize module loading
 
 When the virtual machine encounters an import statement, it executes a callback function which returns the module source for a given module name. If you want to change the way modules are named, or want some kind of custom file interface, you can change the callback function. Just set give `Wren::loadModuleFn` a new value, which can be a free standing function, or callable object of type `char*( const char* )`.
 
@@ -84,6 +122,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * get rid of repetition in the reference counting between Wren and Method
+* `Wren` should uniquely own the VM pointer
 * Add foreign method support.
   * Get hash function for string, use `std::hash<std::string>` specialization
   * All bindings get stored in a tree, along with the WrenForeignMethodFn.
@@ -91,4 +130,5 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * The Wren VM binds its own instance of the tree to the global variable on module execution
   * Functions & methods need to be wrapped in a global method, maybe with templates?
   * See http://stackoverflow.com/a/18171736/2018013 for a possible way of handling WrenForeignMethodFn bindings
+  * See http://stackoverflow.com/q/16592035/2018013 how to write non-type argument template wrapper
 * Consistency: `executeModule` should use `Wren::loadModuleFn`

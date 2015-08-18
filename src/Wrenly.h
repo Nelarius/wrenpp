@@ -9,6 +9,7 @@ extern "C" {
 #include <vector>
 #include <functional>
 #include <cstdint>
+#include <unordered_map>
 
 namespace wrenly {
 
@@ -88,6 +89,13 @@ class Wren {
             const std::string& signature
         );
         
+        void registerMethod(
+            const std::string& module,
+            const std::string& className,
+            const std::string& signature,
+            WrenForeignMethodFn function
+        );
+        
         static LoadModuleFn loadModuleFn;
         
     private:
@@ -96,6 +104,8 @@ class Wren {
     
         WrenVM*	    vm_;
         unsigned*   refCount_;
+        
+        std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
 
 
