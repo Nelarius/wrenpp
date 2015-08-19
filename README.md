@@ -22,7 +22,9 @@ int main() {
 }
 ```
 
-`Wren` is reference-counted, and can be passed around as usual. Module names work the same way by default as the module names of the Wren command line module. You specify the location of the module without the `.wren` postfix.
+The virtual machine is held internally by a pointer. `Wren` uniquely owns the virtual machine, which means that the `Wren` instance can't be copied, but can be moved when needed - just like a unique pointer.
+
+Module names work the same way by default as the module names of the Wren command line module. You specify the location of the module without the `.wren` postfix.
 
 Strings can also be executed:
 
@@ -121,12 +123,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* get rid of repetition in the reference counting between Wren and Method
-* `Wren` should uniquely own the VM pointer
 * Add foreign method support.
-  * Get hash function for string, use `std::hash<std::string>` specialization
-  * All bindings get stored in a tree, along with the WrenForeignMethodFn.
-  * `ForeignMethodFnWrapper` needs to use a global pointer to bound method tree
   * The Wren VM binds its own instance of the tree to the global variable on module execution
   * Functions & methods need to be wrapped in a global method, maybe with templates?
   * See http://stackoverflow.com/a/18171736/2018013 for a possible way of handling WrenForeignMethodFn bindings

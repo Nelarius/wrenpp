@@ -74,9 +74,9 @@ class Wren {
 
     public:
         Wren();
-        Wren( const Wren& );
+        Wren( const Wren& )             = delete;
         Wren( Wren&& );
-        Wren& operator=( const Wren& );
+        Wren& operator=( const Wren& )  = delete;
         Wren& operator=( Wren&& );
         ~Wren();
         
@@ -99,11 +99,8 @@ class Wren {
         static LoadModuleFn loadModuleFn;
         
     private:
-        void retain_();
-        void release_();
     
         WrenVM*	    vm_;
-        unsigned*   refCount_;
         
         std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
