@@ -9,6 +9,8 @@
     <File Name="src/Main.cpp"/>
     <File Name="src/Wrenly.cpp"/>
     <File Name="src/Wrenly.h"/>
+    <File Name="src/Type.h"/>
+    <File Name="src/Type.cpp"/>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
