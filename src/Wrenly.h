@@ -34,13 +34,14 @@ class Method {
         Method& operator=( Method&& )       = delete;
         Method& operator=( Method );
         ~Method();
-            
+        
         template<typename... Args>
         void operator()( Args&&... args );
     
     private:
         /*
-         * For parsing arguments*/
+         * For parsing arguments and telling Wren their type
+         * */
         struct Any {
             Any( bool e )   : type( 'b' ) {}
             Any( double e ) : type( 'd' ) {}
@@ -51,7 +52,6 @@ class Method {
             
             char type;
         };
-        
         
         void retain_();
         void release_();
@@ -66,9 +66,7 @@ class Method {
  * @author Nelarius
  * @date 09/08/2015
  * @file Wren.h
- * @brief Holds an instance of the Wren virtual machine.
- * This class is refcounted, so it can be passed around safely.
- * This class is NOT thread-safe, however.
+ * @brief Holds an instance of the Wren virtual machine. The instance is uniquely owned.
  */
 class Wren {
 
@@ -118,5 +116,9 @@ void Method::operator()( Args&&... args ) {
     }
     wrenCall( vm_, method_, ss.str().c_str(), std::forward<Args>( args )... );
 }
+
+/////////////////////////////////////////////////////////////////////////////
+// Wren implementation
+/////////////////////////////////////////////////////////////////////////////
 
 }   // wrenly

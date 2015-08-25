@@ -1,7 +1,7 @@
 
 # wrenly
 
-A C++ wrapper for the Wren programming language. As the language itself and this library are both heavily WIP, expect everything in here to change.
+A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
 ## Building
 
