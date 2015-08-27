@@ -3,6 +3,11 @@
 
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
+The goals of this library are
+* Wrap the Wren VM in a nice, easy-to-use class -- DONE
+* Register foreign methods with the VM -- WIP
+* Register foreign classes with the VM -- WIP
+
 ## Building
 
 **TODO**
