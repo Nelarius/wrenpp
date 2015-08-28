@@ -1,9 +1,11 @@
-#pragma once 
+#ifndef TYPE_H_INCLUDED
+#define TYPE_H_INCLUDED
 
 #include <cstdint>
 
 namespace wrenly {
-
+namespace detail {
+    
 class BaseType {
     protected:
         static uint32_t familyCounter_;
@@ -18,4 +20,8 @@ class Type: BaseType {
         }
 };
 
-}
+
+}   // detail
+}   // wrenly
+
+#endif  // TYPE_H_INCLUDED
