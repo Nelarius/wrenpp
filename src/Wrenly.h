@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef WRENLY_H_INCLUDED
+#define WRENLY_H_INCLUDED
 
 extern "C" {
     #include <wren.h>
@@ -10,6 +10,7 @@ extern "C" {
 #include <functional>
 #include <cstdint>
 #include <unordered_map>
+#include <type_traits>
 
 namespace wrenly {
 
@@ -78,6 +79,8 @@ class Wren {
         Wren& operator=( Wren&& );
         ~Wren();
         
+        WrenVM* vm();
+        
         void executeModule( const std::string& );
         void executeString( const std::string& );
         
@@ -97,9 +100,7 @@ class Wren {
         static LoadModuleFn loadModuleFn;
         
     private:
-    
         WrenVM*	    vm_;
-        
         std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
 
@@ -122,3 +123,6 @@ void Method::operator()( Args&&... args ) {
 /////////////////////////////////////////////////////////////////////////////
 
 }   // wrenly
+
+
+#endif  // WRENLY_H_INCLUDED

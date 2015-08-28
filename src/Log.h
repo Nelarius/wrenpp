@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef LOG_H_INCLUDED
+#define LOG_H_INCLUDED
 
 #include "Assert.h"
 #include <sstream>
@@ -118,3 +118,6 @@ else wrenly::Log().get( level )
 #define LOG_DEBUG2 LOG(wrenly::LogLevel::Debug2)
 #define LOG_DEBUG3 LOG(wrenly::LogLevel::Debug3)
 #define LOG_DEBUG4 LOG(wrenly::LogLevel::Debug4)
+
+
+#endif  // LOG_H_INCLUDED

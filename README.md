@@ -129,8 +129,8 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Add foreign method support.
-  * The Wren VM binds its own instance of the tree to the global variable on module execution
-  * Functions & methods need to be wrapped in a global method, maybe with templates?
-  * See http://stackoverflow.com/a/18171736/2018013 for a possible way of handling WrenForeignMethodFn bindings
-  * See http://stackoverflow.com/q/16592035/2018013 how to write non-type argument template wrapper
+  * Boost Function Types may be the only way to extract parameter information
+  * http://stackoverflow.com/questions/687490/how-do-i-expand-a-tuple-into-variadic-template-functions-arguments contains information on unpacking tuple into function arguments
+  * http://www.drdobbs.com/cpp/extracting-function-parameter-and-return/240000586 some information on how to obtain a type list
+* Move TypeCount to the `detail` namespace
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
