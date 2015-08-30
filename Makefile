@@ -25,7 +25,7 @@ endif
 
 OBJ = src/Main.o \
 	src/Wrenly.o \
-	src/Type.o \
+	src/detail/Type.o \
 
 all: $(EXECUTABLE)
 
