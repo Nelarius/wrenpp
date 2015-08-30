@@ -5,6 +5,7 @@ A C++ wrapper for the [Wren programming language](http://munificent.github.io/wr
 
 The goals of this library are
 * Wrap the Wren VM in a nice, easy-to-use class -- DONE
+* Wrap the Wren mehod call in easy-to-use syntax --DONE
 * Register foreign methods with the VM -- WIP
 * Register foreign classes with the VM -- WIP
 
@@ -76,7 +77,7 @@ Method Wren::method(
 ## Accessing C++ from Wren
 ### Foreign methods
 
-You can implement a method in a stand-alone C/C++ function. Currently, wrenly simplifies registering with the Wren virtual machine. Here's a small example.
+You can implement a Wren method as a free C/C++ function. Currently, wrenly simplifies registering with the Wren virtual machine. Here's a small example.
 
 ```dart
 // inside foo.wren
@@ -101,10 +102,7 @@ int main() {
   return 0;
 }
 ```
-
-The implementing function must be of type `void (*)( WrenVM* )`.
-
-**TODO:** automate passing arguments between the vm and the function.
+> The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time.
 
 ### Foreign classes
 
@@ -132,5 +130,4 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * Boost Function Types may be the only way to extract parameter information
   * http://stackoverflow.com/questions/687490/how-do-i-expand-a-tuple-into-variadic-template-functions-arguments contains information on unpacking tuple into function arguments
   * http://www.drdobbs.com/cpp/extracting-function-parameter-and-return/240000586 some information on how to obtain a type list
-* Move TypeCount to the `detail` namespace
 * Consistency: `executeModule` should use `Wren::loadModuleFn`

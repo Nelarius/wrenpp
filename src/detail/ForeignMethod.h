@@ -44,6 +44,9 @@ struct FunctionTraits< R( Args... ) > {
         static_assert( N < arity, "FunctionTraits error: invalid argument count parameter" );
         using type = std::tuple_element_t< N, std::tuple< Args... > >;
     };
+    
+    template< std::size_t N >
+    using ArgumentType = typename Argument<N>::type;
 };
 
 template< typename R, typename... Args >
@@ -90,30 +93,15 @@ inline std::string WrenGetArgument( WrenVM* vm, int index ) {
     return std::string( wrenGetArgumentString( vm, index ) );
 }
 
-/*template< typename Func, typename Tuple, std::size_t... index>
-decltype( auto ) InvokeWithSequence( Func&& f, Tuple&& tup, std::index_sequence<index...> ) {
-    return f( std::get<index>( std::forward<Tuple>( tup ) )... );
-}
-
-template< typename Func, typename Tuple >
-decltype( auto ) Invoke( Func&& f, Tuple&& tup ) {
-    constexpr auto Arity = FunctionTraits<decltype(f)>::arity;
-    return InvokeWithSequence(
-        std::forward<Func>( f ),
-        std::forward<Tuple>( tup ),
-        std::make_index_sequence<Arity>{}
-    );
-}*/
-
 template< typename Function, std::size_t... index >
 decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence<index...> ) {
-    using Traits = FunctionTraits< typename std::remove_reference<decltype(f)>::type >;
-    return f( WrenGetArgument< typename Traits::template Argument<index>::type >( vm, index+1u )... );
+    using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
+    return f( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index+1u )... );
 }
 
 template< typename Function >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, Function&& f ) {
-    constexpr auto Arity = FunctionTraits< typename std::remove_reference<decltype(f)>::type >::arity;
+    constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::arity;
     return InvokeHelper( vm, std::forward<Function>( f ), std::make_index_sequence<Arity>{} );
 }
 

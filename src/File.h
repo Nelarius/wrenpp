@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <stdexcept>
 #include "Assert.h"
 #include <sys/stat.h>
 
@@ -18,8 +19,12 @@ namespace wrenly {
     /// \brief Get the contents of a file as a string.
     inline std::string FileToString( const std::string& file ) {
         std::ifstream fin;
+        
+        if ( !FileExists( file ) ) {
+            throw std::runtime_error( "file not found!" );
+        }
+        
         fin.open( file, std::ios::in );
-        ASSERT( FileExists( file ), std::string("error: no such file: ") + file );
 
         std::stringstream buffer;
         buffer << fin.rdbuf();
