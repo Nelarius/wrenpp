@@ -1,6 +1,6 @@
 class Foo {
-  foreign say()
+  foreign say( message )
 }
 
 var h = Foo.new()
-h.say()
+h.say( "Hello from Wren via foreign method!" )

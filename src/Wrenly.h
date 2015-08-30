@@ -1,13 +1,14 @@
 #ifndef WRENLY_H_INCLUDED
 #define WRENLY_H_INCLUDED
 
+#include "detail/ForeignMethod.h"
 extern "C" {
     #include <wren.h>
 }
 #include <sstream>
 #include <string>
 #include <vector>
-#include <functional>
+#include <functional>   // for std::hash
 #include <cstdint>
 #include <unordered_map>
 #include <type_traits>
@@ -93,9 +94,19 @@ class Wren {
         void registerMethod(
             const std::string& module,
             const std::string& className,
+            bool isStatic,
             const std::string& signature,
             WrenForeignMethodFn function
         );
+        
+        /*template< typename Function >
+        constexpr void registerMethod(
+            const std::string& module,
+            const std::string& className,
+            bool isStatic,
+            const std::string& signature,
+            Function&& f
+        );*/
         
         static LoadModuleFn loadModuleFn;
         
@@ -121,6 +132,16 @@ void Method::operator()( Args&&... args ) {
 /////////////////////////////////////////////////////////////////////////////
 // Wren implementation
 /////////////////////////////////////////////////////////////////////////////
+/*template< typename Function >
+void Wren::registerMethod(  const std::string& m,
+                            const std::string& c,
+                            bool isStatic,
+                            const std::string& s,
+                            Function&& f ) {
+    auto hash = detail::HashWrenSignature( m.c_str(), c.c_str(), isStatic, s.c_str() );
+    foreignMethods_.insert( std::make_pair( hash, detail::ForeignMethodWrapper<decltype(f), f>::call ) );
+}*/
+
 
 }   // wrenly
 

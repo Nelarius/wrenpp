@@ -1,5 +1,5 @@
-
-#pragma once
+#ifndef FOREIGNMETHOD_H_INCLUDED
+#define FOREIGNMETHOD_H_INCLUDED
 
 extern "C" {
     #include <wren.h>
@@ -7,11 +7,29 @@ extern "C" {
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <functional>   // for std::hash
 #include <utility>  // for index_sequence
+#include <iostream>
 
 namespace wrenly {
 namespace detail {
-    
+
+// given a Wren method signature, this returns a unique value 
+inline std::size_t HashWrenSignature(
+                        const char* module,
+                        const char* className,
+                        bool isStatic,
+                        const char* signature ) {
+    std::hash<std::string> hash;
+    std::string qualified( module );
+    qualified += className;
+    qualified += signature;
+    if ( isStatic ) {
+        qualified += 's';
+    }
+    return hash( qualified );
+}
+
 template< typename F >
 struct FunctionTraits;
 
@@ -19,68 +37,62 @@ template< typename R, typename... Args >
 struct FunctionTraits< R( Args... ) > {
     using ReturnType = R;
     
-    constexpr static const uint32_t arity = sizeof...( Args );
+    constexpr static const std::size_t arity = sizeof...( Args );
     
-    
+    template< std::size_t N >
+    struct Argument {
+        static_assert( N < arity, "FunctionTraits error: invalid argument count parameter" );
+        using type = std::tuple_element_t< N, std::tuple< Args... > >;
+    };
 };
 
 template< typename R, typename... Args >
 struct FunctionTraits< R(*)( Args... ) >: public FunctionTraits< R( Args... ) > {};
 
+template< typename R, typename... Args > 
+struct FunctionTraits< R(&)( Args... ) >: public FunctionTraits< R( Args... ) > {};
+ 
 template< typename T >
-T GetArgument( WrenVM* vm, int index ) {}
+T WrenGetArgument( WrenVM* vm, int index ) {}
 
 template<>
-float GetArgument( WrenVM* vm, int index ) {
+inline float WrenGetArgument( WrenVM* vm, int index ) {
     return wrenGetArgumentDouble( vm, index );
 }
 
 template<>
-double GetArgument( WrenVM* vm, int index ) {
+inline double WrenGetArgument( WrenVM* vm, int index ) {
     return wrenGetArgumentDouble( vm, index );
 }
 
 template<>
-int GetArgument( WrenVM* vm, int index ) {
+inline int WrenGetArgument( WrenVM* vm, int index ) {
     return int( wrenGetArgumentDouble( vm, index ) );
 }
 
 template<>
-unsigned GetArgument( WrenVM* vm, int index ) {
+inline unsigned WrenGetArgument( WrenVM* vm, int index ) {
     return unsigned( wrenGetArgumentDouble( vm, index ) );
 }
 
 template<>
-bool GetArgument( WrenVM* vm, int index ) {
+inline bool WrenGetArgument( WrenVM* vm, int index ) {
     return wrenGetArgumentDouble( vm, index );
 }
 
 template<>
-const char* GetArgument( WrenVM* vm, int index ) {
+inline const char* WrenGetArgument( WrenVM* vm, int index ) {
     return wrenGetArgumentString( vm, index );
 }
 
 template<>
-std::string GetArgument( WrenVM* vm, int index ) {
+inline std::string WrenGetArgument( WrenVM* vm, int index ) {
     return std::string( wrenGetArgumentString( vm, index ) );
 }
 
-template< typename T >
-void Return( Wrenvm* vm, T val ) {}
-
-template<>
-void Return( WrenVM* vm, float val ) {
-    wrenReturnDouble( vm, val );
-}
-
-template<>
-void Return( WrenVM* vm, double val ) {
-    wrenReturnDouble( vm, val );
-}
-
-template< typename Func, typename Tuple, std::size_t... index>
+/*template< typename Func, typename Tuple, std::size_t... index>
 decltype( auto ) InvokeWithSequence( Func&& f, Tuple&& tup, std::index_sequence<index...> ) {
-    return f( std::get<index>( std::forward<Tup>( tup ) )... );
+    return f( std::get<index>( std::forward<Tuple>( tup ) )... );
 }
 
 template< typename Func, typename Tuple >
@@ -91,13 +103,31 @@ decltype( auto ) Invoke( Func&& f, Tuple&& tup ) {
         std::forward<Tuple>( tup ),
         std::make_index_sequence<Arity>{}
     );
+}*/
+
+template< typename Function, std::size_t... index >
+decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence<index...> ) {
+    using Traits = FunctionTraits< typename std::remove_reference<decltype(f)>::type >;
+    return f( WrenGetArgument< typename Traits::template Argument<index>::type >( vm, index+1u )... );
 }
 
-template<typename F, F f>
-void ForeignMethodWrapper( WrenVM* vm ) {
-    // tuple has to be built here
-    //Return( vm, Invoke( f, tup ) );
+template< typename Function >
+decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, Function&& f ) {
+    constexpr auto Arity = FunctionTraits< typename std::remove_reference<decltype(f)>::type >::arity;
+    return InvokeHelper( vm, std::forward<Function>( f ), std::make_index_sequence<Arity>{} );
 }
+
+template< typename Signature, Signature& >
+struct ForeignMethodWrapper;
+
+template< typename R, typename... Args, R( &P )( Args... ) >
+struct ForeignMethodWrapper< R( Args... ), P > {
+    static void call( WrenVM* vm ) {
+        InvokeWithWrenArguments( vm, P );
+    }
+};
 
 }   // detail
 }   // wrenly
+
+#endif  // FOREIGNMETHOD_H_INCLUDED

@@ -8,21 +8,7 @@
 namespace {
     
     std::unordered_map<std::size_t, WrenForeignMethodFn>* boundForeignMethods{ nullptr };
-    
-    /*
-     * Get the hash of a Wren foreign method signature
-     * */
-    std::size_t Hash( 
-        const char* module,
-        const char* className,
-        const char* signature ) {
-        std::hash<std::string> strHash;
-        std::string qual( module );
-        qual += className;
-        qual += signature;
-        return strHash( qual );
-    }
-    
+        
     /*
      * This function is going to use a global pointer to a bound method tree.
      * 
@@ -39,7 +25,7 @@ namespace {
         if ( !boundForeignMethods ) {
             return NULL;
         }
-        auto it = boundForeignMethods->find( Hash( module, className, signature ) );
+        auto it = boundForeignMethods->find( wrenly::detail::HashWrenSignature( module, className, isStatic, signature ) );
         if ( it == boundForeignMethods->end() ) {
             return NULL;
         }
@@ -106,7 +92,6 @@ void Method::release_() {
     }
 }
 
-
 /*
  * Returns the source as a heap-allocated string.
  * Uses malloc, because our reallocateFn is set to default:
@@ -115,7 +100,12 @@ void Method::release_() {
 LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     std::string path( mod );
     path += ".wren";
-    auto source = wrenly::FileToString( path );
+    std::string source;
+    try {
+        source = wrenly::FileToString( path );
+    } catch( const std::exception& e ) {
+        return NULL;
+    }
     char* buffer = (char*) malloc( source.size() );
     memcpy( buffer, source.c_str(), source.size() );
     return buffer;
@@ -138,14 +128,18 @@ Wren::Wren( Wren&& other )
 }
 
 Wren& Wren::operator=( Wren&& rhs ) {
-    vm_         = rhs.vm_;
+    vm_             = rhs.vm_;
     foreignMethods_ = std::move( rhs.foreignMethods_ );
-    rhs.vm_       = nullptr;
+    rhs.vm_         = nullptr;
     return *this;
 }
 
 Wren::~Wren() {
     wrenFreeVM( vm_ );
+}
+
+WrenVM* Wren::vm() {
+    return vm_;
 }
 
 void Wren::executeModule( const std::string& mod ) {
@@ -192,10 +186,11 @@ Method Wren::method(
 void Wren::registerMethod(
     const std::string& mod,
     const std::string& cName,
+    bool isStatic,
     const std::string& sig,
     WrenForeignMethodFn function
 ) {
-    std::size_t hash = Hash( mod.c_str(), cName.c_str(), sig.c_str() );
+    std::size_t hash = detail::HashWrenSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
     foreignMethods_.insert( std::make_pair( hash, function ) );
 }
 

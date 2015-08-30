@@ -5,12 +5,15 @@
   <VirtualDirectory Name="src">
     <File Name="src/File.h"/>
     <File Name="src/Assert.h"/>
-    <File Name="src/Log.h"/>
     <File Name="src/Main.cpp"/>
     <File Name="src/Wrenly.cpp"/>
     <File Name="src/Wrenly.h"/>
-    <File Name="src/Type.h"/>
-    <File Name="src/Type.cpp"/>
+    <VirtualDirectory Name="detail">
+      <File Name="src/detail/Type.cpp"/>
+      <File Name="src/detail/Type.h"/>
+      <File Name="src/detail/ForeignClass.h"/>
+      <File Name="src/detail/ForeignMethod.h"/>
+    </VirtualDirectory>
   </VirtualDirectory>
   <Settings Type="Static Library">
     <GlobalSettings>
@@ -103,4 +106,6 @@
     <File Name="README.md"/>
     <File Name="Makefile"/>
   </VirtualDirectory>
+  <Dependencies Name="Debug"/>
+  <Dependencies Name="Release"/>
 </CodeLite_Project>
