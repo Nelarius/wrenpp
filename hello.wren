@@ -1,6 +1,11 @@
+import "math" for Math
+
 class Foo {
-  foreign say( message )
+    foreign static say( message )
+    foreign static messageFromCpp()
 }
 
-var h = Foo.new()
-h.say( "Hello from Wren via foreign method!" )
+var y = Math.cos( 0.32 )
+
+Foo.say( "Hello from Wren via foreign method!" )
+IO.print( Foo.messageFromCpp() )

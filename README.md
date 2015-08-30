@@ -5,9 +5,11 @@ A C++ wrapper for the [Wren programming language](http://munificent.github.io/wr
 
 The goals of this library are
 * Wrap the Wren VM in a nice, easy-to-use class -- DONE
-* Wrap the Wren mehod call in easy-to-use syntax --DONE
-* Register foreign methods with the VM -- WIP
-* Register foreign classes with the VM -- WIP
+* Wrap the Wren method call in easy-to-use syntax --DONE
+* Implement foreign methods using free functions -- WIP
+* Implement foreign classes -- WIP
+
+> Oh and by the way, I will place notes on the implementation in quote blocks.
 
 ## Building
 
@@ -102,7 +104,8 @@ int main() {
   return 0;
 }
 ```
-> The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time.
+
+> The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time. Similarly, if a function returns a value, the call to the appropriate `wrenReturn*` function is inserted at compile time.
 
 ### Foreign classes
 
@@ -124,10 +127,12 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 };
 ```
 
+### Customize heap allocation
+
+**TODO**
+
 ## TODO:
 
-* Add foreign method support.
-  * Boost Function Types may be the only way to extract parameter information
-  * http://stackoverflow.com/questions/687490/how-do-i-expand-a-tuple-into-variadic-template-functions-arguments contains information on unpacking tuple into function arguments
-  * http://www.drdobbs.com/cpp/extracting-function-parameter-and-return/240000586 some information on how to obtain a type list
+* Use a context to keep track of the module, class names, much like in LuaBridge. The context owns a pointer to the host Wren object, delegates registration to it.
+* Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
