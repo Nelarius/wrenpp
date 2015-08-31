@@ -8,8 +8,11 @@ The goals of this library are
 * to wrap the Wren method call in easy-to-use syntax --DONE
 * to implement a wrapper to bind free functions to foreign function implementations -- DONE
 * and by far the biggest task: to bind classes to Wren foreign classes -- very WIP
+* template-based - no macros!
 
 ## Building
+
+The library is cross-platform, but is written using C++14.
 
 **TODO**
 
@@ -79,7 +82,7 @@ Method Wren::method(
 
 You can implement a Wren foreign method as a stateless free function in C++. Wrenly offers an easy to use wrapper over the functions. Note that only primitive types and `std::string` work for now. Support for registered types will be provided later once the custom type registration feature is complete.
 
-Here's how you could implement a simple math library using C++.
+Here's how you could implement a simple math library in Wren by binding the C++ standard math library functions.
 
 math.wren:
 ```dart
@@ -95,31 +98,15 @@ main.cpp:
 #include "Wrenly.h"
 #include <cmath>
 
-double MyCos( double x ) {
-    return cos( x );
-}
-
-double MySin( double x ) {
-    return sin( x );
-}
-
-double MyTan( double x ) {
-    return tan( x );
-}
-
-double MyExp( double x ) {
-    return exp( x );
-}
-
 int main( int argc, char** argv ) {
 
     wrenly::Wren wren{};
     wren.beginModule( "math" )
         .beginClass( "Math" )
-            .registerFunction< decltype(MyCos), MyCos >( true, "cos(_)" )
-            .registerFunction< decltype(MySin), MySin >( true, "sin(_)" )
-            .registerFunction< decltype(MyTan), MyTan >( true, "tan(_)" )
-            .registerFunction< decltype(MyExp), MyExp >( true, "exp(_)" );
+            .registerFunction< decltype(cos), cos >( true, "cos(_)" )
+            .registerFunction< decltype(sin), sin >( true, "sin(_)" )
+            .registerFunction< decltype(tan), tan >( true, "tan(_)" )
+            .registerFunction< decltype(exp), exp >( true, "exp(_)" );
             
     wren.executeString( "import \"math\" for Math\nIO.print( Math.cos(0.12345) )" );
     
@@ -159,7 +146,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* Update to latest version of Wren: `WrenMethod` no longer exist, use `WrenValue` instead.
+* BREAKING WREN CHANGE: `WrenMethod` no longer exist, use `WrenValue` instead.
 * Makefile compiles static library
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`

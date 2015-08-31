@@ -177,7 +177,6 @@ void Method::operator()( Args&&... args ) {
 /////////////////////////////////////////////////////////////////////////////
 template< typename F, F&& f >
 ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& s ) {
-    //auto hash = detail::HashWrenSignature( module_->module_.c_str(), class_.c_str(), isStatic, s.c_str() );
     wren_->registerFunction_( 
         module_->module_, 
         class_, isStatic, 
