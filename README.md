@@ -4,12 +4,10 @@
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
 The goals of this library are
-* Wrap the Wren VM in a nice, easy-to-use class -- DONE
-* Wrap the Wren method call in easy-to-use syntax --DONE
-* Implement foreign methods using free functions -- WIP
-* Implement foreign classes -- WIP
-
-> Oh and by the way, I will place notes on the implementation in quote blocks.
+* to wrap the Wren VM in a nice, easy-to-use class -- DONE
+* to wrap the Wren method call in easy-to-use syntax --DONE
+* to implement a wrapper to bind free functions to foreign function implementations -- DONE
+* and by far the biggest task: to bind classes to Wren foreign classes -- very WIP
 
 ## Building
 
@@ -79,35 +77,63 @@ Method Wren::method(
 ## Accessing C++ from Wren
 ### Foreign methods
 
-You can implement a Wren method as a free C/C++ function. Currently, wrenly simplifies registering with the Wren virtual machine. Here's a small example.
+You can implement a Wren foreign method as a stateless free function in C++. Wrenly offers an easy to use wrapper over the functions. Note that only primitive types and `std::string` work for now. Support for registered types will be provided later once the custom type registration feature is complete.
 
+Here's how you could implement a simple math library using C++.
+
+math.wren:
 ```dart
-// inside foo.wren
-class Bar {
-  foreign say()
+class Math {
+    foreign static cos( x )
+    foreign static sin( x )
+	foreign static tan( x )
+    foreign static exp( x )
 }
 ```
-
+main.cpp:
 ```cpp
 #include "Wrenly.h"
-#include <iostream>
+#include <cmath>
 
-void say( WrenVM* vm ) {
-  std::cout << "Hello from C++\n";
+double MyCos( double x ) {
+    return cos( x );
 }
 
-int main() {
-  wrenly::Wren wren{};
-  wren.registerMethod( "main", "Bar", "say()", say );
-  wren.executeModule( "foo" );
+double MySin( double x ) {
+    return sin( x );
+}
 
-  return 0;
+double MyTan( double x ) {
+    return tan( x );
+}
+
+double MyExp( double x ) {
+    return exp( x );
+}
+
+int main( int argc, char** argv ) {
+
+    wrenly::Wren wren{};
+    wren.beginModule( "math" )
+        .beginClass( "Math" )
+            .registerFunction< decltype(MyCos), MyCos >( true, "cos(_)" )
+            .registerFunction< decltype(MySin), MySin >( true, "sin(_)" )
+            .registerFunction< decltype(MyTan), MyTan >( true, "tan(_)" )
+            .registerFunction< decltype(MyExp), MyExp >( true, "exp(_)" );
+            
+    wren.executeString( "import \"math\" for Math\nIO.print( Math.cos(0.12345) )" );
+    
+    return 0;
 }
 ```
+
+Both the type of the function (in the case of `MyCos` the type is `double(double)`, for instance, and could be used instead of `decltype(MyCos)`) and the reference to the function have to be provided to `registerFunction` as tempalte arguments. As arguments, `registerFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
 
 > The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time. Similarly, if a function returns a value, the call to the appropriate `wrenReturn*` function is inserted at compile time.
 
 ### Foreign classes
+
+**TODO**
 
 ## Customize VM behavior
 ### Customize module loading
@@ -133,6 +159,8 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* Use a context to keep track of the module, class names, much like in LuaBridge. The context owns a pointer to the host Wren object, delegates registration to it.
+* Update to latest version of Wren: `WrenMethod` no longer exist, use `WrenValue` instead.
+* Makefile compiles static library
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
+* There needs to be the possibility of a user implementing a Wren "CFunction". The function gets registered without the template-magic wrapper. Ideally, the same would be carried out for the class.

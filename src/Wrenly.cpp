@@ -92,6 +92,28 @@ void Method::release_() {
     }
 }
 
+ModuleContext::ModuleContext( std::string module, Wren* wren )
+:   wren_( wren ),
+    module_( module )
+    {}
+    
+ClassContext ModuleContext::beginClass( std::string c ) {
+    return ClassContext( c, wren_, this );
+}
+
+void ModuleContext::endModule() {}
+
+    
+ClassContext::ClassContext( std::string c, Wren* wren, ModuleContext* mod )
+:   wren_( wren ),
+    module_( mod ),
+    class_( c )
+    {}
+    
+ModuleContext& ClassContext::endClass() {
+    return *module_;
+}
+
 /*
  * Returns the source as a heap-allocated string.
  * Uses malloc, because our reallocateFn is set to default:
@@ -175,6 +197,10 @@ void Wren::executeString( const std::string& code ) {
     }
 }
 
+ModuleContext Wren::beginModule( std::string mod ) {
+    return ModuleContext( mod, this );
+}
+
 Method Wren::method( 
     const std::string& mod,
     const std::string& var,
@@ -183,7 +209,7 @@ Method Wren::method(
     return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
 }
 
-void Wren::registerFunction(
+void Wren::registerFunction_(
     const std::string& mod,
     const std::string& cName,
     bool isStatic,

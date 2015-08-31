@@ -2,8 +2,6 @@
 #include <iostream>
 
 #include <string>
-#include <type_traits>
-#include <functional>
 #include <cmath>
 
 void say( std::string msg ) {
@@ -33,13 +31,14 @@ double MyExp( double x ) {
 int main( int argc, char** argv ) {
     wrenly::Wren wren{};
     
-    wren.registerFunction( "math", "Math", true, "cos(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyCos), MyCos >::call );
-    wren.registerFunction( "math", "Math", true, "sin(_)", wrenly::detail::ForeignMethodWrapper< decltype(MySin), MySin >::call );
-    wren.registerFunction( "math", "Math", true, "exp(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyExp), MyExp >::call );
-    
-    wren.registerFunction( "main", "Foo", true, "say(_)", wrenly::detail::ForeignMethodWrapper< decltype(say), say >::call );
-    wren.registerFunction( "main", "Foo", true, "messageFromCpp()", wrenly::detail::ForeignMethodWrapper< decltype(message), message >::call );
-    wren.executeModule( "hello" );
+    wren.beginModule( "math" )
+        .beginClass( "Math" )
+            .registerFunction< decltype(MyCos), MyCos >( true, "cos(_)" )
+            .registerFunction< decltype(MySin), MySin >( true, "sin(_)" )
+            .registerFunction< decltype(MyTan), MyTan >( true, "tan(_)" )
+            .registerFunction< decltype(MyExp), MyExp >( true, "exp(_)" );
+            
+    wren.executeString("import \"math\" for Math\nIO.print( Math.cos(0.12345) )");
     
     return 0;
 }

@@ -11,7 +11,6 @@ extern "C" {
 #include <functional>   // for std::hash
 #include <cstdint>
 #include <unordered_map>
-#include <type_traits>
 
 namespace wrenly {
 
@@ -63,6 +62,53 @@ class Method {
         unsigned*   refCount_;
 };
 
+class Wren;
+class ModuleContext;
+
+/**
+ * @class ClassContext
+ * @author Muszynski Johann M
+ * @date 31/08/15
+ * @file Wrenly.h
+ * @brief Stores the class and module name. Gives easier access to function registration.
+ */
+class ClassContext {
+    public:
+        ClassContext() = delete;
+        ClassContext( std::string c, Wren* wren, ModuleContext* mod );
+        
+        template< typename F, F&& f >
+        ClassContext& registerFunction(bool isStatic, const std::string& signature );
+        ModuleContext& endClass();
+        
+    private:
+        Wren*           wren_;
+        ModuleContext*  module_;
+        std::string     class_;
+};
+
+/**
+ * @class ModuleContext
+ * @author Muszynski Johann M
+ * @date 31/08/15
+ * @file Wrenly.h
+ * @brief Stores the module name. Gives access to class context.
+ */
+class ModuleContext {
+    public:
+        ModuleContext() = delete;
+        ModuleContext( std::string mod, Wren* wren );
+        
+        ClassContext beginClass( std::string c );
+        void endModule();
+        
+    private:
+        friend ClassContext;
+        
+        Wren*       wren_;
+        std::string module_;
+};
+
 /**
  * @class Wren
  * @author Nelarius
@@ -85,13 +131,21 @@ class Wren {
         void executeModule( const std::string& );
         void executeString( const std::string& );
         
+        ModuleContext beginModule( std::string mod );
+        
         Method method(
             const std::string& module,
             const std::string& variable,
             const std::string& signature
         );
         
-        void registerFunction(
+        static LoadModuleFn loadModuleFn;
+        
+    private:
+        friend class ModuleContext;
+        friend class ClassContext;
+        
+        void registerFunction_(
             const std::string& module,
             const std::string& className,
             bool isStatic,
@@ -99,18 +153,7 @@ class Wren {
             WrenForeignMethodFn function
         );
         
-        /*template< typename Function >
-        constexpr void registerMethod(
-            const std::string& module,
-            const std::string& className,
-            bool isStatic,
-            const std::string& signature,
-            Function&& f
-        );*/
         
-        static LoadModuleFn loadModuleFn;
-        
-    private:
         WrenVM*	    vm_;
         std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
@@ -130,18 +173,19 @@ void Method::operator()( Args&&... args ) {
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// Wren implementation
+// ClassContext implementation
 /////////////////////////////////////////////////////////////////////////////
-/*template< typename Function >
-void Wren::registerMethod(  const std::string& m,
-                            const std::string& c,
-                            bool isStatic,
-                            const std::string& s,
-                            Function&& f ) {
-    auto hash = detail::HashWrenSignature( m.c_str(), c.c_str(), isStatic, s.c_str() );
-    foreignMethods_.insert( std::make_pair( hash, detail::ForeignMethodWrapper<decltype(f), f>::call ) );
-}*/
-
+template< typename F, F&& f >
+ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& s ) {
+    //auto hash = detail::HashWrenSignature( module_->module_.c_str(), class_.c_str(), isStatic, s.c_str() );
+    wren_->registerFunction_( 
+        module_->module_, 
+        class_, isStatic, 
+        s, 
+        detail::ForeignMethodWrapper< std::remove_reference_t<decltype(f)>, f >::call 
+    );
+    return *this;
+}
 
 }   // wrenly
 
