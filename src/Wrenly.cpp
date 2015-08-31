@@ -183,7 +183,7 @@ Method Wren::method(
     return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
 }
 
-void Wren::registerMethod(
+void Wren::registerFunction(
     const std::string& mod,
     const std::string& cName,
     bool isStatic,

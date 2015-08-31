@@ -91,7 +91,7 @@ class Wren {
             const std::string& signature
         );
         
-        void registerMethod(
+        void registerFunction(
             const std::string& module,
             const std::string& className,
             bool isStatic,

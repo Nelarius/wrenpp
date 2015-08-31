@@ -150,7 +150,6 @@ struct InvokeWithoutReturningIf<false> {
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
         WrenReturn< ReturnType >( vm, InvokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
-        InvokeWithWrenArguments( vm, std::forward<Function>( f ) );
     }
 };
 

@@ -6,6 +6,6 @@ class Foo {
 }
 
 var y = Math.cos( 0.32 )
-
+IO.print( y )
 Foo.say( "Hello from Wren via foreign method!" )
 IO.print( Foo.messageFromCpp() )

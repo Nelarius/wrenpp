@@ -15,7 +15,6 @@ std::string message() {
 }
 
 double MyCos( double x ) {
-    std::cout << "Calling my cosine function!" << std::endl;
     return cos( x );
 }
 
@@ -34,12 +33,12 @@ double MyExp( double x ) {
 int main( int argc, char** argv ) {
     wrenly::Wren wren{};
     
-    wren.registerMethod( "main", "Math", true, "cos(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyCos), MyCos >::call );
-    wren.registerMethod( "main", "Math", true, "sin(_)", wrenly::detail::ForeignMethodWrapper< decltype(MySin), MySin >::call );
-    wren.registerMethod( "main", "Math", true, "exp(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyExp), MyExp >::call );
+    wren.registerFunction( "math", "Math", true, "cos(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyCos), MyCos >::call );
+    wren.registerFunction( "math", "Math", true, "sin(_)", wrenly::detail::ForeignMethodWrapper< decltype(MySin), MySin >::call );
+    wren.registerFunction( "math", "Math", true, "exp(_)", wrenly::detail::ForeignMethodWrapper< decltype(MyExp), MyExp >::call );
     
-    wren.registerMethod( "main", "Foo", true, "say(_)", wrenly::detail::ForeignMethodWrapper< decltype(say), say >::call );
-    wren.registerMethod( "main", "Foo", true, "messageFromCpp()", wrenly::detail::ForeignMethodWrapper< decltype(message), message >::call );
+    wren.registerFunction( "main", "Foo", true, "say(_)", wrenly::detail::ForeignMethodWrapper< decltype(say), say >::call );
+    wren.registerFunction( "main", "Foo", true, "messageFromCpp()", wrenly::detail::ForeignMethodWrapper< decltype(message), message >::call );
     wren.executeModule( "hello" );
     
     return 0;
