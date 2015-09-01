@@ -114,7 +114,7 @@ int main( int argc, char** argv ) {
 }
 ```
 
-Both the type of the function (in the case of `cos` the type is `double(double)`, for instance, and could be used instead of `decltype(cos)`) and the reference to the function have to be provided to `registerFunction` as tempalte arguments. As arguments, `registerFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
+Both the type of the function (in the case of `cos` the type is `double(double)`, for instance, and could be used instead of `decltype(cos)`) and the reference to the function have to be provided to `registerFunction` as template arguments. As arguments, `registerFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
 
 > The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time. Similarly, if a function returns a value, the call to the appropriate `wrenReturn*` function is inserted at compile time.
 
@@ -148,6 +148,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * BREAKING WREN CHANGE: `WrenMethod` no longer exist, use `WrenValue` instead.
+* Perhaps a `Value` class would be useful, instead of `Method`. It would behave like a Wren value, and you could call it using similar syntax to Wren (`call` method).
 * Add the wren repository to this one to resolve the dependency issue.
 * Makefile compiles static library
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
