@@ -4,17 +4,17 @@
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
 The goals of this library are
-* to wrap the Wren VM in a nice, easy-to-use class -- DONE
-* to wrap the Wren method call in easy-to-use syntax --DONE
-* to implement a wrapper to bind free functions to foreign function implementations -- DONE
-* and by far the biggest task: to bind classes to Wren foreign classes -- very WIP
+* to wrap the Wren VM in a nice, easy-to-use class
+* to wrap the Wren method call 
+* to implement a wrapper to bind free functions to foreign function implementations
+* and by far the biggest task: to bind classes to Wren foreign classes -- unimplemented at the moment
 * template-based - no macros!
 
 ## Building
 
-The library is cross-platform, but is written using C++14.
-
 **TODO**
+
+The code has been currently tested on Linux and Windows, with MinGW-w64.
 
 ## Getting started
 
@@ -123,6 +123,7 @@ Both the type of the function (in the case of `cos` the type is `double(double)`
 **TODO**
 
 ## Customize VM behavior
+
 ### Customize module loading
 
 When the virtual machine encounters an import statement, it executes a callback function which returns the module source for a given module name. If you want to change the way modules are named, or want some kind of custom file interface, you can change the callback function. Just set give `Wren::loadModuleFn` a new value, which can be a free standing function, or callable object of type `char*( const char* )`.
@@ -147,7 +148,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * BREAKING WREN CHANGE: `WrenMethod` no longer exist, use `WrenValue` instead.
+* Add the wren repository to this one to resolve the dependency issue.
 * Makefile compiles static library
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
-* There needs to be the possibility of a user implementing a Wren "CFunction". The function gets registered without the template-magic wrapper. Ideally, the same would be carried out for the class.

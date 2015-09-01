@@ -23,20 +23,43 @@ else
     endif
 endif
 
-OBJ = src/Main.o \
+EXECUTABLE_OBJ = src/Main.o \
 	src/Wrenly.o \
 	src/detail/Type.o \
+	
+LIB_OBJ = src/Wrenly.o \
+	src/detail/Type.o \
+	
+all: post-build
+	
+pre-build:
+	mkdir lib
+	mkdir include
+	mkdir include/detail
 
-all: $(EXECUTABLE)
+lib-build: pre-build
+	@$(MAKE) lib/libwrenly.a
+
+post-build: lib-build
+	cp src/Wrenly.h include/
+	cp src/File.h include/
+	cp src/Assert.h include/
+	cp src/detail/ForeignMethod.h include/detail
+	cp src/detail/Type.h include/detail
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
+	
+lib/libwrenly.a: $(LIB_OBJ)
+	ar rcs $@ $^
 
-$(EXECUTABLE): $(OBJ)
-	$(CC) -o $(EXECUTABLE) $(OBJ) $(LDFLAGS)
+$(EXECUTABLE): $(EXECUTABLE_OBJ)
+	$(CC) -o $(EXECUTABLE) $(EXECUTABLE_OBJ) $(LDFLAGS)
 
 
-.PHONY: clean
+.PHONY: all clean
 
 clean:
-	rm $(OBJ) $(EXECUTABLE)
+	rm -rf lib
+	rm -rf include
+	rm -rf $(EXECUTABLE_OBJ) $(EXECUTABLE)
