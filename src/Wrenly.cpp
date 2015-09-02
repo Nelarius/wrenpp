@@ -8,7 +8,7 @@
 namespace {
     
     std::unordered_map<std::size_t, WrenForeignMethodFn>* boundForeignMethods{ nullptr };
-        
+    
     /*
      * This function is going to use a global pointer to a bound method tree.
      * 
@@ -25,7 +25,7 @@ namespace {
         if ( !boundForeignMethods ) {
             return NULL;
         }
-        auto it = boundForeignMethods->find( wrenly::detail::HashWrenSignature( module, className, isStatic, signature ) );
+        auto it = boundForeignMethods->find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
         if ( it == boundForeignMethods->end() ) {
             return NULL;
         }
@@ -183,7 +183,7 @@ void Wren::executeModule( const std::string& mod ) {
 }
 
 void Wren::executeString( const std::string& code ) {
-    // set global varibales for the C-callbacks
+    // set global variables for the C-callbacks
     boundForeignMethods = &foreignMethods_;
     
     auto res = wrenInterpret( vm_, "string", code.c_str() );
@@ -195,6 +195,10 @@ void Wren::executeString( const std::string& code ) {
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
         std::cerr << "WREN_RESULT_RUNTIME_ERROR in string: " << code << std::endl;
     }
+}
+
+void Wren::gc() {
+    //vm_->collectGarbage( vm_ );
 }
 
 ModuleContext Wren::beginModule( std::string mod ) {
@@ -216,7 +220,7 @@ void Wren::registerFunction_(
     const std::string& sig,
     WrenForeignMethodFn function
 ) {
-    std::size_t hash = detail::HashWrenSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
+    std::size_t hash = detail::HashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
     foreignMethods_.insert( std::make_pair( hash, function ) );
 }
 

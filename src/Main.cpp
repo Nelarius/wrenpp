@@ -4,6 +4,8 @@
 #include <string>
 #include <cmath>
 
+#include "detail/ForeignClass.h"
+
 void say( std::string msg ) {
     std::cout << msg << std::endl;
 }
@@ -11,6 +13,16 @@ void say( std::string msg ) {
 std::string message() {
     return std::string("Hello from a string created in C++!");
 }
+
+class Factor {
+    Factor() = default;
+    Factor( double f ) : factor_( f ) {}
+    
+    inline double times( double x ) { return factor_ * x; }
+    
+    private:
+        double factor_{ 1.0 };
+};
 
 int main( int argc, char** argv ) {
     wrenly::Wren wren{};

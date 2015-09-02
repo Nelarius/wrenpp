@@ -98,7 +98,7 @@ main.cpp:
 #include "Wrenly.h"
 #include <cmath>
 
-int main( int argc, char** argv ) {
+int main() {
 
     wrenly::Wren wren{};
     wren.beginModule( "math" )
@@ -120,7 +120,31 @@ Both the type of the function (in the case of `cos` the type is `double(double)`
 
 ### Foreign classes
 
-**TODO**
+Foreign classes can be registered by `registerClass` on a module context.
+
+```cpp
+#include "Wrenly.h"
+
+struct Test {
+  Test() = default;
+  Test( double xx ) : x( xx ) {}
+  
+  private:
+    double x{ 0.0 };
+};
+
+int main() {
+  wrenly::Wren wren{};
+  wren.beginModule( "main" )
+    .registerClass< Test, double >( "Test" );
+
+  return 0;
+}
+```
+
+Pass the class type, and constructor argument types to `registerClass`. Even though a C++ class may have many constructors, only one constructor can be registered with Wren.
+
+**TODO: all the rest**
 
 ## Customize VM behavior
 
@@ -150,6 +174,13 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 * BREAKING WREN CHANGE: `WrenMethod` no longer exist, use `WrenValue` instead.
 * Perhaps a `Value` class would be useful, instead of `Method`. It would behave like a Wren value, and you could call it using similar syntax to Wren (`call` method).
 * Add the wren repository to this one to resolve the dependency issue.
-* Makefile compiles static library
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
+* Allow registration of custom types
+  * store the type ids in a set within `Wren`. Remember to move the set in the move constructors & assignment operators!
+  * a function of type `WrenBindForeignClassMethods`, which is `WrenForeignClassMethods(WrenVM*, const char*, const char*)` must return the pointer to the struct `WrenForeignClassMethods` containing two `WrenForeignMethodFn`s.
+  * store the pointers to `WrenForeignClassMethods` in an unordered_map, where the key is again a hash.
+  * are called like foreign methods? Can I call the constructor I want from there?
+* A compile-time method must be devised to assert that a type is registered with Wren.
+  * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
+* Add 

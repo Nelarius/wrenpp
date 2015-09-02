@@ -15,7 +15,7 @@ namespace wrenly {
 namespace detail {
 
 // given a Wren method signature, this returns a unique value 
-inline std::size_t HashWrenSignature(
+inline std::size_t HashMethodSignature(
                         const char* module,
                         const char* className,
                         bool isStatic,
@@ -54,6 +54,14 @@ struct FunctionTraits< R(*)( Args... ) >: public FunctionTraits< R( Args... ) > 
 
 template< typename R, typename... Args > 
 struct FunctionTraits< R(&)( Args... ) >: public FunctionTraits< R( Args... ) > {};
+
+// member function pointer
+template< typename C, typename R, typename... Args >
+struct FunctionTraits< R(C::*)( Args... ) > : public FunctionTraits<R(C&,Args...)> {};
+ 
+// const member function pointer
+template< typename C, typename R, typename... Args >
+struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( C&, Args... ) > {};
  
 template< typename T >
 T WrenGetArgument( WrenVM* vm, int index ) {}
@@ -121,16 +129,16 @@ inline void WrenReturn( WrenVM* vm, std::string val ) {
     wrenReturnString( vm, val.c_str(), -1 );
 }
 
-template< typename Function, std::size_t... index >
+template< typename Function, std::size_t offset, std::size_t... index>
 decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence<index...> ) {
     using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
-    return f( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + 1u )... );
+    return f( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + offset )... );
 }
 
-template< typename Function >
+template< typename Function, std::size_t offset = 1 >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, Function&& f ) {
     constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::arity;
-    return InvokeHelper( vm, std::forward<Function>( f ), std::make_index_sequence<Arity>{} );
+    return InvokeHelper< Function, offset >( vm, std::forward<Function>( f ), std::make_index_sequence<Arity> {} );
 }
 
 // invokes plain InvokeWithWrenArguments if true

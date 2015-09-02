@@ -2,6 +2,7 @@
 #define WRENLY_H_INCLUDED
 
 #include "detail/ForeignMethod.h"
+#include "detail/ForeignClass.h"
 extern "C" {
     #include <wren.h>
 }
@@ -11,6 +12,7 @@ extern "C" {
 #include <functional>   // for std::hash
 #include <cstdint>
 #include <unordered_map>
+#include <set>
 
 namespace wrenly {
 
@@ -99,11 +101,27 @@ class ModuleContext {
         ModuleContext() = delete;
         ModuleContext( std::string mod, Wren* wren );
         
-        ClassContext beginClass( std::string c );
+        /**
+         * @brief Begin a class context.
+         * @param className The class name.
+         * @return 
+         */
+        ClassContext beginClass( std::string className );
+        
+        /**
+         * @brief Register a C++ class with Wren.
+         * @param className The name of the class in Wren.
+         * @tparam T The C++ class type.
+         * @tparam Args... The constructor argument types
+         * @return The class context for the registered type.
+         */
+        template< typename T, typename... Args >
+        ClassContext registerClass( std::string className ):
+        
         void endModule();
         
     private:
-        friend ClassContext;
+        friend class ClassContext;
         
         Wren*       wren_;
         std::string module_;
@@ -114,7 +132,10 @@ class ModuleContext {
  * @author Nelarius
  * @date 09/08/2015
  * @file Wren.h
- * @brief Holds an instance of the Wren virtual machine. The instance is uniquely owned.
+ * @brief Holds an instance of the Wren virtual machine.
+ * The Wren virtual machine is held internally as a pointer. This class
+ * owns the pointer uniquely. The contents of this class may be moved, 
+ * but not copied.
  */
 class Wren {
 
@@ -131,8 +152,27 @@ class Wren {
         void executeModule( const std::string& );
         void executeString( const std::string& );
         
+        /**
+         * @brief Run garbage collection immediately.
+         */
+        void gc();
+        
+        /**
+         * @brief Begin a module context.
+         * @param mod The name of the module. The name is "main" if not in an imported module.
+         * @return 
+         */
         ModuleContext beginModule( std::string mod );
         
+        /**
+         * @brief Get a callable Wren method.
+         * @param module The name of the module that the method is located in. "main" if not in an imported module.
+         * @param variable The name of the variable the method is attached to. The class name if static.
+         * @param signature The name of the method, followed by a parenthesis enclosed list of of underscores representing each argument.
+         * @return The callable method object.
+         * As long as this object exists, the variable that the method is attached to in Wren will not be
+         * garbage collected.
+         */
         Method method(
             const std::string& module,
             const std::string& variable,
@@ -158,10 +198,6 @@ class Wren {
         std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
 
-
-/////////////////////////////////////////////////////////////////////////////
-// Method implementation
-/////////////////////////////////////////////////////////////////////////////
 template<typename... Args>
 void Method::operator()( Args&&... args ) {
     std::vector<Any> vec = { args... };
@@ -172,9 +208,11 @@ void Method::operator()( Args&&... args ) {
     wrenCall( vm_, method_, ss.str().c_str(), std::forward<Args>( args )... );
 }
 
-/////////////////////////////////////////////////////////////////////////////
-// ClassContext implementation
-/////////////////////////////////////////////////////////////////////////////
+template< typename T, typename... Args >
+ClassContext ClassContext::registerClass( std::string c ) {
+    //
+}
+
 template< typename F, F&& f >
 ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& s ) {
     wren_->registerFunction_( 
