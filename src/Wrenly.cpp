@@ -40,7 +40,7 @@ namespace {
 
 namespace wrenly {
 
-Method::Method( WrenVM* vm, WrenMethod* method )
+Method::Method( WrenVM* vm, WrenValue* method )
 :   vm_( vm ),
     method_( method ),
     refCount_( nullptr ) {
@@ -85,7 +85,7 @@ void Method::release_() {
     if ( refCount_ ) {
         *refCount_ -= 1u;
         if ( *refCount_ == 0u ) {
-            wrenReleaseMethod( vm_, method_ );
+            wrenReleaseValue( vm_, method_ );
             delete refCount_;
             refCount_ = nullptr;
         }

@@ -29,7 +29,7 @@ using LoadModuleFn = std::function<char*( const char*)>;
  */
 class Method {
     public:
-        Method( WrenVM*, WrenMethod* );
+        Method( WrenVM*, WrenValue* );
         Method() = delete;
         Method( const Method& );
         Method( Method&& );
@@ -60,7 +60,7 @@ class Method {
         void release_();
     
         WrenVM*     vm_;
-        WrenMethod* method_;
+        WrenValue*  method_;
         unsigned*   refCount_;
 };
 
@@ -116,7 +116,7 @@ class ModuleContext {
          * @return The class context for the registered type.
          */
         template< typename T, typename... Args >
-        ClassContext registerClass( std::string className ):
+        ClassContext registerClass( std::string className );
         
         void endModule();
         
@@ -198,19 +198,21 @@ class Wren {
         std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
 };
 
-template<typename... Args>
+template< typename... Args >
 void Method::operator()( Args&&... args ) {
     std::vector<Any> vec = { args... };
     std::stringstream ss;
     for ( auto a: vec ) {
         ss << a.type;
     }
-    wrenCall( vm_, method_, ss.str().c_str(), std::forward<Args>( args )... );
+    WrenValue* result;
+    wrenCall( vm_, method_, &result, ss.str().c_str(), std::forward<Args>( args )... );
 }
 
 template< typename T, typename... Args >
-ClassContext ClassContext::registerClass( std::string c ) {
-    //
+ClassContext ModuleContext::registerClass( std::string c ) {
+    
+    return ClassContext( c, wren_, this );
 }
 
 template< typename F, F&& f >
