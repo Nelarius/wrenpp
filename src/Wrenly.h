@@ -155,7 +155,7 @@ class Wren {
         /**
          * @brief Run garbage collection immediately.
          */
-        void gc();
+        void collectGarbage();
         
         /**
          * @brief Begin a module context.
@@ -205,7 +205,7 @@ void Method::operator()( Args&&... args ) {
     for ( auto a: vec ) {
         ss << a.type;
     }
-    WrenValue* result;
+    WrenValue* result{ nullptr };
     wrenCall( vm_, method_, &result, ss.str().c_str(), std::forward<Args>( args )... );
 }
 

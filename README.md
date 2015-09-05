@@ -12,13 +12,15 @@ The goals of this library are
 
 ## Building
 
-**TODO**
+Checkout the repository using `git clone --recursive https://github.com/nelarius/wrenly.git`.
+
+**TODO** CMake
 
 The code has been currently tested on Linux and Windows, with MinGW-w64.
 
 ## Getting started
 
-The Wren virtual machine is contained in the `Wren` class. Here's how you would initialize the virtual machine and execute a module:
+Here's how you would initialize an instance of the virtual machine and execute a module:
 
 ```cpp
 #include "Wrenly.h"
@@ -77,6 +79,18 @@ Method Wren::method(
 
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
+### Maps
+
+**TODO**
+
+In order to use wren as a data format, we need access to maps and lists. Implementing them would also require wrapping most of the Wren core library.
+
+It will be a class which holds the module, variable name, and wraps the methods by calling the appropriate `wrenCall()`
+
+*Limitation*: implemented in this way, only maps in global scope can be accessed. This isn't "true" variable access.
+
+### List
+
 ## Accessing C++ from Wren
 ### Foreign methods
 
@@ -89,7 +103,7 @@ math.wren:
 class Math {
     foreign static cos( x )
     foreign static sin( x )
-	foreign static tan( x )
+    foreign static tan( x )
     foreign static exp( x )
 }
 ```
@@ -183,4 +197,4 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * are called like foreign methods? Can I call the constructor I want from there?
 * A compile-time method must be devised to assert that a type is registered with Wren.
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
-* Add 
+* Add examples

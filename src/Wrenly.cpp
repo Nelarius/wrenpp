@@ -197,8 +197,8 @@ void Wren::executeString( const std::string& code ) {
     }
 }
 
-void Wren::gc() {
-    //vm_->collectGarbage( vm_ );
+void Wren::collectGarbage() {
+    wrenCollectGarbage( vm_ );
 }
 
 ModuleContext Wren::beginModule( std::string mod ) {

@@ -1,8 +1,8 @@
 
 CC=g++
 
-WREN_COMP = C:/dev/wren/src/include
-WREN_LINK = C:/dev/wren/lib
+WREN_COMP = wren/src/include
+WREN_LINK = wren/lib
 
 CFLAGS = -std=gnu++14 -Wall -O2 -DDEBUG
 
@@ -17,8 +17,8 @@ ifeq ($(OS),Windows_NT)
 else
 	UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Linux)
-        CFLAGS +=  -I ./src -I /home/muszynsk/dev/wren/src/include
-        LDFLAGS +=  -L /home/muszynsk/dev/wren/lib -l:libwren.a
+        CFLAGS +=  -I ./src -I $(WREN_COMP)
+        LDFLAGS +=  -L $(WREN_LINK) -l:libwren.a
 		EXECUTABLE += wrenly
     endif
 endif
@@ -45,7 +45,9 @@ post-build: lib-build
 	cp src/File.h include/
 	cp src/Assert.h include/
 	cp src/detail/ForeignMethod.h include/detail
+	cp src/detail/ForeignClass.h include/detail
 	cp src/detail/Type.h include/detail
+	cp wren/src/include/Wren.h include/
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
