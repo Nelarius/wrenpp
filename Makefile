@@ -38,7 +38,7 @@ pre-build:
 	mkdir include/detail
 
 lib-build: pre-build
-	@$(MAKE) lib/libwrenly.a
+	@$(MAKE) lib/libtemporary.a
 
 post-build: lib-build
 	cp src/Wrenly.h include/
@@ -48,11 +48,14 @@ post-build: lib-build
 	cp src/detail/ForeignClass.h include/detail
 	cp src/detail/Type.h include/detail
 	cp wren/src/include/Wren.h include/
+	ar -M <libwrenly.mri
+	mv libwrenly.a lib/
+	rm lib/libtemporary.a
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c -o $@ $<
 	
-lib/libwrenly.a: $(LIB_OBJ)
+lib/libtemporary.a: $(LIB_OBJ)
 	ar rcs $@ $^
 
 $(EXECUTABLE): $(EXECUTABLE_OBJ)
