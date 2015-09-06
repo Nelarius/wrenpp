@@ -33,11 +33,6 @@ inline std::size_t HashClassSignature( const char* module, const char* className
     return hash( qualified );
 }
 
-template< typename T >
-struct ObjectWrapper {
-    WrenForeignMethodFn allocate, finalize;
-};
-
 template< typename T, typename... Args, std::size_t... index >
 void Construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
     using Traits = ParameterPackTraits< Args... >;
@@ -54,10 +49,9 @@ void Allocate( WrenVM* vm ) {
 
 template< typename T >
 void Finalize( WrenVM* vm ) {
-    T* instance = wrenGetArgumentValue( vm, 0 );
+    T* instance = static_cast<T*>( wrenGetArgumentForeign( vm, 0 ) );
     instance->~T();
 }
-
 
 }   // detail
 }   // wrenly

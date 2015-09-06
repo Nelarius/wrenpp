@@ -79,19 +79,8 @@ Method Wren::method(
 
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
-### Maps
-
-**TODO**
-
-In order to use wren as a data format, we need access to maps and lists. Implementing them would also require wrapping most of the Wren core library.
-
-It will be a class which holds the module, variable name, and wraps the methods by calling the appropriate `wrenCall()`
-
-*Limitation*: implemented in this way, only maps in global scope can be accessed. This isn't "true" variable access.
-
-### List
-
 ## Accessing C++ from Wren
+
 ### Foreign methods
 
 You can implement a Wren foreign method as a stateless free function in C++. Wrenly offers an easy to use wrapper over the functions. Note that only primitive types and `std::string` work for now. Support for registered types will be provided later once the custom type registration feature is complete.
@@ -185,9 +174,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* BREAKING WREN CHANGE: `WrenMethod` no longer exist, use `WrenValue` instead.
 * Perhaps a `Value` class would be useful, instead of `Method`. It would behave like a Wren value, and you could call it using similar syntax to Wren (`call` method).
-* Add the wren repository to this one to resolve the dependency issue.
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
 * Allow registration of custom types
@@ -197,4 +184,3 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * are called like foreign methods? Can I call the constructor I want from there?
 * A compile-time method must be devised to assert that a type is registered with Wren.
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
-* Add examples

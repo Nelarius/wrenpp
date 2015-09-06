@@ -78,15 +78,29 @@ class ClassContext {
     public:
         ClassContext() = delete;
         ClassContext( std::string c, Wren* wren, ModuleContext* mod );
+        virtual ~ClassContext() = default;
         
         template< typename F, F&& f >
-        ClassContext& registerFunction(bool isStatic, const std::string& signature );
+        ClassContext& registerFunction( bool isStatic, const std::string& signature );
+        
         ModuleContext& endClass();
         
-    private:
+    protected:
         Wren*           wren_;
         ModuleContext*  module_;
         std::string     class_;
+};
+
+template< typename T >
+class RegisteredClassContext: public ClassContext {
+    public:
+        RegisteredClassContext( std::string c, Wren* wren, ModuleContext* mod )
+        :   ClassContext( c, wren, mod )
+            {}
+        virtual ~RegisteredClassContext() = default;
+        
+        template< typename R, typename... Args, R( T::*f )( Args... ) >
+        RegisteredClassContext& registerMethod( bool isStatic, const std::string& signature );
 };
 
 /**
@@ -116,7 +130,7 @@ class ModuleContext {
          * @return The class context for the registered type.
          */
         template< typename T, typename... Args >
-        ClassContext registerClass( std::string className );
+        RegisteredClassContext<T> registerClass( std::string className );
         
         void endModule();
         
@@ -193,9 +207,15 @@ class Wren {
             WrenForeignMethodFn function
         );
         
+        void registerClass_(
+            const std::string& module,
+            const std::string& className,
+            WrenForeignClassMethods methods
+        );
         
         WrenVM*	    vm_;
-        std::unordered_map<std::size_t, WrenForeignMethodFn>    foreignMethods_;
+        std::unordered_map<std::size_t, WrenForeignMethodFn>        foreignMethods_;
+        std::unordered_map<std::size_t, WrenForeignClassMethods>    foreignClasses_;
 };
 
 template< typename... Args >
@@ -210,9 +230,10 @@ void Method::operator()( Args&&... args ) {
 }
 
 template< typename T, typename... Args >
-ClassContext ModuleContext::registerClass( std::string c ) {
-    
-    return ClassContext( c, wren_, this );
+RegisteredClassContext<T> ModuleContext::registerClass( std::string c ) {
+    WrenForeignClassMethods wrapper{ &detail::Allocate< T, Args... >, &detail::Finalize< T > };
+    wren_->registerClass_( module_, c, wrapper );
+    return RegisteredClassContext<T>( c, wren_, this );
 }
 
 template< typename F, F&& f >
@@ -222,6 +243,18 @@ ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& 
         class_, isStatic, 
         s, 
         detail::ForeignMethodWrapper< std::remove_reference_t<decltype(f)>, f >::call 
+    );
+    return *this;
+}
+
+template< typename T >
+template< typename R, typename... Args, R( T::*f )( Args... ) >
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isStatic, const std::string& s ) {
+    wren_->registerFunction_( 
+        module_->module_,
+        class_, isStatic,
+        s,
+        detail::ForeignMethodWrapper< R( T::* )( Args... ), f >::call 
     );
     return *this;
 }
