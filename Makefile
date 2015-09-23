@@ -47,7 +47,7 @@ post-build: lib-build
 	cp src/detail/ForeignMethod.h include/detail
 	cp src/detail/ForeignClass.h include/detail
 	cp src/detail/Type.h include/detail
-	cp wren/src/include/Wren.h include/
+	cp wren/src/include/wren.h include/
 	ar -M <libwrenly.mri
 	mv libwrenly.a lib/
 	rm lib/libtemporary.a

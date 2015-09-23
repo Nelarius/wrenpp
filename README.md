@@ -182,5 +182,6 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * a function of type `WrenBindForeignClassMethods`, which is `WrenForeignClassMethods(WrenVM*, const char*, const char*)` must return the pointer to the struct `WrenForeignClassMethods` containing two `WrenForeignMethodFn`s.
   * store the pointers to `WrenForeignClassMethods` in an unordered_map, where the key is again a hash.
   * are called like foreign methods? Can I call the constructor I want from there?
+* The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren.
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
