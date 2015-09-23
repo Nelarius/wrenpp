@@ -145,13 +145,13 @@ template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
     C* c = static_cast<C*>( wrenGetArgumentForeign( vm, 0 ) );
-    return c->f( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + 1 )... );
+    return (c->*f)( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + 1 )... );
 }
 
 template< typename R, typename C, typename... Args >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
-    constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::arity;
-    return InvokeHelper< R, C, Args... >( vm, std::forward< R(C::*)( Args... ) >( f ), std::make_index_sequence<Arity>{} );
+    constexpr auto Arity = FunctionTraits< decltype(f) >::arity;
+    return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
 }
 
 // invokes plain InvokeWithWrenArguments if true
@@ -181,23 +181,26 @@ struct InvokeWithoutReturningIf<false> {
     }
     
     template< typename R, typename C, typename... Args >
-    static void invoke( WrenVM* vm, R(C::*f)( Args... ) ) {
-        WrenReturn< R >( vm, InvokeWithWrenArguments( vm, std::forward< R( C::* )( Args... ) >( f ) ) );
+    static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
+        WrenReturn< R >( vm, InvokeWithWrenArguments( vm, f ) );
     }
 };
 
 template< typename Signature, Signature&& >
-struct ForeignMethodWrapper;
+struct ForeignFunctionWrapper;
 
 // free function variant
 template< typename R, typename... Args, R( &f )( Args... ) >
-struct ForeignMethodWrapper< R( Args... ), f > {
+struct ForeignFunctionWrapper< R( Args... ), f > {
     
     static void call( WrenVM* vm ) {
         InvokeWithoutReturningIf< std::is_void<R>::value >::invoke( vm, f );
     }
     
 };
+
+template< typename Signature, Signature fn >
+struct ForeignMethodWrapper;
 
 // method variant
 template< typename R, typename C, typename... Args, R( C::*m )( Args... ) >

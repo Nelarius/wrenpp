@@ -1,4 +1,5 @@
 #include "Wrenly.h"
+#include "detail/ForeignMethod.h"
 #include <iostream>
 
 #include <string>
@@ -18,10 +19,12 @@ class Factor {
 int main( int argc, char** argv ) {
     wrenly::Wren wren{};
     
-    wren.beginModule( "main" )
+    /*wren.beginModule( "main" )
         .registerClass< Factor, double >( "Factor" )
-            .registerMethod< double(Factor::*)( double ), &Factor::times >( false, "times(_)" );
-            
+            .registerMethod< double, double, &Factor::times >( false, "times(_)" );*/
+    std::cout << std::is_same<double, wrenly::detail::FunctionTraits< decltype( &Factor::times ) >::ReturnType >::value << std::endl;
+    auto p = &wrenly::detail::ForeignMethodWrapper< decltype(&Factor::times), &Factor::times >::call;
+    
     wren.executeString("foreign class Factor {\n construct new( x ) {}\n //foreign times(x)\n }\nvar f = Factor.new( 4.0 )\n");
     
     return 0;
