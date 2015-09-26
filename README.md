@@ -151,6 +151,14 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 ## Customize VM behavior
 
+### Customize `System.print`
+
+The Wren scripting language does not implement `System.print( ... )` itself, but expects the embedder to provide it. The `Wren` wrapper class does exactly that with the static `Wren::writeFn` field, which is of type `std::function< void( WrenVM*, const char* ) >`. By default, it is implemented as follows.
+
+```cpp
+Wren::writeFn = []( WrenVM* vm, const char* text ) -> void { printf( text ) };
+```
+
 ### Customize module loading
 
 When the virtual machine encounters an import statement, it executes a callback function which returns the module source for a given module name. If you want to change the way modules are named, or want some kind of custom file interface, you can change the callback function. Just set give `Wren::loadModuleFn` a new value, which can be a free standing function, or callable object of type `char*( const char* )`.
@@ -174,7 +182,6 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* Perhaps a `Value` class would be useful, instead of `Method`. It would behave like a Wren value, and you could call it using similar syntax to Wren (`call` method).
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
 * Allow registration of custom types

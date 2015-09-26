@@ -16,7 +16,8 @@ extern "C" {
 
 namespace wrenly {
 
-using LoadModuleFn = std::function<char*( const char*)>;
+using LoadModuleFn = std::function< char*( const char* ) >;
+using WriteFn = std::function< void( WrenVM*, const char* ) >;
 
 /**
  * @class Method
@@ -195,6 +196,7 @@ class Wren {
         );
         
         static LoadModuleFn loadModuleFn;
+        static WriteFn writeFn;
         
     private:
         friend class ModuleContext;

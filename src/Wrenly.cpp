@@ -4,6 +4,7 @@
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp
 #include <iostream>
+#include <cstdio>
 
 namespace {
     
@@ -48,6 +49,10 @@ namespace {
     
     char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
         return wrenly::Wren::loadModuleFn( mod );
+    }
+    
+    void WriteFnWrapper( WrenVM* vm, const char* text ) {
+        wrenly::Wren::writeFn( vm, text );
     }
 }
 
@@ -146,14 +151,20 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     return buffer;
 };
 
+WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
+    printf( text );
+};
+
 Wren::Wren()
 :   vm_( nullptr ),
     foreignMethods_() {
     
     WrenConfiguration configuration{};
+    wrenInitConfiguration( &configuration );
     configuration.bindForeignMethodFn = ForeignMethodProvider;
     configuration.loadModuleFn = LoadModuleFnWrapper;
     configuration.bindForeignClassFn = ForeignClassProvider;
+    configuration.writeFn = WriteFnWrapper;
     vm_ = wrenNewVM( &configuration );
 }
 
