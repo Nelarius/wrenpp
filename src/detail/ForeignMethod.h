@@ -186,21 +186,18 @@ struct InvokeWithoutReturningIf<false> {
     }
 };
 
-template< typename Signature, Signature&& >
-struct ForeignFunctionWrapper;
+template< typename Signature, Signature >
+struct ForeignMethodWrapper;
 
 // free function variant
-template< typename R, typename... Args, R( &f )( Args... ) >
-struct ForeignFunctionWrapper< R( Args... ), f > {
+template< typename R, typename... Args, R( *f )( Args... ) >
+struct ForeignMethodWrapper< R(*)( Args... ), f > {
     
     static void call( WrenVM* vm ) {
         InvokeWithoutReturningIf< std::is_void<R>::value >::invoke( vm, f );
     }
     
 };
-
-template< typename Signature, Signature fn >
-struct ForeignMethodWrapper;
 
 // method variant
 template< typename R, typename C, typename... Args, R( C::*m )( Args... ) >

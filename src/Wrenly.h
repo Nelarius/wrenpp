@@ -80,7 +80,7 @@ class ClassContext {
         ClassContext( std::string c, Wren* wren, ModuleContext* mod );
         virtual ~ClassContext() = default;
         
-        template< typename F, F&& f >
+        template< typename F, F f >
         ClassContext& registerFunction( bool isStatic, const std::string& signature );
         
         ModuleContext& endClass();
@@ -99,7 +99,7 @@ class RegisteredClassContext: public ClassContext {
             {}
         virtual ~RegisteredClassContext() = default;
         
-        template< typename R, typename... Args, R( T::*f )( Args... ) >
+        template< typename F, F f >
         RegisteredClassContext& registerMethod( bool isStatic, const std::string& signature );
 };
 
@@ -136,6 +136,7 @@ class ModuleContext {
         
     private:
         friend class ClassContext;
+        template< typename T > friend class RegisteredClassContext;
         
         Wren*       wren_;
         std::string module_;
@@ -198,6 +199,7 @@ class Wren {
     private:
         friend class ModuleContext;
         friend class ClassContext;
+        template< typename T > friend class RegisteredClassContext;
         
         void registerFunction_(
             const std::string& module,
@@ -236,25 +238,25 @@ RegisteredClassContext<T> ModuleContext::registerClass( std::string c ) {
     return RegisteredClassContext<T>( c, wren_, this );
 }
 
-template< typename F, F&& f >
+template< typename F, F f >
 ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& s ) {
     wren_->registerFunction_( 
         module_->module_, 
         class_, isStatic, 
         s, 
-        detail::ForeignMethodWrapper< std::remove_reference_t<decltype(f)>, f >::call 
+        detail::ForeignMethodWrapper< decltype(f), f >::call 
     );
     return *this;
 }
 
 template< typename T >
-template< typename R, typename... Args, R( T::*f )( Args... ) >
+template< typename F, F f >
 RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isStatic, const std::string& s ) {
     wren_->registerFunction_( 
         module_->module_,
         class_, isStatic,
         s,
-        detail::ForeignMethodWrapper< R( T::* )( Args... ), f >::call 
+        detail::ForeignMethodWrapper< decltype(f), f >::call 
     );
     return *this;
 }
