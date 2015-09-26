@@ -106,10 +106,10 @@ int main() {
     wrenly::Wren wren{};
     wren.beginModule( "math" )
         .beginClass( "Math" )
-            .registerFunction< decltype(cos), cos >( true, "cos(_)" )
-            .registerFunction< decltype(sin), sin >( true, "sin(_)" )
-            .registerFunction< decltype(tan), tan >( true, "tan(_)" )
-            .registerFunction< decltype(exp), exp >( true, "exp(_)" );
+            .registerFunction< decltype(&cos), &cos >( true, "cos(_)" )
+            .registerFunction< decltype(&sin), &sin >( true, "sin(_)" )
+            .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
+            .registerFunction< decltype(&exp), &exp >( true, "exp(_)" );
             
     wren.executeString( "import \"math\" for Math\nIO.print( Math.cos(0.12345) )" );
     
@@ -183,5 +183,5 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
   * store the pointers to `WrenForeignClassMethods` in an unordered_map, where the key is again a hash.
   * are called like foreign methods? Can I call the constructor I want from there?
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
-* A compile-time method must be devised to assert that a type is registered with Wren.
+* A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
