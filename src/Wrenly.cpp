@@ -36,7 +36,7 @@ namespace {
     }
     
     WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
-        if ( boundForeignClasses ) {
+        if ( !boundForeignClasses ) {
             return WrenForeignClassMethods{ nullptr, nullptr };
         }
         auto it = boundForeignClasses->find( wrenly::detail::HashClassSignature( m, c ) );
