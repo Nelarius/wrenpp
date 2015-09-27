@@ -10,7 +10,7 @@ int main() {
             .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
             .registerFunction< decltype(&exp), &exp >( true, "exp(_)" );
 
-    wren.executeString("import \"math\" for Math\nIO.print( Math.cos(0.12345) )");
+    wren.executeString("import \"math\" for Math\nSystem.print( Math.cos(0.12345) )");
 
     return 0;
 }

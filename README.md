@@ -4,11 +4,13 @@
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
 The goals of this library are
-* to wrap the Wren VM in a nice, easy-to-use class
-* to wrap the Wren method call 
-* to implement a wrapper to bind free functions to foreign function implementations
-* and by far the biggest task: to bind classes to Wren foreign classes -- unimplemented at the moment
-* template-based - no macros!
+* provide a RAII wrapper for the Wren virtual machine
+* to wrap the method call function
+* to generate automatic wrappers for free functions and methods implementing Wren foreign methods
+* to generate automatic wrappers for classes implementing Wren foreign classes
+* template-based -- no macros!
+
+This library uses the template metaprogramming facilities provided by C++14.
 
 ## Building
 
@@ -40,7 +42,7 @@ Module names work the same way by default as the module names of the Wren comman
 Strings can also be executed:
 
 ```cpp
-wren.executeString( "IO.print(\"Hello from a C++ string!\")" );
+wren.executeString( "System.print(\"Hello from a C++ string!\")" );
 ```
 
 ## Accessing Wren from C++
@@ -111,7 +113,7 @@ int main() {
             .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
             .registerFunction< decltype(&exp), &exp >( true, "exp(_)" );
             
-    wren.executeString( "import \"math\" for Math\nIO.print( Math.cos(0.12345) )" );
+    wren.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
     
     return 0;
 }
@@ -131,6 +133,8 @@ Foreign classes can be registered by `registerClass` on a module context.
 struct Test {
   Test() = default;
   Test( double xx ) : x( xx ) {}
+
+  inline double get() { return x; }  
   
   private:
     double x{ 0.0 };
@@ -139,7 +143,8 @@ struct Test {
 int main() {
   wrenly::Wren wren{};
   wren.beginModule( "main" )
-    .registerClass< Test, double >( "Test" );
+    .registerClass< Test, double >( "Test" )
+      .registerMethod< decltype( &Test::get ), &Test::get >( false, "get()" );
 
   return 0;
 }
@@ -147,7 +152,7 @@ int main() {
 
 Pass the class type, and constructor argument types to `registerClass`. Even though a C++ class may have many constructors, only one constructor can be registered with Wren.
 
-**TODO: all the rest**
+Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
 ## Customize VM behavior
 
@@ -184,11 +189,8 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 * Use FixedVector in `Method::operator( Args... )` to close out any possible slow allocations. Size determined during compile time using `sizeof...( Args )`.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
-* Allow registration of custom types
-  * store the type ids in a set within `Wren`. Remember to move the set in the move constructors & assignment operators!
-  * a function of type `WrenBindForeignClassMethods`, which is `WrenForeignClassMethods(WrenVM*, const char*, const char*)` must return the pointer to the struct `WrenForeignClassMethods` containing two `WrenForeignMethodFn`s.
-  * store the pointers to `WrenForeignClassMethods` in an unordered_map, where the key is again a hash.
-  * are called like foreign methods? Can I call the constructor I want from there?
+* Register types from C++
+  * Find out how construction of foreign objects should work.
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
