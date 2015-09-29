@@ -154,6 +154,8 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
+When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, a foreign class is an object which contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class. Wrenly initializes an instance of the class in the array of bytes, nothing more.
+
 ## Customize VM behavior
 
 ### Customize `System.print`
