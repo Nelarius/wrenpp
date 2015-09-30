@@ -152,7 +152,7 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
 };
 
 WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
-    printf( text );
+    printf( "%s", text );
 };
 
 Wren::Wren()
