@@ -10,15 +10,24 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-This library uses the template metaprogramming facilities provided by C++14.
+Currently developing against `wren:master@f757c9e`.
 
-## Building
+## Build
 
-Checkout the repository using `git clone --recursive https://github.com/nelarius/wrenly.git`.
+Checkout the repository using `git clone https://github.com/nelarius/wrenly.git`.
 
-**TODO** CMake
+The easiest way to build the project is to include contents of the `src/` folder in your project. Just remember to compile with C++14 features turned on!
 
-The code has been currently tested on Linux and Windows, with MinGW-w64.
+You can also use CMake to build the project. CMake tries to find Wren, and stores the result in the `WREN_INCLUDE_DIR` variable. If you don't have Wren installed in a system-wide location, you can help CMake by specifying the variable on the command line. For example, you could write:
+
+```sh
+mkdir build
+cd build
+cmake -DWREN_INCLUDE_DIR=<location of wren.h here> ../
+make
+``` 
+
+The code has been built on Linux using gcc, and Windows using MinGW-w64.
 
 ## Getting started
 

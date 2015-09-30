@@ -21,8 +21,8 @@
 #Makefile
 # I don't think I need this file cluttering the repository.
 # Codelite will generate it anyway based on the project file.
-*.mk
-*.txt
+wrenly.mk
+wrenly.txt
 
 # Project files/folders
 Build/

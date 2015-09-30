@@ -1,5 +1,0 @@
-create libwrenly.a
-addlib wren/lib/libwren.a
-addlib lib/libtemporary.a
-save
-end
