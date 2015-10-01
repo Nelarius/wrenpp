@@ -25,7 +25,6 @@ wrenly.mk
 wrenly.txt
 
 # Project files/folders
-Build/
-Objects/
-modelling
+build/
+build.sh
 
