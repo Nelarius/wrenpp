@@ -36,7 +36,7 @@ inline std::size_t HashClassSignature( const char* module, const char* className
 template< typename T, typename... Args, std::size_t... index >
 void Construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
     using Traits = ParameterPackTraits< Args... >;
-    new ( memory ) T( WrenGetArgument< typename Traits::template ParameterType<index> >( vm, index )... );
+    new ( memory ) T( WrenGetArgument< typename Traits::template ParameterType<index> >( vm, index + 1 )... );
 }
 
 template< typename T, typename... Args >
