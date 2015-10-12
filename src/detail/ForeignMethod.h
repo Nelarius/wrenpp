@@ -62,77 +62,101 @@ struct FunctionTraits< R(C::*)( Args... ) > : public FunctionTraits< R( Args... 
 // const member function pointer
 template< typename C, typename R, typename... Args >
 struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( Args... ) > {};
- 
-template< typename T >
-T WrenGetArgument( WrenVM* vm, int index ) {}
-
-template<>
-inline float WrenGetArgument( WrenVM* vm, int index ) {
-    return wrenGetArgumentDouble( vm, index );
-}
-
-template<>
-inline double WrenGetArgument( WrenVM* vm, int index ) {
-    return wrenGetArgumentDouble( vm, index );
-}
-
-template<>
-inline int WrenGetArgument( WrenVM* vm, int index ) {
-    return int( wrenGetArgumentDouble( vm, index ) );
-}
-
-template<>
-inline unsigned WrenGetArgument( WrenVM* vm, int index ) {
-    return unsigned( wrenGetArgumentDouble( vm, index ) );
-}
-
-template<>
-inline bool WrenGetArgument( WrenVM* vm, int index ) {
-    return wrenGetArgumentDouble( vm, index );
-}
-
-template<>
-inline const char* WrenGetArgument( WrenVM* vm, int index ) {
-    return wrenGetArgumentString( vm, index );
-}
-
-template<>
-inline std::string WrenGetArgument( WrenVM* vm, int index ) {
-    return std::string( wrenGetArgumentString( vm, index ) );
-}
 
 template< typename T >
-void WrenReturn( WrenVM* vm, T val ) {}
+struct WrenArgument;
 
 template<>
-inline void WrenReturn( WrenVM* vm, float val ) {
-    wrenReturnDouble( vm, val );
-}
+struct WrenArgument< float > {
+    static float get( WrenVM* vm, int index ) {
+        return wrenGetArgumentDouble( vm, index );
+    }
+};
 
 template<>
-inline void WrenReturn( WrenVM* vm, double val ) {
-    wrenReturnDouble( vm, val );
-}
+struct WrenArgument< double > {
+    static double get( WrenVM* vm, int index ) {
+        return wrenGetArgumentDouble( vm, index );
+    }
+};
 
 template<>
-inline void WrenReturn( WrenVM* vm, int val ) {
-    wrenReturnDouble( vm, double( val ) );
-}
+struct WrenArgument< int > {
+    static int get( WrenVM* vm, int index ) {
+        return wrenGetArgumentDouble( vm, index );
+    }
+};
 
 template<>
-inline void WrenReturn( WrenVM* vm, bool val ) {
-    wrenReturnBool( vm, val );
-}
+struct WrenArgument< unsigned > {
+    static unsigned get( WrenVM* vm, int index ) {
+        return wrenGetArgumentDouble( vm, index );
+    }
+};
 
 template<>
-inline void WrenReturn( WrenVM* vm, std::string val ) {
-    wrenReturnString( vm, val.c_str(), -1 );
-}
+struct WrenArgument< bool > {
+    static bool get( WrenVM* vm, int index ) {
+        return wrenGetArgumentBool( vm, index );
+    }
+};
 
+template<>
+struct WrenArgument< const char* > {
+    static const char* get( WrenVM* vm, int index ) {
+        return wrenGetArgumentString( vm, index );
+    }
+};
+
+template<>
+struct WrenArgument< std::string > {
+    static std::string get( WrenVM* vm, int index ) {
+        return std::string( wrenGetArgumentString( vm, index ) );
+    }
+};
+
+template< typename T >
+struct WrenReturnValue;
+
+template<>
+struct WrenReturnValue< float > {
+    static void ret( WrenVM* vm, float val ) {
+        wrenReturnDouble( vm, double ( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< double > {
+    static void ret( WrenVM* vm, double val ) {
+        wrenReturnDouble( vm, val );
+    }
+};
+
+template<>
+struct WrenReturnValue< int > {
+    static void ret( WrenVM* vm, int val ) {
+        wrenReturnDouble( vm, double ( val ) );
+    }
+};
+
+
+template<>
+struct WrenReturnValue< bool > {
+    static void ret( WrenVM* vm, bool val ) {
+        wrenReturnBool( vm, val );
+    }
+};
+
+template<>
+struct WrenReturnValue< std::string > {
+    static void ret( WrenVM* vm, std::string val ) {
+        wrenReturnString( vm, val.c_str(), -1 );
+    }
+};
 template< typename Function, std::size_t... index>
 decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
-    return f( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + 1 )... );
+    return f( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename Function >
@@ -145,7 +169,7 @@ template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
     C* c = static_cast<C*>( wrenGetArgumentForeign( vm, 0 ) );
-    return (c->*f)( WrenGetArgument< typename Traits::template ArgumentType<index> >( vm, index + 1 )... );
+    return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename R, typename C, typename... Args >
@@ -177,12 +201,12 @@ struct InvokeWithoutReturningIf<false> {
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
-        WrenReturn< ReturnType >( vm, InvokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
+        WrenReturnValue< ReturnType >::ret( vm, InvokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
     }
     
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
-        WrenReturn< R >( vm, InvokeWithWrenArguments( vm, f ) );
+        WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );
     }
 };
 
