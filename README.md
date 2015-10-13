@@ -199,8 +199,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
-* Register types from C++
-  * Find out how construction of foreign objects should work.
+* WrenArgument needs to provide case for non-primitive types, and attempt to get the foreign argument.
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
