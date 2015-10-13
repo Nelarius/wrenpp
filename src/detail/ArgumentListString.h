@@ -35,7 +35,11 @@ class ArgumentListString {
             }
             args[N] = '\0';
         }
-        ArgumentListString() = delete;
+        ArgumentListString()                                            = delete;
+        ArgumentListString( const ArgumentListString& )                 = delete;
+        ArgumentListString( ArgumentListString&& )                      = delete;
+        ArgumentListString& operator=( const ArgumentListString& )      = delete;
+        ArgumentListString& operator=( ArgumentListString&& )           = delete;
         ~ArgumentListString() = default;
         
         const char* getString() const {
