@@ -11,7 +11,7 @@ find_package(Wren REQUIRED)
 include_directories(${WREN_INCLUDE_DIR})
 
 if (WREN_FOUND)
-    add_library(wrenly STATIC src/Wrenly.cpp src/detail/Type.cpp src/File.h src/Wrenly.h src/Assert.h src/detail/ForeignClass.h src/detail/ForeignMethod.h src/detail/Type.h)
+    add_library(wrenly STATIC src/Wrenly.cpp src/detail/Type.cpp src/File.h src/Wrenly.h src/Assert.h src/detail/ArgumentListString.h src/detail/ForeignClass.h src/detail/ForeignMethod.h src/detail/Type.h)
 else()
     message(FATAL_ERROR "Wren required, but not found.")
 endif ()

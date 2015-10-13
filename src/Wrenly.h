@@ -3,6 +3,7 @@
 
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
+#include "detail/ArgumentListString.h"
 extern "C" {
     #include <wren.h>
 }
@@ -11,6 +12,7 @@ extern "C" {
 #include <vector>
 #include <functional>   // for std::hash
 #include <cstdint>
+#include <cstdlib>      // for std::size_t
 #include <unordered_map>
 #include <set>
 
@@ -42,21 +44,7 @@ class Method {
         template<typename... Args>
         void operator()( Args&&... args );
     
-    private:
-        /*
-         * For parsing arguments and telling Wren their type
-         * */
-        struct Any {
-            Any( bool e )   : type( 'b' ) {}
-            Any( double e ) : type( 'd' ) {}
-            Any( float e )  : type( 'd' ) {}
-            Any( int e )    : type( 'i' ) {}
-            Any( const char* ) : type( 's' ) {}
-            Any( const std::string& ) : type( 's' ) {}
-            
-            char type;
-        };
-        
+    private:        
         void retain_();
         void release_();
     
@@ -224,13 +212,10 @@ class Wren {
 
 template< typename... Args >
 void Method::operator()( Args&&... args ) {
-    std::vector<Any> vec = { args... };
-    std::stringstream ss;
-    for ( auto a: vec ) {
-        ss << a.type;
-    }
+    constexpr const std::size_t Arity = sizeof...( Args );
+    detail::ArgumentListString< Arity > arguments{ args... };
     WrenValue* result{ nullptr };
-    wrenCall( vm_, method_, &result, ss.str().c_str(), std::forward<Args>( args )... );
+    wrenCall( vm_, method_, &result, arguments.getString(), std::forward<Args>( args )... );
 }
 
 template< typename T, typename... Args >
