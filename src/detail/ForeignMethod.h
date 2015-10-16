@@ -37,11 +37,11 @@ template< typename R, typename... Args >
 struct FunctionTraits< R( Args... ) > {
     using ReturnType = R;
     
-    constexpr static const std::size_t arity = sizeof...( Args );
+    constexpr static const std::size_t Arity = sizeof...( Args );
     
     template< std::size_t N >
     struct Argument {
-        static_assert( N < arity, "FunctionTraits error: invalid argument count parameter" );
+        static_assert( N < Arity, "FunctionTraits error: invalid argument count parameter" );
         using type = std::tuple_element_t< N, std::tuple< Args... > >;
     };
     
@@ -193,7 +193,7 @@ decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence< in
 
 template< typename Function >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, Function&& f ) {
-    constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::arity;
+    constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::Arity;
     return InvokeHelper< Function >( vm, std::forward<Function>( f ), std::make_index_sequence<Arity> {} );
 }
 
@@ -206,7 +206,7 @@ decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
 
 template< typename R, typename C, typename... Args >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
-    constexpr auto Arity = FunctionTraits< decltype(f) >::arity;
+    constexpr auto Arity = FunctionTraits< decltype(f) >::Arity;
     return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
 }
 
