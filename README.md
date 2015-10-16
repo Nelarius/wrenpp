@@ -163,7 +163,15 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
-When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, a foreign class is an object which contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class. Wrenly initializes an instance of the class in the array of bytes, nothing more.
+>When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, the C representation of a foreign class object contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class' byte aray. Wrenly uses the byte array to store an instance of the registered class, and nothing more.
+
+### Foreign method arguments
+
+Note that a class registered with Wren as a foreign class can be passed to foreign functions as an argument. It may be passed as a pointer, reference, or by value, `const`, or not.
+
+### Foreign method return values
+
+Note that only the following types can be returned to Wren: `int` (and anything which can be cast to `int`), `const char*`, `std::string`, `bool`, `float`, `double`. A foreign method implementor may be left `void`, of course.
 
 ## Customize VM behavior
 
@@ -199,7 +207,6 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
-* WrenArgument needs to provide case for non-primitive types, and attempt to get the foreign argument.
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.

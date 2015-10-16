@@ -64,7 +64,39 @@ template< typename C, typename R, typename... Args >
 struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( Args... ) > {};
 
 template< typename T >
-struct WrenArgument;
+struct WrenArgument {
+    static T get( WrenVM* vm, int index ) {
+        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    }
+};
+
+template < typename T >
+struct WrenArgument< T& > {
+    static T& get( WrenVM* vm, int index ) {
+        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    }
+};
+
+template< typename T >
+struct WrenArgument< const T& > {
+    static const T& get( WrenVM* vm, int index ) {
+        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    }
+};
+
+template< typename T >
+struct WrenArgument< T* > {
+    static T* get( WrenVM* vm, int index ) {
+        return static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    }
+};
+
+template< typename T >
+struct WrenArgument< const T* > {
+    static const T* get( WrenVM* vm, int index ) {
+        return static_cast< const T* >( wrenGetArgumentForeign( vm, index ) );
+    }
+};
 
 template<>
 struct WrenArgument< float > {
@@ -139,7 +171,6 @@ struct WrenReturnValue< int > {
     }
 };
 
-
 template<>
 struct WrenReturnValue< bool > {
     static void ret( WrenVM* vm, bool val ) {
@@ -153,6 +184,7 @@ struct WrenReturnValue< std::string > {
         wrenReturnString( vm, val.c_str(), -1 );
     }
 };
+
 template< typename Function, std::size_t... index>
 decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
