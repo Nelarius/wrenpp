@@ -12,7 +12,7 @@ class BaseType {
 };
 
 template<typename T>
-class Type: BaseType {
+class Type: public BaseType {
     public:
         static uint32_t family() {
             static uint32_t f{ familyCounter_++ };
