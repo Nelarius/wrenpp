@@ -25,7 +25,9 @@ mkdir build
 cd build
 cmake -DWREN_INCLUDE_DIR=<location of wren.h here> ../
 make
-``` 
+```
+
+A premake5 build script is also included, if you prefer using it over CMake. The resulting build files are placed in `build/<action>/`. Use the `--wren=<location of wren.h>` option generate the build files with the wren header location.
 
 The code has been built on Linux using gcc, and Windows using MinGW-w64.
 
