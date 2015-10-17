@@ -5,7 +5,6 @@
 #include <sstream>
 #include <fstream>
 #include <stdexcept>
-#include "Assert.h"
 #include <sys/stat.h>
 
 namespace wrenly {
