@@ -41,16 +41,22 @@ class Method {
         Method& operator=( Method );
         ~Method();
         
+        /**
+        * @brief Call a wren method and pass it any arguments
+        * This method is const, because it is intentended to be pass around
+        * like immutable data. In reality, the underlying virtual machine might 
+        * change its state, depending on the Wren method being called.
+        */
         template<typename... Args>
-        void operator()( Args&&... args );
+        void operator()( Args&&... args ) const;
     
     private:        
         void retain_();
         void release_();
     
-        WrenVM*     vm_;
-        WrenValue*  method_;
-        unsigned*   refCount_;
+        mutable WrenVM*         vm_;
+        mutable WrenValue*      method_;
+        unsigned*               refCount_;
 };
 
 class Wren;
@@ -211,7 +217,7 @@ class Wren {
 };
 
 template< typename... Args >
-void Method::operator()( Args&&... args ) {
+void Method::operator()( Args&&... args ) const {
     constexpr const std::size_t Arity = sizeof...( Args );
     detail::ArgumentListString< Arity > arguments{ args... };
     WrenValue* result{ nullptr };
