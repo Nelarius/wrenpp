@@ -35,7 +35,9 @@ class ArgumentListString {
             }
             args[N] = '\0';
         }
-        ArgumentListString()                                            = delete;
+        ArgumentListString() 
+        :   args{ '\0' }
+            {}
         ArgumentListString( const ArgumentListString& )                 = delete;
         ArgumentListString( ArgumentListString&& )                      = delete;
         ArgumentListString& operator=( const ArgumentListString& )      = delete;
@@ -49,6 +51,7 @@ class ArgumentListString {
     private:
         char args[N+1];
 };   
+
 }   // namespace detail
 }   // namespace wrenly
 
