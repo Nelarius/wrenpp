@@ -10,7 +10,7 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-Currently developing against `wren:master@e968b4b`.
+Currently developing against `wren:master@545a4cb`.
 
 ## Build
 
@@ -208,6 +208,7 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
+* Investigate whether it is possible to use "properties" to access C-like struct members.
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!

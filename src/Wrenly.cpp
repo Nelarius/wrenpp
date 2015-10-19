@@ -199,7 +199,7 @@ void Wren::executeModule( const std::string& mod ) {
     std::string file = mod;
     file += ".wren";
     auto source = FileToString( file );
-    auto res = wrenInterpret( vm_, file.c_str(), source.c_str() );
+    auto res = wrenInterpret( vm_, source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
         std::cerr << "WREN_RESULT_COMPILE_ERROR in module " << mod << std::endl;
@@ -218,7 +218,7 @@ void Wren::executeString( const std::string& code ) {
     boundForeignMethods = &foreignMethods_;
     boundForeignClasses = &foreignClasses_;
     
-    auto res = wrenInterpret( vm_, "string", code.c_str() );
+    auto res = wrenInterpret( vm_, code.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
         std::cerr << "WREN_RESULT_COMPILE_ERROR in string: " << code << std::endl;
