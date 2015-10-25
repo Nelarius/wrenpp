@@ -10,7 +10,7 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-Currently developing against `wren:master@545a4cb`.
+Currently developing against `wren:master@b365c07`.
 
 ## Build
 
@@ -65,7 +65,7 @@ You can use the `Wren` instance to get a callable handle for a method implemente
 ```dart
 class Foo {
   static say( text ) {
-    IO.print( text )
+    System.print( text )
   }
 }
 ```
@@ -165,7 +165,7 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
->When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, the C representation of a foreign class object contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class' byte aray. Wrenly uses the byte array to store an instance of the registered class, and nothing more.
+>When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, the C representation of a foreign class object contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class' byte array. Wrenly uses the byte array to store an instance of the registered class, and nothing more.
 
 ### Foreign method arguments
 
@@ -209,7 +209,9 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Investigate whether it is possible to use "properties" to access C-like struct members.
+* Another major shortcoming is non-ability to store references to instances.
+* Add the ability for wren to call user-defined implementor function directly (no wrapper).
 * Consistency: `executeModule` should use `Wren::loadModuleFn`
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
-  * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registeres different types for multiple `Wren` instances.
+  * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
