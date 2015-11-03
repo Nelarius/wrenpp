@@ -10,7 +10,7 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-Currently developing against `wren:master@b365c07`.
+Currently developing against `wren:master@2ff8acb`.
 
 ## Build
 
