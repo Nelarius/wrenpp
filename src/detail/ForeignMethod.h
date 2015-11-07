@@ -36,15 +36,15 @@ struct FunctionTraits;
 template< typename R, typename... Args >
 struct FunctionTraits< R( Args... ) > {
     using ReturnType = R;
-    
+
     constexpr static const std::size_t Arity = sizeof...( Args );
-    
+
     template< std::size_t N >
     struct Argument {
         static_assert( N < Arity, "FunctionTraits error: invalid argument count parameter" );
         using type = std::tuple_element_t< N, std::tuple< Args... > >;
     };
-    
+
     template< std::size_t N >
     using ArgumentType = typename Argument<N>::type;
 };
@@ -215,12 +215,12 @@ decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
 // to be used with std::is_void as the predicate
 template<bool predicate>
 struct InvokeWithoutReturningIf {
-    
+
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         InvokeWithWrenArguments( vm, std::forward<Function>( f ) );
     }
-    
+
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R( C::*f )( Args... ) ) {
         InvokeWithWrenArguments( vm, std::forward< R(C::*)( Args... ) >( f ) );
@@ -229,13 +229,13 @@ struct InvokeWithoutReturningIf {
 
 template<>
 struct InvokeWithoutReturningIf<false> {
-    
+
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
         WrenReturnValue< ReturnType >::ret( vm, InvokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
     }
-    
+
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
         WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );

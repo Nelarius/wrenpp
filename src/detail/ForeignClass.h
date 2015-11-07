@@ -12,7 +12,7 @@ namespace detail {
 
 template< typename... Args >
 struct ParameterPackTraits {
-    
+
     constexpr static const std::size_t size = sizeof...( Args );
     
     template< std::size_t N >
@@ -20,7 +20,7 @@ struct ParameterPackTraits {
         static_assert( N < size, "ParameterPackTraits error: invalid parameter count" );
         using type = std::tuple_element_t< N, std::tuple< Args... > >;
     };
-    
+
     template< std::size_t N >
     using ParameterType = typename Parameter< N >::type;
 };

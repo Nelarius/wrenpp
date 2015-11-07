@@ -5,7 +5,7 @@
 
 namespace wrenly {
 namespace detail {
-    
+
 class BaseType {
     protected:
         static uint32_t familyCounter_;

@@ -7,7 +7,7 @@
 
 namespace wrenly {
 namespace detail {
-    
+
 struct Any {
     Any( bool e )   : type( 'b' ) {}
     Any( double e ) : type( 'd' ) {}
@@ -16,7 +16,7 @@ struct Any {
     Any( const char* ) : type( 's' ) {}
     Any( const std::string& ) : type( 's' ) {} 
     template< typename T > Any( const T& t ) : type( 'v' ) {}
-    
+
     char type;
 };
 
@@ -43,11 +43,11 @@ class ArgumentListString {
         ArgumentListString& operator=( const ArgumentListString& )      = delete;
         ArgumentListString& operator=( ArgumentListString&& )           = delete;
         ~ArgumentListString() = default;
-        
+
         const char* getString() const {
             return args;
         }
-        
+
     private:
         char args[N+1];
 };   
