@@ -212,8 +212,6 @@ class Wren {
         );
         
         WrenVM*	    vm_;
-        std::unordered_map<std::size_t, WrenForeignMethodFn>        foreignMethods_;
-        std::unordered_map<std::size_t, WrenForeignClassMethods>    foreignClasses_;
 };
 
 template< typename... Args >

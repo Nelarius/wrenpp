@@ -8,8 +8,8 @@
 
 namespace {
     
-    std::unordered_map< std::size_t, WrenForeignMethodFn >* boundForeignMethods{ nullptr };
-    std::unordered_map< std::size_t, WrenForeignClassMethods >* boundForeignClasses{ nullptr };
+    std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
+    std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
     
     /*
      * This function is going to use a global pointer to a bound method tree.
@@ -24,11 +24,8 @@ namespace {
                                  const char* className,
                                  bool isStatic,
                                  const char* signature ) {
-        if ( !boundForeignMethods ) {
-            return NULL;
-        }
-        auto it = boundForeignMethods->find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
-        if ( it == boundForeignMethods->end() ) {
+        auto it = boundForeignMethods.find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
+        if ( it == boundForeignMethods.end() ) {
             return NULL;
         }
         
@@ -36,11 +33,8 @@ namespace {
     }
     
     WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
-        if ( !boundForeignClasses ) {
-            return WrenForeignClassMethods{ nullptr, nullptr };
-        }
-        auto it = boundForeignClasses->find( wrenly::detail::HashClassSignature( m, c ) );
-        if ( it == boundForeignClasses->end() ) {
+        auto it = boundForeignClasses.find( wrenly::detail::HashClassSignature( m, c ) );
+        if ( it == boundForeignClasses.end() ) {
             return WrenForeignClassMethods{ nullptr, nullptr };
         }
         
@@ -192,10 +186,6 @@ WrenVM* Wren::vm() {
 }
 
 void Wren::executeModule( const std::string& mod ) {
-    // set global variables for the C-callbacks
-    boundForeignMethods = &foreignMethods_;
-    boundForeignClasses = &foreignClasses_;
-    
     std::string file = mod;
     file += ".wren";
     auto source = FileToString( file );
@@ -208,15 +198,9 @@ void Wren::executeModule( const std::string& mod ) {
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
         std::cerr << "WREN_RESULT_RUNTIME_ERROR in module " << mod << std::endl;
     }
-    
-    boundForeignMethods = nullptr;
-    boundForeignClasses = nullptr;
 }
 
 void Wren::executeString( const std::string& code ) {
-    // set global variables for the C-callbacks
-    boundForeignMethods = &foreignMethods_;
-    boundForeignClasses = &foreignClasses_;
     
     auto res = wrenInterpret( vm_, code.c_str() );
     
@@ -227,9 +211,6 @@ void Wren::executeString( const std::string& code ) {
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
         std::cerr << "WREN_RESULT_RUNTIME_ERROR in string: " << code << std::endl;
     }
-    
-    boundForeignMethods = nullptr;
-    boundForeignClasses = nullptr;
 }
 
 void Wren::collectGarbage() {
@@ -256,7 +237,7 @@ void Wren::registerFunction_(
     WrenForeignMethodFn function
 ) {
     std::size_t hash = detail::HashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
-    foreignMethods_.insert( std::make_pair( hash, function ) );
+    boundForeignMethods.insert( std::make_pair( hash, function ) );
 }
 
 void Wren::registerClass_(
@@ -265,7 +246,7 @@ void Wren::registerClass_(
     WrenForeignClassMethods methods
 ) {
     std::size_t hash = detail::HashClassSignature( m.c_str(), c.c_str() );
-    foreignClasses_.insert( std::make_pair( hash, methods ) );
+    boundForeignClasses.insert( std::make_pair( hash, methods ) );
 }
 
 }   // wrenly
