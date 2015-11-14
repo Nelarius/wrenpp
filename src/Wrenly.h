@@ -22,6 +22,37 @@ using LoadModuleFn = std::function< char*( const char* ) >;
 using WriteFn = std::function< void( WrenVM*, const char* ) >;
 
 /**
+ * @class Value
+ * @date 11/07/15
+ * @brief A reference-counted RAII wrapper for a WrenValue.
+ * Use this to obtain references to object instances living in Wren. The contained object
+ * will not be garbage collected while held in an instance of this wrapper.
+ */
+class Value {
+    public:
+        Value( WrenVM*, WrenValue* );
+        Value() = delete;
+        Value( const Value& );
+        Value( Value&& );
+        Value& operator=( const Value& )    = delete;
+        Value& operator=( Value&& )         = delete;
+        Value& operator=( Value );
+        ~Value();
+
+        bool isNull() const;
+
+        WrenValue* pointer();
+
+    private:
+        void retain_();
+        void release_();
+
+        WrenVM*     vm_;    // this pointer is not managed here
+        WrenValue*  value_;
+        unsigned*   refCount_;
+};
+
+/**
  * @class Method
  * @author Muszynski Johann M
  * @date 13/08/15
@@ -40,7 +71,7 @@ class Method {
         Method& operator=( Method&& )       = delete;
         Method& operator=( Method );
         ~Method();
-        
+
         /**
         * @brief Call a wren method and pass it any arguments
         * This method is const, because it is intentended to be pass around
@@ -48,13 +79,13 @@ class Method {
         * change its state, depending on the Wren method being called.
         */
         template<typename... Args>
-        void operator()( Args&&... args ) const;
-    
-    private:        
+        Value operator()( Args&&... args ) const;
+
+    private:
         void retain_();
         void release_();
     
-        mutable WrenVM*         vm_;
+        mutable WrenVM*         vm_;    // this pointer is not managed here
         mutable WrenValue*      method_;
         unsigned*               refCount_;
 };
@@ -109,14 +140,14 @@ class ModuleContext {
     public:
         ModuleContext() = delete;
         ModuleContext( std::string mod, Wren* wren );
-        
+
         /**
          * @brief Begin a class context.
          * @param className The class name.
          * @return 
          */
         ClassContext beginClass( std::string className );
-        
+
         /**
          * @brief Register a C++ class with Wren.
          * @param className The name of the class in Wren.
@@ -126,13 +157,13 @@ class ModuleContext {
          */
         template< typename T, typename... Args >
         RegisteredClassContext<T> registerClass( std::string className );
-        
+
         void endModule();
-        
+
     private:
         friend class ClassContext;
         template< typename T > friend class RegisteredClassContext;
-        
+
         Wren*       wren_;
         std::string module_;
 };
@@ -156,24 +187,24 @@ class Wren {
         Wren& operator=( const Wren& )  = delete;
         Wren& operator=( Wren&& );
         ~Wren();
-        
+
         WrenVM* vm();
-        
+
         void executeModule( const std::string& );
         void executeString( const std::string& );
-        
+
         /**
          * @brief Run garbage collection immediately.
          */
         void collectGarbage();
-        
+
         /**
          * @brief Begin a module context.
          * @param mod The name of the module. The name is "main" if not in an imported module.
          * @return 
          */
         ModuleContext beginModule( std::string mod );
-        
+
         /**
          * @brief Get a callable Wren method.
          * @param module The name of the module that the method is located in. "main" if not in an imported module.
@@ -188,15 +219,15 @@ class Wren {
             const std::string& variable,
             const std::string& signature
         );
-        
+
         static LoadModuleFn loadModuleFn;
         static WriteFn writeFn;
-        
+
     private:
         friend class ModuleContext;
         friend class ClassContext;
         template< typename T > friend class RegisteredClassContext;
-        
+
         void registerFunction_(
             const std::string& module,
             const std::string& className,
@@ -204,22 +235,24 @@ class Wren {
             const std::string& signature,
             WrenForeignMethodFn function
         );
-        
+
         void registerClass_(
             const std::string& module,
             const std::string& className,
             WrenForeignClassMethods methods
         );
-        
+
         WrenVM*	    vm_;
 };
 
 template< typename... Args >
-void Method::operator()( Args&&... args ) const {
+Value Method::operator()( Args&&... args ) const {
     constexpr const std::size_t Arity = sizeof...( Args );
     detail::ArgumentListString< Arity > arguments{ args... };
     WrenValue* result{ nullptr };
     wrenCall( vm_, method_, &result, arguments.getString(), std::forward<Args>( args )... );
+
+    return Value( vm_, result );
 }
 
 template< typename T, typename... Args >

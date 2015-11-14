@@ -7,50 +7,111 @@
 #include <cstdio>
 
 namespace {
-    
-    std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
-    std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
-    
-    /*
-     * This function is going to use a global pointer to a bound method tree.
-     * 
-     * When the correspodning wren vm executes a module, it has to bind its instances
-     * of the bound method/class tree to the global variable.
-     * 
-     * There is no way to avoid this static/global function
-     * */
-    WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
-                                 const char* module,
-                                 const char* className,
-                                 bool isStatic,
-                                 const char* signature ) {
-        auto it = boundForeignMethods.find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
-        if ( it == boundForeignMethods.end() ) {
-            return NULL;
-        }
-        
-        return it->second;
+
+std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
+std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
+
+/*
+    * This function is going to use a global pointer to a bound method tree.
+    *
+    * When the correspodning wren vm executes a module, it has to bind its instances
+    * of the bound method/class tree to the global variable.
+    *
+    * There is no way to avoid this static/global function
+    * */
+WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
+                                const char* module,
+                                const char* className,
+                                bool isStatic,
+                                const char* signature ) {
+    auto it = boundForeignMethods.find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
+    if ( it == boundForeignMethods.end() ) {
+        return NULL;
     }
-    
-    WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
-        auto it = boundForeignClasses.find( wrenly::detail::HashClassSignature( m, c ) );
-        if ( it == boundForeignClasses.end() ) {
-            return WrenForeignClassMethods{ nullptr, nullptr };
-        }
-        
-        return it->second;
+
+    return it->second;
+}
+
+WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
+    auto it = boundForeignClasses.find( wrenly::detail::HashClassSignature( m, c ) );
+    if ( it == boundForeignClasses.end() ) {
+        return WrenForeignClassMethods{ nullptr, nullptr };
     }
-    
-    char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
-        return wrenly::Wren::loadModuleFn( mod );
-    }
-    
-    void WriteFnWrapper( WrenVM* vm, const char* text ) {
-        wrenly::Wren::writeFn( vm, text );
-    }
+
+    return it->second;
+}
+
+char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
+    return wrenly::Wren::loadModuleFn( mod );
+}
+
+void WriteFnWrapper( WrenVM* vm, const char* text ) {
+    wrenly::Wren::writeFn( vm, text );
+}
+
 }
 
 namespace wrenly {
+
+Value::Value( WrenVM* vm, WrenValue* val )
+:   vm_{ vm },
+    value_{ val },
+    refCount_{ nullptr } {
+    refCount_ = new unsigned;
+    *refCount_ = 1u;
+}
+
+Value::Value( const Value& other )
+:   vm_{ other.vm_ },
+    value_{ other.value_ },
+    refCount_{ other.refCount_ } {
+    retain_();
+}
+
+Value::Value( Value&& other )
+:   vm_{ other.vm_ },
+    value_{ other.value_ },
+    refCount_{ other.refCount_ } {
+    other.vm_ = nullptr;
+    other.value_ = nullptr;
+    other.refCount_ = nullptr;
+}
+
+Value& Value::operator=( Value rhs ) {
+    release_();
+    vm_ = rhs.vm_;
+    value_ = rhs.value_;
+    refCount_ = rhs.refCount_;
+    retain_();
+    return *this;
+}
+
+Value::~Value() {
+    release_();
+}
+
+bool Value::isNull() const {
+    return value_ == nullptr;
+}
+
+WrenValue* Value::pointer() {
+    return value_;
+}
+
+void Value::retain_() {
+    *refCount_ += 1u;
+}
+
+void Value::release_() {
+    if ( refCount_ ) {
+        *refCount_ -= 1u;
+        if ( *refCount_ == 0u ) {
+            wrenReleaseValue( vm_, value_ );
+            delete refCount_;
+            refCount_ = nullptr;
+        }
+    }
+}
 
 Method::Method( WrenVM* vm, WrenValue* method )
 :   vm_( vm ),
@@ -115,7 +176,6 @@ ClassContext ModuleContext::beginClass( std::string c ) {
 
 void ModuleContext::endModule() {}
 
-    
 ClassContext::ClassContext( std::string c, Wren* wren, ModuleContext* mod )
 :   wren_( wren ),
     module_( mod ),
@@ -150,8 +210,7 @@ WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
 };
 
 Wren::Wren()
-:   vm_( nullptr ),
-    foreignMethods_() {
+:   vm_( nullptr ) {
     
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
@@ -163,16 +222,12 @@ Wren::Wren()
 }
 
 Wren::Wren( Wren&& other )
-:   vm_( other.vm_ ),
-    foreignMethods_( std::move( other.foreignMethods_ ) ),
-    foreignClasses_( std::move( other.foreignClasses_ ) ){
+:   vm_( other.vm_ ) {
     other.vm_ = nullptr;
 }
 
 Wren& Wren::operator=( Wren&& rhs ) {
     vm_             = rhs.vm_;
-    foreignMethods_ = std::move( rhs.foreignMethods_ );
-    foreignClasses_ = std::move( rhs.foreignClasses_ );
     rhs.vm_         = nullptr;
     return *this;
 }

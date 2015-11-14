@@ -215,3 +215,5 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 * The contexts need to be independent of `Wren`. Methods and classes will be registered globally. Thus there will be two trees of WrenForeignMethodFn.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
+* I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
+  * Ideally there would be a wrapper for WrenValue, which might be null.
