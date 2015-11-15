@@ -18,6 +18,8 @@ extern "C" {
 
 namespace wrenly {
 
+// this is just void (*FunctionPtr)(void)
+using FunctionPtr = WrenForeignMethodFn;
 using LoadModuleFn = std::function< char*( const char* ) >;
 using WriteFn = std::function< void( WrenVM*, const char* ) >;
 
@@ -118,7 +120,7 @@ class ClassContext {
          * This function takes as its only parameter a pointer to the virtual machine
          * instance. You can use Wren's own API for interfacing with the VM instance.
          */
-        ClassContext& registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function );
+        ClassContext& registerCFunction( bool isStatic, const std::string& signature, FunctionPtr function );
 
         ModuleContext& endClass();
 
@@ -138,7 +140,7 @@ class RegisteredClassContext: public ClassContext {
 
         template< typename F, F f >
         RegisteredClassContext& registerMethod( bool isStatic, const std::string& signature );
-        RegisteredClassContext& registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function );
+        RegisteredClassContext& registerCFunction( bool isStatic, const std::string& signature, FunctionPtr function );
 };
 
 /**
@@ -298,7 +300,7 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isSta
 }
 
 template< typename T >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, const std::string& s, WrenForeignMethodFn function ) {
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, const std::string& s, FunctionPtr function ) {
     wren_->registerFunction_(
         module_->module_,
         class_, isStatic,

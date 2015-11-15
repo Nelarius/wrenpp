@@ -186,7 +186,7 @@ ClassContext::ClassContext( std::string c, Wren* wren, ModuleContext* mod )
     class_( c )
     {}
 
-ClassContext& ClassContext::registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function ) {
+ClassContext& ClassContext::registerCFunction( bool isStatic, const std::string& signature, FunctionPtr function ) {
     wren_->registerFunction_(
         module_->module_,
         class_, isStatic,
