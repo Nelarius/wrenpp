@@ -84,7 +84,7 @@ class Method {
     private:
         void retain_();
         void release_();
-    
+
         mutable WrenVM*         vm_;    // this pointer is not managed here
         mutable WrenValue*      method_;
         unsigned*               refCount_;
@@ -105,12 +105,23 @@ class ClassContext {
         ClassContext() = delete;
         ClassContext( std::string c, Wren* wren, ModuleContext* mod );
         virtual ~ClassContext() = default;
-        
+
+        /**
+         * @brief Register a free function with Wrenly.
+         * @param isStatic true, if the wrapping method is static, false otherwise
+         * @param signature The Wren signature of the function. Include parenthesized argument list, with an underscore in place of each argument, or no parenthesis if the method doesn't contain any.
+         */
         template< typename F, F f >
         ClassContext& registerFunction( bool isStatic, const std::string& signature );
-        
+        /**
+         * @brief Register a function without any automatic wrapping taking place.
+         * This function takes as its only parameter a pointer to the virtual machine
+         * instance. You can use Wren's own API for interfacing with the VM instance.
+         */
+        ClassContext& registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function );
+
         ModuleContext& endClass();
-        
+
     protected:
         Wren*           wren_;
         ModuleContext*  module_;
@@ -124,9 +135,10 @@ class RegisteredClassContext: public ClassContext {
         :   ClassContext( c, wren, mod )
             {}
         virtual ~RegisteredClassContext() = default;
-        
+
         template< typename F, F f >
         RegisteredClassContext& registerMethod( bool isStatic, const std::string& signature );
+        RegisteredClassContext& registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function );
 };
 
 /**
@@ -281,6 +293,16 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isSta
         class_, isStatic,
         s,
         detail::ForeignMethodWrapper< decltype(f), f >::call 
+    );
+    return *this;
+}
+
+template< typename T >
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, const std::string& s, WrenForeignMethodFn function ) {
+    wren_->registerFunction_(
+        module_->module_,
+        class_, isStatic,
+        s, function
     );
     return *this;
 }

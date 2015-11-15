@@ -176,14 +176,23 @@ ClassContext ModuleContext::beginClass( std::string c ) {
 
 void ModuleContext::endModule() {}
 
+ModuleContext& ClassContext::endClass() {
+    return *module_;
+}
+
 ClassContext::ClassContext( std::string c, Wren* wren, ModuleContext* mod )
 :   wren_( wren ),
     module_( mod ),
     class_( c )
     {}
-    
-ModuleContext& ClassContext::endClass() {
-    return *module_;
+
+ClassContext& ClassContext::registerCFunction( bool isStatic, const std::string& signature, WrenForeignMethodFn function ) {
+    wren_->registerFunction_(
+        module_->module_,
+        class_, isStatic,
+        signature, function
+    );
+    return *this;
 }
 
 /*
