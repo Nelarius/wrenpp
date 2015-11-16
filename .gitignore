@@ -27,5 +27,6 @@ wrenly.txt
 # Project files/folders
 build/
 build.sh
-Main.cpp
+*.cc
+*.wren
 
