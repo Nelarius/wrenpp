@@ -218,3 +218,5 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 * I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
   * Ideally there would be a wrapper for WrenValue, which might be null.
 * Divorce registration from the Wren instances.
+* There needs to be better error handling for not finding a method.
+  * Is Wren actually responsible for crashing the program when a method is not found?
