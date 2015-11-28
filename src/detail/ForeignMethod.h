@@ -204,8 +204,23 @@ decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
+// const variant
+template< typename R, typename C, typename... Args, std::size_t... index >
+decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::index_sequence< index... > ) {
+    using Traits = FunctionTraits< decltype(f) >;
+    const C* c = static_cast<const C*>( wrenGetArgumentForeign( vm, 0 ) );
+    return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+}
+
 template< typename R, typename C, typename... Args >
 decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
+    constexpr auto Arity = FunctionTraits< decltype(f) >::Arity;
+    return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
+}
+
+// const variant
+template< typename R, typename C, typename... Args >
+decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) const ) {
     constexpr auto Arity = FunctionTraits< decltype(f) >::Arity;
     return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
 }
@@ -240,6 +255,11 @@ struct InvokeWithoutReturningIf<false> {
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
         WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );
     }
+
+    template< typename R, typename C, typename... Args >
+    static void invoke( WrenVM* vm, R ( C::*f )( Args... ) const ) {
+        WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );
+    }
 };
 
 template< typename Signature, Signature >
@@ -248,21 +268,31 @@ struct ForeignMethodWrapper;
 // free function variant
 template< typename R, typename... Args, R( *f )( Args... ) >
 struct ForeignMethodWrapper< R(*)( Args... ), f > {
-    
+
     static void call( WrenVM* vm ) {
         InvokeWithoutReturningIf< std::is_void<R>::value >::invoke( vm, f );
     }
-    
+
 };
 
 // method variant
 template< typename R, typename C, typename... Args, R( C::*m )( Args... ) >
 struct ForeignMethodWrapper< R( C::* )( Args... ), m > {
-    
+
     static void call( WrenVM* vm ) {
         InvokeWithoutReturningIf< std::is_void<R>::value >::invoke( vm, m );
     }
-    
+
+};
+
+// const method variant
+template< typename R, typename C, typename... Args, R( C::*m )( Args... ) const >
+struct ForeignMethodWrapper< R( C::* )( Args... ) const, m > {
+
+    static void call( WrenVM* vm ) {
+        InvokeWithoutReturningIf< std::is_void<R>::value >::invoke( vm, m );
+    }
+
 };
 
 }   // detail
