@@ -3,6 +3,7 @@
 
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
+#include "detail/ForeignProperty.h"
 #include "detail/ArgumentListString.h"
 extern "C" {
     #include <wren.h>
@@ -114,13 +115,13 @@ class ClassContext {
          * @param signature The Wren signature of the function. Include parenthesized argument list, with an underscore in place of each argument, or no parenthesis if the method doesn't contain any.
          */
         template< typename F, F f >
-        ClassContext& registerFunction( bool isStatic, const std::string& signature );
+        ClassContext& registerFunction( bool isStatic, std::string signature );
         /**
          * @brief Register a function without any automatic wrapping taking place.
          * This function takes as its only parameter a pointer to the virtual machine
          * instance. You can use Wren's own API for interfacing with the VM instance.
          */
-        ClassContext& registerCFunction( bool isStatic, const std::string& signature, FunctionPtr function );
+        ClassContext& registerCFunction( bool isStatic, std::string signature, FunctionPtr function );
 
         ModuleContext& endClass();
 
@@ -139,8 +140,12 @@ class RegisteredClassContext: public ClassContext {
         virtual ~RegisteredClassContext() = default;
 
         template< typename F, F f >
-        RegisteredClassContext& registerMethod( bool isStatic, const std::string& signature );
-        RegisteredClassContext& registerCFunction( bool isStatic, const std::string& signature, FunctionPtr function );
+        RegisteredClassContext& registerMethod( bool isStatic, std::string signature );
+        template< typename U, U T::*Field >
+        RegisteredClassContext& registerGetter( bool isStatic, std::string signature );
+        template< typename U, U T::*Field >
+        RegisteredClassContext& registerSetter( bool isStatic, std::string signature );
+        RegisteredClassContext& registerCFunction( bool isStatic, std::string signature, FunctionPtr function );
 };
 
 /**
@@ -277,7 +282,7 @@ RegisteredClassContext<T> ModuleContext::registerClass( std::string c ) {
 }
 
 template< typename F, F f >
-ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& s ) {
+ClassContext& ClassContext::registerFunction( bool isStatic, std::string s ) {
     wren_->registerFunction_( 
         module_->module_, 
         class_, isStatic, 
@@ -289,7 +294,7 @@ ClassContext& ClassContext::registerFunction( bool isStatic, const std::string& 
 
 template< typename T >
 template< typename F, F f >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isStatic, const std::string& s ) {
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isStatic, std::string s ) {
     wren_->registerFunction_( 
         module_->module_,
         class_, isStatic,
@@ -300,7 +305,31 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isSta
 }
 
 template< typename T >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, const std::string& s, FunctionPtr function ) {
+template< typename U, U T::*Field >
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerGetter( bool isStatic, std::string s ) {
+    wren_->registerFunction_(
+        module_->module_,
+        class_, isStatic,
+        s,
+        detail::propertyGetter< T, U, Field >
+    );
+    return *this;
+}
+
+template< typename T >
+template< typename U, U T::*Field >
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerSetter( bool isStatic, std::string s ) {
+    wren_->registerFunction_(
+        module_->module_,
+        class_, isStatic,
+        s,
+        detail::propertySetter< T, U, Field >
+    );
+    return *this;
+}
+
+template< typename T >
+RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, std::string s, FunctionPtr function ) {
     wren_->registerFunction_(
         module_->module_,
         class_, isStatic,
