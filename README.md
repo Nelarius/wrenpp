@@ -165,10 +165,10 @@ We would like to implement it using the following C++ struct.
 struct Vec3 {
   union {
     float v[3];
-    struct { T x, y, z; };
+    struct { float x, y, z; };
   };
   
-  Vec3( float x, y, z )
+  Vec3( float x, float y, float z )
   : v{ x, y, z }
     {}
 
@@ -199,8 +199,8 @@ int main() {
   wrenly::Wren wren{};
   wren.beginModule( "main" )
     .registerClass< math::Vector3f, float, float, float >( "Vec3" )
-      .registerMethod< decltype(&math::Vec3::norm), &math::Vec3::norm >( false, "norm()" )
-      .registerMethod< decltype(&math::Vec3::dot), &math::Vec3::dot >( false, "dot(_)" )
+      .registerMethod< decltype(&Vec3::norm), &Vec3::norm >( false, "norm()" )
+      .registerMethod< decltype(&Vec3::dot), &Vec3::dot >( false, "dot(_)" )
     .endClass()
   .endModule();
 
@@ -212,7 +212,7 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
-We have now implemented two out of `Vec3`'s foreign functions -- what about the last foreign method, `cross(_)` ?
+We've now implemented two of `Vec3`'s three foreign functions -- what about the last foreign method, `cross(_)` ?
 
 ### CFunctions
 
