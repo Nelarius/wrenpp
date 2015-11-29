@@ -244,9 +244,9 @@ Finally, here's what our full binding code for `Vec3` now looks like.
 ```cpp
   wren.beginModule( "main" )
     .registerClass< math::Vector3f, float, float, float >( "Vec3" )
-      .registerMethod< decltype(&math::Vec3::norm), &math::Vec3::norm >( false, "norm()" )
-      .registerMethod< decltype(&math::Vec3::dot), &math::Vec3::dot >( false, "dot(_)" )
-      .registerCFunction( false, "cross(_)", wren::cross3f )
+      .registerMethod< decltype(&Vec3::norm), &Vec3::norm >( false, "norm()" )
+      .registerMethod< decltype(&Vec3::dot), &Vec3::dot >( false, "dot(_)" )
+      .registerCFunction( false, "cross(_)", cross )
     .endClass()
   .endModule();
 ```
