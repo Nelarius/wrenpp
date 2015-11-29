@@ -10,7 +10,7 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-Currently developing against `wren:master@2ff8acb`.
+Currently developing against `wren:master@545415`.
 
 ## Build
 
@@ -103,10 +103,10 @@ Here's how you could implement a simple math library in Wren by binding the C++ 
 math.wren:
 ```dart
 class Math {
-    foreign static cos( x )
-    foreign static sin( x )
-    foreign static tan( x )
-    foreign static exp( x )
+  foreign static cos( x )
+  foreign static sin( x )
+  foreign static tan( x )
+  foreign static exp( x )
 }
 ```
 main.cpp:
@@ -116,17 +116,19 @@ main.cpp:
 
 int main() {
 
-    wrenly::Wren wren{};
-    wren.beginModule( "math" )
-        .beginClass( "Math" )
-            .registerFunction< decltype(&cos), &cos >( true, "cos(_)" )
-            .registerFunction< decltype(&sin), &sin >( true, "sin(_)" )
-            .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
-            .registerFunction< decltype(&exp), &exp >( true, "exp(_)" );
-            
-    wren.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
+  wrenly::Wren wren{};
+  wren.beginModule( "math" )
+    .beginClass( "Math" )
+      .registerFunction< decltype(&cos), &cos >( true, "cos(_)" )
+      .registerFunction< decltype(&sin), &sin >( true, "sin(_)" )
+      .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
+      .registerFunction< decltype(&exp), &exp >( true, "exp(_)" )
+    .endClass()
+  .endModule();
+        
+  wren.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
     
-    return 0;
+  return 0;
 }
 ```
 
@@ -136,26 +138,71 @@ Both the type of the function (in the case of `cos` the type is `double(double)`
 
 ### Foreign classes
 
-Foreign classes can be registered by `registerClass` on a module context.
+Free functions don't get us very far if we want there to be some state on a per-object basis. Foreign classes can be registered by using `registerClass` on a module context. Let's look at an example. Say we have the following Wren class representing a 3-vector:
+
+```dart
+foreign class Vec3 {
+  construct new( x, y, z ) {}
+
+  foreign norm()
+  foreign dot( rhs )
+  foreign cross( rhs )    // returns the result as a new vector
+}
+
+/*
+ * This is a creator object for the C++ API to use in order to create foreign objects
+ * and return them back to Wren with the required state
+ */
+
+var createVector3 = Fn.new { | x, y, z |
+  return Vec3.new( x, y, z )
+}
+```
+
+We would like to implement it using the following C++ struct.
+
+```cpp
+struct Vec3 {
+  union {
+    float v[3];
+    struct { T x, y, z; };
+  };
+  
+  Vec3( float x, y, z )
+  : v{ x, y, z }
+    {}
+
+  float norm() const {
+    return sqrt( x*x + y*y + z*z );
+  }
+
+  float dot( const Vec3& rhs ) const {
+    return x*rhs.x + y*rhs.y + z*rhs.z;
+  }
+  
+  Vec3 cross( const Vec3& rhs ) const {
+    return Vec3 {
+      y*rhs.z - z*rhs.y,
+      z*rhs.x - x*rhs.z,
+      x*rhs.y - y*rhs.x
+    };
+  }
+};
+```
+
+Using the afore-mentioned `registerClass` instead of `beginClass` tells Wrenly to store our C++ class in the byte array associated with each instance of a foreign class.
 
 ```cpp
 #include "Wrenly.h"
 
-struct Test {
-  Test() = default;
-  Test( double xx ) : x( xx ) {}
-
-  inline double get() { return x; }  
-  
-  private:
-    double x{ 0.0 };
-};
-
 int main() {
   wrenly::Wren wren{};
   wren.beginModule( "main" )
-    .registerClass< Test, double >( "Test" )
-      .registerMethod< decltype( &Test::get ), &Test::get >( false, "get()" );
+    .registerClass< math::Vector3f, float, float, float >( "Vec3" )
+      .registerMethod< decltype(&math::Vec3::norm), &math::Vec3::norm >( false, "norm()" )
+      .registerMethod< decltype(&math::Vec3::dot), &math::Vec3::dot >( false, "dot(_)" )
+    .endClass()
+  .endModule();
 
   return 0;
 }
@@ -165,15 +212,54 @@ Pass the class type, and constructor argument types to `registerClass`. Even tho
 
 Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
 
->When you define a foreign class in Wren, and bind it using wrenly, what actually happens? In Wren, the C representation of a foreign class object contains an array of bytes. It is up to the embedder to decide what kind of state they want to store in the foreign class' byte array. Wrenly uses the byte array to store an instance of the registered class, and nothing more.
+We have now implemented two out of `Vec3`'s foreign functions -- what about the last foreign method, `cross(_)` ?
 
-### Foreign method arguments
+### CFunctions
 
-Note that a class registered with Wren as a foreign class can be passed to foreign functions as an argument. It may be passed as a pointer, reference, or by value, `const`, or not.
+You can register a free function taking nothing but a pointer to the VM (called a CFunction, after Lua) to "manually" implement a foreign method. Why would we want to do this?
+
+The problem with `cross(_)` within `Vec3` is that it should return a new instance of `Vec3` -- and we need to do that in C++, and return it to Wren. Currently, there's no way of doing that via Wren's C API. So here's a horribly hacky way of doing that, using a CFunction.
+
+```cpp
+// somewhere, in a source file far, far away...
+
+extern "C" {
+  #include <wren.h>
+}
+// we need get the foreign arguments from the `cross(_)` invocation
+// and do the cross product ourselves, and then return it to Wren
+void cross( WrenVM* vm ) {
+  const Vec3* lhs = (const Vec3*)wrenGetArgumentForeign( vm, 0 );
+  const Vec3* rhs = (const Vec3*)wrenGetArgumentForeign( vm, 1 );
+  Vec3 res = lhs->cross( *rhs );
+  WrenValue* ret = nullptr;
+  WrenValue* constructor  = wrenGetMethod( vm, "main, "createVector3", "call(_,_,_)" );
+  wrenCall( vm, constructor, &ret, "ddd", res.x, res.y, res.z );
+  wrenReturnValue( vm, ret );
+}
+```
+
+Finally, here's what our full binding code for `Vec3` now looks like.
+
+```cpp
+  wren.beginModule( "main" )
+    .registerClass< math::Vector3f, float, float, float >( "Vec3" )
+      .registerMethod< decltype(&math::Vec3::norm), &math::Vec3::norm >( false, "norm()" )
+      .registerMethod< decltype(&math::Vec3::dot), &math::Vec3::dot >( false, "dot(_)" )
+      .registerCFunction( false, "cross(_)", wren::cross3f )
+    .endClass()
+  .endModule();
+```
+
+### Foreign classes as foreign method arguments
+
+Note that a class bound to Wren as a foreign class can be passed to foreign functions as an argument. It may be passed as a pointer, reference, or by value, `const`, or not.
 
 ### Foreign method return values
 
 Note that only the following types can be returned to Wren: `int` (and anything which can be cast to `int`), `const char*`, `std::string`, `bool`, `float`, `double`. A foreign method implementor may be left `void`, of course.
+
+This will hopefully change in the future!
 
 ## Customize VM behavior
 
