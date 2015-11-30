@@ -24,6 +24,16 @@ using FunctionPtr = WrenForeignMethodFn;
 using LoadModuleFn = std::function< char*( const char* ) >;
 using WriteFn = std::function< void( WrenVM*, const char* ) >;
 
+namespace detail {
+    void registerFunction(
+        const std::string& mod, const std::string& clss, bool isStatic,
+        std::string sig, FunctionPtr function
+    );
+    void registerClass(
+        const std::string& mod, std::string clss, WrenForeignClassMethods methods
+    );
+}
+
 /**
  * @class Value
  * @date 11/07/15
@@ -106,7 +116,7 @@ class ModuleContext;
 class ClassContext {
     public:
         ClassContext() = delete;
-        ClassContext( std::string c, Wren* wren, ModuleContext* mod );
+        ClassContext( std::string c, ModuleContext* mod );
         virtual ~ClassContext() = default;
 
         /**
@@ -115,18 +125,17 @@ class ClassContext {
          * @param signature The Wren signature of the function. Include parenthesized argument list, with an underscore in place of each argument, or no parenthesis if the method doesn't contain any.
          */
         template< typename F, F f >
-        ClassContext& registerFunction( bool isStatic, std::string signature );
+        ClassContext& bindFunction( bool isStatic, std::string signature );
         /**
          * @brief Register a function without any automatic wrapping taking place.
          * This function takes as its only parameter a pointer to the virtual machine
          * instance. You can use Wren's own API for interfacing with the VM instance.
          */
-        ClassContext& registerCFunction( bool isStatic, std::string signature, FunctionPtr function );
+        ClassContext& bindCFunction( bool isStatic, std::string signature, FunctionPtr function );
 
         ModuleContext& endClass();
 
     protected:
-        Wren*           wren_;
         ModuleContext*  module_;
         std::string     class_;
 };
@@ -134,18 +143,18 @@ class ClassContext {
 template< typename T >
 class RegisteredClassContext: public ClassContext {
     public:
-        RegisteredClassContext( std::string c, Wren* wren, ModuleContext* mod )
-        :   ClassContext( c, wren, mod )
+        RegisteredClassContext( std::string c, ModuleContext* mod )
+        :   ClassContext( c, mod )
             {}
         virtual ~RegisteredClassContext() = default;
 
         template< typename F, F f >
-        RegisteredClassContext& registerMethod( bool isStatic, std::string signature );
+        RegisteredClassContext& bindMethod( bool isStatic, std::string signature );
         template< typename U, U T::*Field >
-        RegisteredClassContext& registerGetter( bool isStatic, std::string signature );
+        RegisteredClassContext& bindGetter( bool isStatic, std::string signature );
         template< typename U, U T::*Field >
-        RegisteredClassContext& registerSetter( bool isStatic, std::string signature );
-        RegisteredClassContext& registerCFunction( bool isStatic, std::string signature, FunctionPtr function );
+        RegisteredClassContext& bindSetter( bool isStatic, std::string signature );
+        RegisteredClassContext& bindCFunction( bool isStatic, std::string signature, FunctionPtr function );
 };
 
 /**
@@ -158,7 +167,7 @@ class RegisteredClassContext: public ClassContext {
 class ModuleContext {
     public:
         ModuleContext() = delete;
-        ModuleContext( std::string mod, Wren* wren );
+        ModuleContext( std::string mod );
 
         /**
          * @brief Begin a class context.
@@ -175,7 +184,7 @@ class ModuleContext {
          * @return The class context for the registered type.
          */
         template< typename T, typename... Args >
-        RegisteredClassContext<T> registerClass( std::string className );
+        RegisteredClassContext<T> bindClass( std::string className );
 
         void endModule();
 
@@ -183,9 +192,10 @@ class ModuleContext {
         friend class ClassContext;
         template< typename T > friend class RegisteredClassContext;
 
-        Wren*       wren_;
-        std::string module_;
+        std::string name_;
 };
+
+ModuleContext beginModule( std::string mod );
 
 /**
  * @class Wren
@@ -222,7 +232,7 @@ class Wren {
          * @param mod The name of the module. The name is "main" if not in an imported module.
          * @return 
          */
-        ModuleContext beginModule( std::string mod );
+        //ModuleContext beginModule( std::string mod );
 
         /**
          * @brief Get a callable Wren method.
@@ -247,20 +257,6 @@ class Wren {
         friend class ClassContext;
         template< typename T > friend class RegisteredClassContext;
 
-        void registerFunction_(
-            const std::string& module,
-            const std::string& className,
-            bool isStatic,
-            const std::string& signature,
-            WrenForeignMethodFn function
-        );
-
-        void registerClass_(
-            const std::string& module,
-            const std::string& className,
-            WrenForeignClassMethods methods
-        );
-
         WrenVM*	    vm_;
 };
 
@@ -275,40 +271,40 @@ Value Method::operator()( Args&&... args ) const {
 }
 
 template< typename T, typename... Args >
-RegisteredClassContext<T> ModuleContext::registerClass( std::string c ) {
+RegisteredClassContext<T> ModuleContext::bindClass( std::string c ) {
     WrenForeignClassMethods wrapper{ &detail::allocate< T, Args... >, &detail::finalize< T > };
-    wren_->registerClass_( module_, c, wrapper );
-    return RegisteredClassContext<T>( c, wren_, this );
+    detail::registerClass( name_, c, wrapper );
+    return RegisteredClassContext<T>( c, this );
 }
 
 template< typename F, F f >
-ClassContext& ClassContext::registerFunction( bool isStatic, std::string s ) {
-    wren_->registerFunction_( 
-        module_->module_, 
-        class_, isStatic, 
-        s, 
-        detail::ForeignMethodWrapper< decltype(f), f >::call 
+ClassContext& ClassContext::bindFunction( bool isStatic, std::string s ) {
+    detail::registerFunction(
+        module_->name_,
+        class_, isStatic,
+        s,
+        detail::ForeignMethodWrapper< decltype(f), f >::call
     );
     return *this;
 }
 
 template< typename T >
 template< typename F, F f >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerMethod( bool isStatic, std::string s ) {
-    wren_->registerFunction_( 
-        module_->module_,
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindMethod( bool isStatic, std::string s ) {
+    detail::registerFunction(
+        module_->name_,
         class_, isStatic,
         s,
-        detail::ForeignMethodWrapper< decltype(f), f >::call 
+        detail::ForeignMethodWrapper< decltype(f), f >::call
     );
     return *this;
 }
 
 template< typename T >
 template< typename U, U T::*Field >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerGetter( bool isStatic, std::string s ) {
-    wren_->registerFunction_(
-        module_->module_,
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindGetter( bool isStatic, std::string s ) {
+    detail::registerFunction(
+        module_->name_,
         class_, isStatic,
         s,
         detail::propertyGetter< T, U, Field >
@@ -318,9 +314,9 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::registerGetter( bool isSta
 
 template< typename T >
 template< typename U, U T::*Field >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerSetter( bool isStatic, std::string s ) {
-    wren_->registerFunction_(
-        module_->module_,
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindSetter( bool isStatic, std::string s ) {
+    detail::registerFunction(
+        module_->name_,
         class_, isStatic,
         s,
         detail::propertySetter< T, U, Field >
@@ -329,9 +325,9 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::registerSetter( bool isSta
 }
 
 template< typename T >
-RegisteredClassContext<T>& RegisteredClassContext<T>::registerCFunction( bool isStatic, std::string s, FunctionPtr function ) {
-    wren_->registerFunction_(
-        module_->module_,
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindCFunction( bool isStatic, std::string s, FunctionPtr function ) {
+    detail::registerFunction(
+        module_->name_,
         class_, isStatic,
         s, function
     );

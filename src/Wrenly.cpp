@@ -53,6 +53,18 @@ void WriteFnWrapper( WrenVM* vm, const char* text ) {
 
 namespace wrenly {
 
+namespace detail {
+    void registerFunction( const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function ) {
+        std::size_t hash = detail::hashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
+        boundForeignMethods.insert( std::make_pair( hash, function ) );
+    }
+
+    void registerClass( const std::string& mod, std::string cName, WrenForeignClassMethods methods ) {
+        std::size_t hash = detail::hashClassSignature( mod.c_str(), cName.c_str() );
+        boundForeignClasses.insert( std::make_pair( hash, methods ) );
+    }
+}
+
 Value::Value( WrenVM* vm, WrenValue* val )
 :   vm_{ vm },
     value_{ val },
@@ -165,33 +177,31 @@ void Method::release_() {
     }
 }
 
-ModuleContext::ModuleContext( std::string module, Wren* wren )
-:   wren_( wren ),
-    module_( module )
+ModuleContext::ModuleContext( std::string module )
+:   name_( module )
     {}
-    
+
 ClassContext ModuleContext::beginClass( std::string c ) {
-    return ClassContext( c, wren_, this );
+    return ClassContext( c, this );
 }
 
 void ModuleContext::endModule() {}
+
+ModuleContext beginModule( std::string mod ) {
+    return ModuleContext{ mod };
+}
 
 ModuleContext& ClassContext::endClass() {
     return *module_;
 }
 
-ClassContext::ClassContext( std::string c, Wren* wren, ModuleContext* mod )
-:   wren_( wren ),
-    module_( mod ),
+ClassContext::ClassContext( std::string c, ModuleContext* mod )
+:   module_( mod ),
     class_( c )
     {}
 
-ClassContext& ClassContext::registerCFunction( bool isStatic, std::string signature, FunctionPtr function ) {
-    wren_->registerFunction_(
-        module_->module_,
-        class_, isStatic,
-        signature, function
-    );
+ClassContext& ClassContext::bindCFunction( bool isStatic, std::string signature, FunctionPtr function ) {
+    detail::registerFunction( module_->name_, class_, isStatic, signature, function );
     return *this;
 }
 
@@ -283,36 +293,12 @@ void Wren::collectGarbage() {
     wrenCollectGarbage( vm_ );
 }
 
-ModuleContext Wren::beginModule( std::string mod ) {
-    return ModuleContext( mod, this );
-}
-
 Method Wren::method( 
     const std::string& mod,
     const std::string& var,
     const std::string& sig
 ) {
     return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
-}
-
-void Wren::registerFunction_(
-    const std::string& mod,
-    const std::string& cName,
-    bool isStatic,
-    const std::string& sig,
-    WrenForeignMethodFn function
-) {
-    std::size_t hash = detail::hashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
-    boundForeignMethods.insert( std::make_pair( hash, function ) );
-}
-
-void Wren::registerClass_(
-    const std::string& m,
-    const std::string& c,
-    WrenForeignClassMethods methods
-) {
-    std::size_t hash = detail::hashClassSignature( m.c_str(), c.c_str() );
-    boundForeignClasses.insert( std::make_pair( hash, methods ) );
 }
 
 }   // wrenly
