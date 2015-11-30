@@ -15,7 +15,7 @@ namespace wrenly {
 namespace detail {
 
 // given a Wren method signature, this returns a unique value 
-inline std::size_t HashMethodSignature(
+inline std::size_t hashMethodSignature(
                         const char* module,
                         const char* className,
                         bool isStatic,
@@ -186,19 +186,19 @@ struct WrenReturnValue< std::string > {
 };
 
 template< typename Function, std::size_t... index>
-decltype( auto ) InvokeHelper( WrenVM* vm, Function&& f, std::index_sequence< index... > ) {
+decltype( auto ) invokeHelper( WrenVM* vm, Function&& f, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
     return f( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename Function >
-decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, Function&& f ) {
+decltype( auto ) invokeWithWrenArguments( WrenVM* vm, Function&& f ) {
     constexpr auto Arity = FunctionTraits< std::remove_reference_t<decltype(f)> >::Arity;
-    return InvokeHelper< Function >( vm, std::forward<Function>( f ), std::make_index_sequence<Arity> {} );
+    return invokeHelper< Function >( vm, std::forward<Function>( f ), std::make_index_sequence<Arity> {} );
 }
 
 template< typename R, typename C, typename... Args, std::size_t... index >
-decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
+decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
     C* c = static_cast<C*>( wrenGetArgumentForeign( vm, 0 ) );
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
@@ -206,39 +206,39 @@ decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
 
 // const variant
 template< typename R, typename C, typename... Args, std::size_t... index >
-decltype( auto ) InvokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::index_sequence< index... > ) {
+decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
     const C* c = static_cast<const C*>( wrenGetArgumentForeign( vm, 0 ) );
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename R, typename C, typename... Args >
-decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
+decltype( auto ) invokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) ) {
     constexpr auto Arity = FunctionTraits< decltype(f) >::Arity;
-    return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
+    return invokeHelper( vm, f, std::make_index_sequence<Arity>{} );
 }
 
 // const variant
 template< typename R, typename C, typename... Args >
-decltype( auto ) InvokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) const ) {
+decltype( auto ) invokeWithWrenArguments( WrenVM* vm, R( C::*f )( Args... ) const ) {
     constexpr auto Arity = FunctionTraits< decltype(f) >::Arity;
-    return InvokeHelper( vm, f, std::make_index_sequence<Arity>{} );
+    return invokeHelper( vm, f, std::make_index_sequence<Arity>{} );
 }
 
-// invokes plain InvokeWithWrenArguments if true
-// invokes InvokeWithWrenArguments within WrenReturn if false
+// invokes plain invokeWithWrenArguments if true
+// invokes invokeWithWrenArguments within WrenReturn if false
 // to be used with std::is_void as the predicate
 template<bool predicate>
 struct InvokeWithoutReturningIf {
 
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
-        InvokeWithWrenArguments( vm, std::forward<Function>( f ) );
+        invokeWithWrenArguments( vm, std::forward<Function>( f ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R( C::*f )( Args... ) ) {
-        InvokeWithWrenArguments( vm, std::forward< R(C::*)( Args... ) >( f ) );
+        invokeWithWrenArguments( vm, std::forward< R(C::*)( Args... ) >( f ) );
     }
 };
 
@@ -248,17 +248,17 @@ struct InvokeWithoutReturningIf<false> {
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
-        WrenReturnValue< ReturnType >::ret( vm, InvokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
+        WrenReturnValue< ReturnType >::ret( vm, invokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
-        WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );
+        WrenReturnValue< R >::ret( vm, invokeWithWrenArguments( vm, f ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) const ) {
-        WrenReturnValue< R >::ret( vm, InvokeWithWrenArguments( vm, f ) );
+        WrenReturnValue< R >::ret( vm, invokeWithWrenArguments( vm, f ) );
     }
 };
 

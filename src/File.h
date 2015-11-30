@@ -10,16 +10,16 @@
 namespace wrenly {
 
     /// \brief Check whether a file of the given name exists.
-    inline bool FileExists( const std::string& file ) {
+    inline bool fileExists( const std::string& file ) {
         struct stat buffer;
         return ( stat( file.c_str(), &buffer) == 0 );
     }
 
     /// \brief Get the contents of a file as a string.
-    inline std::string FileToString( const std::string& file ) {
+    inline std::string fileToString( const std::string& file ) {
         std::ifstream fin;
         
-        if ( !FileExists( file ) ) {
+        if ( !fileExists( file ) ) {
             throw std::runtime_error( "file not found!" );
         }
         

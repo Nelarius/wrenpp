@@ -26,7 +26,7 @@ struct ParameterPackTraits {
 };
 
 // given a Wren class signature, this returns a unique value 
-inline std::size_t HashClassSignature( const char* module, const char* className ) {
+inline std::size_t hashClassSignature( const char* module, const char* className ) {
     std::hash<std::string> hash;
     std::string qualified( module );
     qualified += className;
@@ -34,21 +34,21 @@ inline std::size_t HashClassSignature( const char* module, const char* className
 }
 
 template< typename T, typename... Args, std::size_t... index >
-void Construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
+void construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
     using Traits = ParameterPackTraits< Args... >;
     new ( memory ) T( WrenArgument< typename Traits::template ParameterType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename T, typename... Args >
-void Allocate( WrenVM* vm ) {
+void allocate( WrenVM* vm ) {
     // this is the function which handles the object construction
     // it should get arguments passed to the constructor
     void* memory = wrenAllocateForeign( vm, sizeof(T) );
-    Construct< T, Args... >( vm, memory, std::make_index_sequence< ParameterPackTraits< Args... >::size > {} );
+    construct< T, Args... >( vm, memory, std::make_index_sequence< ParameterPackTraits< Args... >::size > {} );
 }
 
 template< typename T >
-void Finalize( WrenVM* vm ) {
+void finalize( WrenVM* vm ) {
     T* instance = static_cast<T*>( wrenGetArgumentForeign( vm, 0 ) );
     instance->~T();
 }

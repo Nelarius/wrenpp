@@ -276,7 +276,7 @@ Value Method::operator()( Args&&... args ) const {
 
 template< typename T, typename... Args >
 RegisteredClassContext<T> ModuleContext::registerClass( std::string c ) {
-    WrenForeignClassMethods wrapper{ &detail::Allocate< T, Args... >, &detail::Finalize< T > };
+    WrenForeignClassMethods wrapper{ &detail::allocate< T, Args... >, &detail::finalize< T > };
     wren_->registerClass_( module_, c, wrapper );
     return RegisteredClassContext<T>( c, wren_, this );
 }

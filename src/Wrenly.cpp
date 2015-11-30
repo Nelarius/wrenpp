@@ -24,7 +24,7 @@ WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
                                 const char* className,
                                 bool isStatic,
                                 const char* signature ) {
-    auto it = boundForeignMethods.find( wrenly::detail::HashMethodSignature( module, className, isStatic, signature ) );
+    auto it = boundForeignMethods.find( wrenly::detail::hashMethodSignature( module, className, isStatic, signature ) );
     if ( it == boundForeignMethods.end() ) {
         return NULL;
     }
@@ -33,7 +33,7 @@ WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
 }
 
 WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
-    auto it = boundForeignClasses.find( wrenly::detail::HashClassSignature( m, c ) );
+    auto it = boundForeignClasses.find( wrenly::detail::hashClassSignature( m, c ) );
     if ( it == boundForeignClasses.end() ) {
         return WrenForeignClassMethods{ nullptr, nullptr };
     }
@@ -205,7 +205,7 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     path += ".wren";
     std::string source;
     try {
-        source = wrenly::FileToString( path );
+        source = wrenly::fileToString( path );
     } catch( const std::exception& e ) {
         return NULL;
     }
@@ -254,7 +254,7 @@ WrenVM* Wren::vm() {
 void Wren::executeModule( const std::string& mod ) {
     std::string file = mod;
     file += ".wren";
-    auto source = FileToString( file );
+    auto source = fileToString( file );
     auto res = wrenInterpret( vm_, source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
@@ -302,7 +302,7 @@ void Wren::registerFunction_(
     const std::string& sig,
     WrenForeignMethodFn function
 ) {
-    std::size_t hash = detail::HashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
+    std::size_t hash = detail::hashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
     boundForeignMethods.insert( std::make_pair( hash, function ) );
 }
 
@@ -311,7 +311,7 @@ void Wren::registerClass_(
     const std::string& c,
     WrenForeignClassMethods methods
 ) {
-    std::size_t hash = detail::HashClassSignature( m.c_str(), c.c_str() );
+    std::size_t hash = detail::hashClassSignature( m.c_str(), c.c_str() );
     boundForeignClasses.insert( std::make_pair( hash, methods ) );
 }
 
