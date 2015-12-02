@@ -18,15 +18,15 @@ namespace wrenly {
     /// \brief Get the contents of a file as a string.
     inline std::string fileToString( const std::string& file ) {
         std::ifstream fin;
-        
+
         if ( !fileExists( file ) ) {
             throw std::runtime_error( "file not found!" );
         }
-        
+
         fin.open( file, std::ios::in );
 
         std::stringstream buffer;
-        buffer << fin.rdbuf();
+        buffer << fin.rdbuf() << '\0';
         return buffer.str();
     }
 
