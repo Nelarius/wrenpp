@@ -91,6 +91,8 @@ Method Wren::method(
 
 ## Accessing C++ from Wren
 
+Wrenly allows you to bind C++ functions and methods to Wren classes. This is done by storing the names or signatures along with the function pointers, so that Wren can find them. That is, you bind all your code once, after which all your Wren instances can use them.
+
 ### Foreign methods
 
 You can implement a Wren foreign method as a stateless free function in C++. Wrenly offers an easy to use wrapper over the functions. Note that only primitive types and `std::string` work for now. Support for registered types will be provided later once the custom type registration feature is complete.
@@ -114,12 +116,12 @@ main.cpp:
 int main() {
 
   wrenly::Wren wren{};
-  wren.beginModule( "math" )
+  wrenly::beginModule( "math" )
     .beginClass( "Math" )
-      .registerFunction< decltype(&cos), &cos >( true, "cos(_)" )
-      .registerFunction< decltype(&sin), &sin >( true, "sin(_)" )
-      .registerFunction< decltype(&tan), &tan >( true, "tan(_)" )
-      .registerFunction< decltype(&exp), &exp >( true, "exp(_)" )
+      .bindFunction< decltype(&cos), &cos >( true, "cos(_)" )
+      .bindFunction< decltype(&sin), &sin >( true, "sin(_)" )
+      .bindFunction< decltype(&tan), &tan >( true, "tan(_)" )
+      .bindFunction< decltype(&exp), &exp >( true, "exp(_)" )
     .endClass()
   .endModule();
         
@@ -129,13 +131,13 @@ int main() {
 }
 ```
 
-Both the type of the function (in the case of `cos` the type is `double(double)`, for instance, and could be used instead of `decltype(cos)`) and the reference to the function have to be provided to `registerFunction` as template arguments. As arguments, `registerFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
+Both the type of the function (in the case of `cos` the type is `double(double)`, for instance, and could be used instead of `decltype(&cos)`) and the reference to the function have to be provided to `bindFunction` as template arguments. As arguments, `bindFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
 
 > The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wrenly wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time. Similarly, if a function returns a value, the call to the appropriate `wrenReturn*` function is inserted at compile time.
 
 ### Foreign classes
 
-Free functions don't get us very far if we want there to be some state on a per-object basis. Foreign classes can be registered by using `registerClass` on a module context. Let's look at an example. Say we have the following Wren class representing a 3-vector:
+Free functions don't get us very far if we want there to be some state on a per-object basis. Foreign classes can be registered by using `bindClass` on a module context. Let's look at an example. Say we have the following Wren class representing a 3-vector:
 
 ```dart
 foreign class Vec3 {
@@ -144,6 +146,14 @@ foreign class Vec3 {
   foreign norm()
   foreign dot( rhs )
   foreign cross( rhs )    // returns the result as a new vector
+
+  // accessors
+  foreign x
+  foreign x=( rhs )
+  foreign y
+  foreign y=( rhs )
+  foreign z
+  foreign z=( rhs )
 }
 
 /*
@@ -187,17 +197,61 @@ struct Vec3 {
 };
 ```
 
-Using the afore-mentioned `registerClass` instead of `beginClass` tells Wrenly to store our C++ class in the byte array associated with each instance of a foreign class.
+Let's start by binding the class to Wren and adding properties.
+
+A class is bound by writing `bindClass` instead of `beginClass`. This binds the specified constructor and destructor to Wren, and allocates a new instance of your class within Wren.
 
 ```cpp
 #include "Wrenly.h"
 
 int main() {
   wrenly::Wren wren{};
-  wren.beginModule( "main" )
-    .registerClass< math::Vector3f, float, float, float >( "Vec3" )
-      .registerMethod< decltype(&Vec3::norm), &Vec3::norm >( false, "norm()" )
-      .registerMethod< decltype(&Vec3::dot), &Vec3::dot >( false, "dot(_)" )
+  wrenly::beginModule( "main" )
+    .bindClass< Vec3, float, float, float >( "Vec3" );
+    // you can now construct Vec3 in Wren
+
+  return 0;
+}
+```
+
+Pass the class type, and constructor argument types to `bindClass`. Even though a C++ class may have many constructors, only one constructor can be registered with Wren.
+
+#### Properties
+
+If your class or struct has public fields you wish to expose, you can do so by using `bindGetter` and `bindSetter`. This will automatically generate a function which returns the value of the field to Wren.
+
+```cpp
+wrenly::beginModule( "main" )
+  .bindClass< Vec3, float, float, float >( "Vec3" )
+    .bindGetter< decltype(Vec3::x), &Vec3::x >( false, "x" )
+    .bindSetter< declType(Vec3::x), &Vec3::x >( false, "x=(_)" )
+    .bindGetter< decltype(Vec3::y), &Vec3::y >( false, "y" )
+    .bindSetter< declType(Vec3::y), &Vec3::y >( false, "y=(_)" )
+    .bindGetter< decltype(Vec3::z), &Vec3::z >( false, "z" )
+    .bindSetter< declType(Vec3::z), &Vec3::z >( false, "z=(_)" );
+```
+
+#### Methods
+
+Using `registerMethod` allows you to bind a class method to a Wren foreign method. Just do:
+
+```cpp
+#include "Wrenly.h"
+
+int main() {
+  wrenly::Wren wren{};
+  wrenly::beginModule( "main" )
+    .bindClass< Vec3, float, float, float >( "Vec3" )
+      // properties
+      .bindGetter< decltype(Vec3::x), &Vec3::x >( false, "x" )
+      .bindSetter< declType(Vec3::x), &Vec3::x >( false, "x=(_)" )
+      .bindGetter< decltype(Vec3::y), &Vec3::y >( false, "y" )
+      .bindSetter< declType(Vec3::y), &Vec3::y >( false, "y=(_)" )
+      .bindGetter< decltype(Vec3::z), &Vec3::z >( false, "z" )
+      .bindSetter< declType(Vec3::z), &Vec3::z >( false, "z=(_)" )
+      // methods
+      .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
+      .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
     .endClass()
   .endModule();
 
@@ -205,9 +259,7 @@ int main() {
 }
 ```
 
-Pass the class type, and constructor argument types to `registerClass`. Even though a C++ class may have many constructors, only one constructor can be registered with Wren.
-
-Methods are registered in a similar way to free functions. You simply call `registerMethod` on the registered class context. The arguments are the same as what you pass `registerFunction`.
+The arguments are the same as what you pass `bindFunction`, but as the template parameters pass the method type and pointer instead of a function.
 
 We've now implemented two of `Vec3`'s three foreign functions -- what about the last foreign method, `cross(_)` ?
 
@@ -233,17 +285,18 @@ void cross( WrenVM* vm ) {
   WrenValue* constructor  = wrenGetMethod( vm, "main, "createVector3", "call(_,_,_)" );
   wrenCall( vm, constructor, &ret, "ddd", res.x, res.y, res.z );
   wrenReturnValue( vm, ret );
+  wrenReleaseValue( vm, ret );
 }
 ```
 
 Finally, here's what our full binding code for `Vec3` now looks like.
 
 ```cpp
-  wren.beginModule( "main" )
+  wrenly::beginModule( "main" )
     .registerClass< math::Vector3f, float, float, float >( "Vec3" )
-      .registerMethod< decltype(&Vec3::norm), &Vec3::norm >( false, "norm()" )
-      .registerMethod< decltype(&Vec3::dot), &Vec3::dot >( false, "dot(_)" )
-      .registerCFunction( false, "cross(_)", cross )
+      .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
+      .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
+      .bindCFunction( false, "cross(_)", cross )
     .endClass()
   .endModule();
 ```
@@ -292,11 +345,10 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Another major shortcoming is non-ability to store references to instances.
-* Consistency: `executeModule` should use `Wren::loadModuleFn`
+* Consistency: `executeModule` should use `Wren::loadModuleFn`.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
 * I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
   * Ideally there would be a wrapper for WrenValue, which might be null.
-* Divorce registration from the Wren instances.
 * There needs to be better error handling for not finding a method.
   * Is Wren actually responsible for crashing the program when a method is not found?
