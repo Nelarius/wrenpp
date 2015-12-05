@@ -293,7 +293,7 @@ Finally, here's what our full binding code for `Vec3` now looks like.
 
 ```cpp
   wrenly::beginModule( "main" )
-    .registerClass< math::Vector3f, float, float, float >( "Vec3" )
+    .bindClass< math::Vector3f, float, float, float >( "Vec3" )
       .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
       .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
       .bindCFunction( false, "cross(_)", cross )
