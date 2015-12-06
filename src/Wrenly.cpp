@@ -3,7 +3,6 @@
 #include "File.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp
-#include <iostream>
 #include <cstdio>
 
 namespace {
@@ -261,32 +260,36 @@ WrenVM* Wren::vm() {
     return vm_;
 }
 
-void Wren::executeModule( const std::string& mod ) {
+Result Wren::executeModule( const std::string& mod ) {
     std::string file = mod;
     file += ".wren";
     auto source = fileToString( file );
     auto res = wrenInterpret( vm_, source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
-        std::cerr << "WREN_RESULT_COMPILE_ERROR in module " << mod << std::endl;
+        return Result::CompileError;
+    }
+
+    if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
+        return Result::RuntimeError;
     }
     
-    if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
-        std::cerr << "WREN_RESULT_RUNTIME_ERROR in module " << mod << std::endl;
-    }
+    return Result::Success;
 }
 
-void Wren::executeString( const std::string& code ) {
+Result Wren::executeString( const std::string& code ) {
 
     auto res = wrenInterpret( vm_, code.c_str() );
 
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
-        std::cerr << "WREN_RESULT_COMPILE_ERROR in string: " << code << std::endl;
+        return Result::CompileError;
     }
 
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
-        std::cerr << "WREN_RESULT_RUNTIME_ERROR in string: " << code << std::endl;
+        return Result::RuntimeError;
     }
+    
+    return Result::Success;
 }
 
 void Wren::collectGarbage() {

@@ -30,7 +30,7 @@ The code has been built on Linux using gcc, and Windows using MinGW-w64.
 
 ## Getting started
 
-Here's how you would initialize an instance of the virtual machine and execute a module:
+Here's how you would initialize an instance of the virtual machine and execute from a module:
 
 ```cpp
 #include "Wrenly.h"
@@ -52,6 +52,20 @@ Strings can also be executed:
 ```cpp
 wren.executeString( "System.print(\"Hello from a C++ string!\")" );
 ```
+
+Both `executeString` and `executeModule` return a code indicating if the interpretation encountered any errors.
+
+```cpp
+wrenly::Result res = wrenly.executeString(
+  "// calling nonexistent variable"
+  "foobar.call()"
+);
+if ( res == wrenly::Result::CompileError ) {
+  std::cout << "foobar doesn't exist and a compilation error occurs.\n";
+}
+```
+
+There are two other codes: `Result::RuntimeError` and `Result::Success`.
 
 ## Accessing Wren from C++
 

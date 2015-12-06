@@ -197,6 +197,12 @@ class ModuleContext {
 
 ModuleContext beginModule( std::string mod );
 
+enum class Result {
+    Success,
+    CompileError,
+    RuntimeError
+};
+
 /**
  * @class Wren
  * @author Nelarius
@@ -219,8 +225,8 @@ class Wren {
 
         WrenVM* vm();
 
-        void executeModule( const std::string& );
-        void executeString( const std::string& );
+        Result executeModule( const std::string& );
+        Result executeString( const std::string& );
 
         /**
          * @brief Run garbage collection immediately.
