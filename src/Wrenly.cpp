@@ -261,9 +261,7 @@ WrenVM* Wren::vm() {
 }
 
 Result Wren::executeModule( const std::string& mod ) {
-    std::string file = mod;
-    file += ".wren";
-    auto source = fileToString( file );
+    std::string source( loadModuleFn( mod.c_str() ) );
     auto res = wrenInterpret( vm_, source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {

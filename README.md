@@ -359,7 +359,6 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 ## TODO:
 
 * Another major shortcoming is non-ability to store references to instances.
-* Consistency: `executeModule` should use `Wren::loadModuleFn`.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
 * I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
