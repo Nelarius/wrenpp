@@ -10,6 +10,7 @@ extern "C" {
 #include <functional>   // for std::hash
 #include <utility>  // for index_sequence
 #include <iostream>
+#include <cstdlib>
 
 namespace wrenly {
 namespace detail {
@@ -158,7 +159,35 @@ struct WrenReturnValue< float > {
 };
 
 template<>
+struct WrenReturnValue< float& > {
+    static void ret( WrenVM* vm, float val ) {
+        wrenReturnDouble( vm, double( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< const float& > {
+    static void ret( WrenVM* vm, float val ) {
+        wrenReturnDouble( vm, double( val ) );
+    }
+};
+
+template<>
 struct WrenReturnValue< double > {
+    static void ret( WrenVM* vm, double val ) {
+        wrenReturnDouble( vm, val );
+    }
+};
+
+template<>
+struct WrenReturnValue< double& > {
+    static void ret( WrenVM* vm, double val ) {
+        wrenReturnDouble( vm, val );
+    }
+};
+
+template<>
+struct WrenReturnValue< const double& > {
     static void ret( WrenVM* vm, double val ) {
         wrenReturnDouble( vm, val );
     }
@@ -168,6 +197,41 @@ template<>
 struct WrenReturnValue< int > {
     static void ret( WrenVM* vm, int val ) {
         wrenReturnDouble( vm, double ( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< int& > {
+    static void ret( WrenVM* vm, int val ) {
+        wrenReturnDouble( vm, double ( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< const int& > {
+    static void ret( WrenVM* vm, int val ) {
+        wrenReturnDouble( vm, double ( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< std::size_t > {
+    static void ret( WrenVM* vm, std::size_t val ) {
+        wrenReturnDouble( vm, double( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< std::size_t& > {
+    static void ret( WrenVM* vm, std::size_t val ) {
+        wrenReturnDouble( vm, double( val ) );
+    }
+};
+
+template<>
+struct WrenReturnValue< const std::size_t& > {
+    static void ret( WrenVM* vm, std::size_t val ) {
+        wrenReturnDouble( vm, double( val ) );
     }
 };
 
