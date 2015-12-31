@@ -47,9 +47,8 @@ class Value {
         Value() = delete;
         Value( const Value& );
         Value( Value&& );
-        Value& operator=( const Value& )    = delete;
-        Value& operator=( Value&& )         = delete;
-        Value& operator=( Value );
+        Value& operator=(const Value&);
+        Value& operator=(Value&&);
         ~Value();
 
         bool isNull() const;
@@ -80,9 +79,8 @@ class Method {
         Method() = delete;
         Method( const Method& );
         Method( Method&& );
-        Method& operator=( const Method& )  = delete;
-        Method& operator=( Method&& )       = delete;
-        Method& operator=( Method );
+        Method& operator=( const Method& );
+        Method& operator=( Method&& );
         ~Method();
 
         /**

@@ -88,13 +88,25 @@ Value::Value( Value&& other )
     other.refCount_ = nullptr;
 }
 
-Value& Value::operator=( Value rhs ) {
+Value& Value::operator=( const Value& rhs ) {
     release_();
     vm_ = rhs.vm_;
     value_ = rhs.value_;
     refCount_ = rhs.refCount_;
     retain_();
     return *this;
+}
+
+Value& Value::operator=(Value&& rhs) {
+    release_();
+    vm_ = rhs.vm_;
+    value_ = rhs.value_;
+    refCount_ = rhs.refCount_;
+    rhs.vm_ = nullptr;
+    rhs.value_ = nullptr;
+    rhs.refCount_ = nullptr;
+    return *this;
+
 }
 
 Value::~Value() {
@@ -152,12 +164,23 @@ Method::~Method() {
     release_();
 }
 
-Method& Method::operator=( Method rhs ) {
+Method& Method::operator=( const Method& rhs ) {
     release_();
     vm_ = rhs.vm_;
     method_ = rhs.method_;
     refCount_ = rhs.refCount_;
     retain_();
+    return *this;
+}
+
+Method& Method::operator=(Method&& rhs) {
+    release_();
+    vm_ = rhs.vm_;
+    method_ = rhs.method_;
+    refCount_ = rhs.refCount_;
+    rhs.vm_ = nullptr;
+    rhs.method_ = nullptr;
+    rhs.refCount_ = nullptr;
     return *this;
 }
 
@@ -215,7 +238,7 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     std::string source;
     try {
         source = wrenly::fileToString( path );
-    } catch( const std::exception& e ) {
+    } catch( const std::exception& ) {
         return NULL;
     }
     char* buffer = (char*) malloc( source.size() );

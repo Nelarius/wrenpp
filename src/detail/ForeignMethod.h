@@ -102,7 +102,7 @@ struct WrenArgument< const T* > {
 template<>
 struct WrenArgument< float > {
     static float get( WrenVM* vm, int index ) {
-        return wrenGetArgumentDouble( vm, index );
+        return float(wrenGetArgumentDouble( vm, index ));
     }
 };
 
@@ -116,14 +116,14 @@ struct WrenArgument< double > {
 template<>
 struct WrenArgument< int > {
     static int get( WrenVM* vm, int index ) {
-        return wrenGetArgumentDouble( vm, index );
+        return int(wrenGetArgumentDouble( vm, index ));
     }
 };
 
 template<>
 struct WrenArgument< unsigned > {
     static unsigned get( WrenVM* vm, int index ) {
-        return wrenGetArgumentDouble( vm, index );
+        return unsigned(wrenGetArgumentDouble( vm, index ));
     }
 };
 
