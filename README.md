@@ -14,19 +14,15 @@ Currently developing against `wren:master@545415`.
 
 ## Build
 
-Checkout the repository using `git clone https://github.com/nelarius/wrenly.git`.
+Checkout the repository using `git clone https://github.com/nelarius/wrenly.git`. The easiest way to build the project is to include contents of the `src/` folder in your project. Just remember to compile with C++14 features turned on!
 
-The easiest way to build the project is to include contents of the `src/` folder in your project. Just remember to compile with C++14 features turned on!
-
-You can also use CMake to build the project. CMake tries to find Wren, and stores the result in the `WREN_INCLUDE_DIR` variable. If you don't have Wren installed in a system-wide location, you can help CMake by specifying the variable on the command line. For example, you could write:
+To build a stand-alone static library, you can use premake to generate your build scripts. Just remember to include the path to `wren.h`:
 
 ```sh
-mkdir build
-cd build
-cmake -DWREN_INCLUDE_DIR=<location of wren.h here> ../
-make
+premake5 vs2015 --wren=<path-to-wren.h>
 ```
-The code has been built on Linux using gcc, and Windows using MinGW-w64.
+
+The build script will be located in `build/`, and the library in `lib/`. 
 
 ## Getting started
 
