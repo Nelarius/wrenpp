@@ -10,21 +10,6 @@
 namespace wrenly {
 namespace detail {
 
-template< typename... Args >
-struct ParameterPackTraits {
-
-    constexpr static const std::size_t size = sizeof...( Args );
-    
-    template< std::size_t N >
-    struct Parameter {
-        static_assert( N < size, "ParameterPackTraits error: invalid parameter count" );
-        using type = std::tuple_element_t< N, std::tuple< Args... > >;
-    };
-
-    template< std::size_t N >
-    using ParameterType = typename Parameter< N >::type;
-};
-
 // given a Wren class signature, this returns a unique value 
 inline std::size_t hashClassSignature( const char* module, const char* className ) {
     std::hash<std::string> hash;
@@ -48,8 +33,8 @@ void allocate( WrenVM* vm ) {
 }
 
 template< typename T >
-void finalize( WrenVM* vm ) {
-    T* instance = static_cast<T*>( wrenGetArgumentForeign( vm, 0 ) );
+void finalize( void* bytes ) {
+    T* instance = static_cast<T*>( bytes );
     instance->~T();
 }
 

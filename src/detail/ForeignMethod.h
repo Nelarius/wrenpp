@@ -42,12 +42,27 @@ struct FunctionTraits< R( Args... ) > {
 
     template< std::size_t N >
     struct Argument {
-        static_assert( N < Arity, "FunctionTraits error: invalid argument count parameter" );
-        using type = std::tuple_element_t< N, std::tuple< Args... > >;
+        static_assert( N < Arity, "FunctionTraits error: invalid argument index parameter" );
+        using Type = std::tuple_element_t< N, std::tuple< Args... > >;
     };
 
     template< std::size_t N >
-    using ArgumentType = typename Argument<N>::type;
+    using ArgumentType = typename Argument<N>::Type;
+};
+
+template< typename... Args >
+struct ParameterPackTraits {
+
+    constexpr static const std::size_t size = sizeof...(Args);
+
+    template< std::size_t N >
+    struct Parameter {
+        static_assert(N < size, "ParameterPackTraits error: invalid parameter index");
+        using Type = std::tuple_element_t< N, std::tuple< Args... > >;
+    };
+
+    template< std::size_t N >
+    using ParameterType = typename Parameter< N >::Type;
 };
 
 template< typename R, typename... Args >
@@ -66,186 +81,231 @@ struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( Ar
 
 template< typename T >
 struct WrenArgument {
-    static T get( WrenVM* vm, int index ) {
-        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    static T get( WrenVM* vm, int slot ) {
+        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
     }
 };
 
 template < typename T >
 struct WrenArgument< T& > {
-    static T& get( WrenVM* vm, int index ) {
-        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    static T& get( WrenVM* vm, int slot ) {
+        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
     }
 };
 
 template< typename T >
 struct WrenArgument< const T& > {
-    static const T& get( WrenVM* vm, int index ) {
-        return *static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    static const T& get( WrenVM* vm, int slot ) {
+        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
     }
 };
 
 template< typename T >
 struct WrenArgument< T* > {
-    static T* get( WrenVM* vm, int index ) {
-        return static_cast< T* >( wrenGetArgumentForeign( vm, index ) );
+    static T* get( WrenVM* vm, int slot ) {
+        return static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
     }
 };
 
 template< typename T >
 struct WrenArgument< const T* > {
-    static const T* get( WrenVM* vm, int index ) {
-        return static_cast< const T* >( wrenGetArgumentForeign( vm, index ) );
+    static const T* get( WrenVM* vm, int slot ) {
+        return static_cast< const T* >( wrenGetSlotForeign( vm, slot ) );
     }
 };
 
 template<>
 struct WrenArgument< float > {
-    static float get( WrenVM* vm, int index ) {
-        return float(wrenGetArgumentDouble( vm, index ));
+    static float get( WrenVM* vm, int slot ) {
+        return float(wrenGetSlotDouble( vm, slot ));
     }
 };
 
 template<>
 struct WrenArgument< double > {
-    static double get( WrenVM* vm, int index ) {
-        return wrenGetArgumentDouble( vm, index );
+    static double get( WrenVM* vm, int slot ) {
+        return wrenGetSlotDouble( vm, slot );
+    }
+
+    static void set(WrenVM* vm, int slot, double val ) {
+        wrenSetSlotDouble( vm, slot, val );
     }
 };
 
 template<>
 struct WrenArgument< int > {
-    static int get( WrenVM* vm, int index ) {
-        return int(wrenGetArgumentDouble( vm, index ));
+    static int get( WrenVM* vm, int slot ) {
+        return int(wrenGetSlotDouble( vm, slot ));
+    }
+
+    static void set( WrenVM* vm, int slot, int val ) {
+        wrenSetSlotDouble( vm, slot, double(val) );
     }
 };
 
 template<>
 struct WrenArgument< unsigned > {
-    static unsigned get( WrenVM* vm, int index ) {
-        return unsigned(wrenGetArgumentDouble( vm, index ));
+    static unsigned get( WrenVM* vm, int slot ) {
+        return unsigned(wrenGetSlotDouble( vm, slot ));
+    }
+
+    static void set( WrenVM* vm, int slot, unsigned val ) {
+        wrenSetSlotDouble( vm, slot, double(val) );
     }
 };
 
 template<>
 struct WrenArgument< bool > {
-    static bool get( WrenVM* vm, int index ) {
-        return wrenGetArgumentBool( vm, index );
+    static bool get( WrenVM* vm, int slot ) {
+        return wrenGetSlotBool( vm, slot );
+    }
+
+    static void set( WrenVM* vm, int slot, bool val ) {
+        wrenSetSlotBool( vm, slot, val );
     }
 };
 
 template<>
 struct WrenArgument< const char* > {
-    static const char* get( WrenVM* vm, int index ) {
-        return wrenGetArgumentString( vm, index );
+    static const char* get( WrenVM* vm, int slot ) {
+        return wrenGetSlotString( vm, slot );
+    }
+
+    static void set( WrenVM* vm, int slot, const char* val ) {
+        wrenSetSlotString( vm, slot, val );
     }
 };
 
 template<>
 struct WrenArgument< std::string > {
-    static std::string get( WrenVM* vm, int index ) {
-        return std::string( wrenGetArgumentString( vm, index ) );
+    static std::string get( WrenVM* vm, int slot ) {
+        return std::string( wrenGetSlotString( vm, slot ) );
+    }
+
+    static void set( WrenVM* vm, int slot, const std::string& str ) {
+        wrenSetSlotString( vm, slot, str.c_str() );
     }
 };
+
+struct ExpandType {
+    template< typename... T >
+    ExpandType( T&&... ) {}
+};
+
+// a helper for passing arguments to Wren
+// explained here:
+// http://stackoverflow.com/questions/17339789/how-to-call-a-function-on-all-variadic-template-args
+template<typename... Args, std::size_t... index>
+void passArgumentsToWren( WrenVM* vm, const std::tuple<Args...>& tuple, std::index_sequence< index... > ) {
+    using Traits = ParameterPackTraits<Args...>;
+    ExpandType{
+        0,
+        (WrenArgument<typename Traits::template ParameterType<index>>::set(
+            vm,
+            index + 1,
+            std::get<index>(tuple)
+        ), 0)...
+    };
+}
 
 template< typename T >
 struct WrenReturnValue;
 
 template<>
 struct WrenReturnValue< float > {
-    static void ret( WrenVM* vm, float val ) {
-        wrenReturnDouble( vm, double ( val ) );
+    static void set( WrenVM* vm, float val ) {
+        wrenSetSlotDouble( vm, 0, double ( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< float& > {
-    static void ret( WrenVM* vm, float val ) {
-        wrenReturnDouble( vm, double( val ) );
+    static void set( WrenVM* vm, float val ) {
+        wrenSetSlotDouble( vm, 0, double( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< const float& > {
-    static void ret( WrenVM* vm, float val ) {
-        wrenReturnDouble( vm, double( val ) );
+    static void set( WrenVM* vm, float val ) {
+        wrenSetSlotDouble( vm, 0, double( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< double > {
-    static void ret( WrenVM* vm, double val ) {
-        wrenReturnDouble( vm, val );
+    static void set( WrenVM* vm, double val ) {
+        wrenSetSlotDouble( vm, 0, val );
     }
 };
 
 template<>
 struct WrenReturnValue< double& > {
-    static void ret( WrenVM* vm, double val ) {
-        wrenReturnDouble( vm, val );
+    static void set( WrenVM* vm, double val ) {
+        wrenSetSlotDouble( vm, 0, val );
     }
 };
 
 template<>
 struct WrenReturnValue< const double& > {
-    static void ret( WrenVM* vm, double val ) {
-        wrenReturnDouble( vm, val );
+    static void set( WrenVM* vm, double val ) {
+        wrenSetSlotDouble( vm, 0, val );
     }
 };
 
 template<>
 struct WrenReturnValue< int > {
-    static void ret( WrenVM* vm, int val ) {
-        wrenReturnDouble( vm, double ( val ) );
+    static void set( WrenVM* vm, int val ) {
+        wrenSetSlotDouble( vm, 0, double ( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< int& > {
-    static void ret( WrenVM* vm, int val ) {
-        wrenReturnDouble( vm, double ( val ) );
+    static void set( WrenVM* vm, int val ) {
+        wrenSetSlotDouble( vm, 0, double ( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< const int& > {
-    static void ret( WrenVM* vm, int val ) {
-        wrenReturnDouble( vm, double ( val ) );
+    static void set( WrenVM* vm, int val ) {
+        wrenSetSlotDouble( vm, 0, double ( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< std::size_t > {
-    static void ret( WrenVM* vm, std::size_t val ) {
-        wrenReturnDouble( vm, double( val ) );
+    static void set( WrenVM* vm, std::size_t val ) {
+        wrenSetSlotDouble( vm, 0, double( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< std::size_t& > {
     static void ret( WrenVM* vm, std::size_t val ) {
-        wrenReturnDouble( vm, double( val ) );
+        wrenSetSlotDouble( vm, 0, double( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< const std::size_t& > {
-    static void ret( WrenVM* vm, std::size_t val ) {
-        wrenReturnDouble( vm, double( val ) );
+    static void set( WrenVM* vm, std::size_t val ) {
+        wrenSetSlotDouble( vm, 0, double( val ) );
     }
 };
 
 template<>
 struct WrenReturnValue< bool > {
-    static void ret( WrenVM* vm, bool val ) {
-        wrenReturnBool( vm, val );
+    static void set( WrenVM* vm, bool val ) {
+        wrenSetSlotBool( vm, 0, val );
     }
 };
 
 template<>
 struct WrenReturnValue< std::string > {
     static void ret( WrenVM* vm, std::string val ) {
-        wrenReturnString( vm, val.c_str(), -1 );
+        wrenSetSlotString( vm, 0, val.c_str() );
     }
 };
 
@@ -312,17 +372,17 @@ struct InvokeWithoutReturningIf<false> {
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
-        WrenReturnValue< ReturnType >::ret( vm, invokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
+        WrenReturnValue< ReturnType >::set( vm, invokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
-        WrenReturnValue< R >::ret( vm, invokeWithWrenArguments( vm, f ) );
+        WrenReturnValue< R >::set( vm, invokeWithWrenArguments( vm, f ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) const ) {
-        WrenReturnValue< R >::ret( vm, invokeWithWrenArguments( vm, f ) );
+        WrenReturnValue< R >::set( vm, invokeWithWrenArguments( vm, f ) );
     }
 };
 
