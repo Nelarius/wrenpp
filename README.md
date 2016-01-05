@@ -10,7 +10,7 @@ The goals of this library are
 * to generate automatic wrappers for classes implementing Wren foreign classes
 * template-based -- no macros!
 
-Currently developing against `wren:master@545415`.
+Currently developing against `wren:master@f9d1e99`.
 
 ## Build
 
@@ -354,12 +354,6 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* The new Wren API. These are the minimum number of  changes required to get everything to play nice with the new API:
-	* `WrenArgument` needs to call the new functions.
-	* `WrenReturnValue` needs to call the new functions.
-	* `Method` should be a wrapper around a variable and a call handle. Both are needed to make the call.
-	* `WrenReturnValue::ret` should be called `WrenReturnValue::set`, as it sets the return value in slot 0.
-	* Finalizer needs to be updated.
 * Another major shortcoming is non-ability to store references to instances.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.

@@ -75,7 +75,7 @@ class Value {
  */
 class Method {
     public:
-        Method( WrenVM*, WrenValue* );
+        Method( WrenVM*, WrenValue* variable, WrenValue* method );
         Method() = delete;
         Method( const Method& );
         Method( Method&& );
@@ -90,7 +90,7 @@ class Method {
         * change its state, depending on the Wren method being called.
         */
         template<typename... Args>
-        Value operator()( Args&&... args ) const;
+        void operator()( Args... args ) const;
 
     private:
         void retain_();
@@ -98,6 +98,7 @@ class Method {
 
         mutable WrenVM*         vm_;    // this pointer is not managed here
         mutable WrenValue*      method_;
+        mutable WrenValue*      variable_;
         unsigned*               refCount_;
 };
 
@@ -265,13 +266,15 @@ class Wren {
 };
 
 template< typename... Args >
-Value Method::operator()( Args&&... args ) const {
+void Method::operator()( Args... args ) const {
     constexpr const std::size_t Arity = sizeof...( Args );
-    detail::ArgumentListString< Arity > arguments{ args... };
-    WrenValue* result{ nullptr };
-    wrenCall( vm_, method_, &result, arguments.getString(), std::forward<Args>( args )... );
+    wrenEnsureSlots( vm_, Arity + 1u );
+    wrenSetSlotValue(vm_, 0, variable_);
 
-    return Value( vm_, result );
+    std::tuple<Args...> tuple = std::make_tuple( args... );
+    detail::passArgumentsToWren( vm_, tuple, std::make_index_sequence<Arity> {} );
+
+    wrenCall( vm_, method_ );
 }
 
 template< typename T, typename... Args >

@@ -136,9 +136,10 @@ void Value::release_() {
     }
 }
 
-Method::Method( WrenVM* vm, WrenValue* method )
+Method::Method( WrenVM* vm, WrenValue* variable, WrenValue* method )
 :   vm_( vm ),
     method_( method ),
+    variable_( variable ),
     refCount_( nullptr ) {
     refCount_ = new unsigned;
     *refCount_ = 1u;
@@ -147,6 +148,7 @@ Method::Method( WrenVM* vm, WrenValue* method )
 Method::Method( const Method& other )
 :   vm_( other.vm_ ),
     method_( other.method_ ),
+    variable_( other.variable_ ),
     refCount_( other.refCount_ ) {
     retain_();
 }
@@ -154,9 +156,11 @@ Method::Method( const Method& other )
 Method::Method( Method&& other )
 :   vm_( other.vm_ ),
     method_( other.method_ ),
+    variable_( other.variable_ ),
     refCount_( other.refCount_ ) {
     other.vm_ = nullptr;
     other.method_ = nullptr;
+    other.variable_ = nullptr;
     other.refCount_ = nullptr;
 }
 
@@ -168,6 +172,7 @@ Method& Method::operator=( const Method& rhs ) {
     release_();
     vm_ = rhs.vm_;
     method_ = rhs.method_;
+    variable_ = rhs.variable_;
     refCount_ = rhs.refCount_;
     retain_();
     return *this;
@@ -177,9 +182,11 @@ Method& Method::operator=(Method&& rhs) {
     release_();
     vm_ = rhs.vm_;
     method_ = rhs.method_;
+    variable_ = rhs.variable_;
     refCount_ = rhs.refCount_;
     rhs.vm_ = nullptr;
     rhs.method_ = nullptr;
+    rhs.variable_ = nullptr;
     rhs.refCount_ = nullptr;
     return *this;
 }
@@ -193,6 +200,7 @@ void Method::release_() {
         *refCount_ -= 1u;
         if ( *refCount_ == 0u ) {
             wrenReleaseValue( vm_, method_ );
+            wrenReleaseValue( vm_, variable_ );
             delete refCount_;
             refCount_ = nullptr;
         }
@@ -322,7 +330,11 @@ Method Wren::method(
     const std::string& var,
     const std::string& sig
 ) {
-    return Method( vm_, wrenGetMethod( vm_, mod.c_str(), var.c_str(), sig.c_str() ) );
+    wrenEnsureSlots( vm_, 1 );
+    wrenGetVariable( vm_, mod.c_str(), var.c_str(), 1 );
+    WrenValue* variable = wrenGetSlotValue( vm_, 1 );
+    WrenValue* handle = wrenMakeCallHandle(vm_, sig.c_str());
+    return Method( vm_, variable, handle );
 }
 
 }   // wrenly
