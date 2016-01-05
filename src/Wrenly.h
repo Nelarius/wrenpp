@@ -4,7 +4,6 @@
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
 #include "detail/ForeignProperty.h"
-#include "detail/ArgumentListString.h"
 extern "C" {
     #include <wren.h>
 }
