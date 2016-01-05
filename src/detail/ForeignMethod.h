@@ -119,6 +119,10 @@ struct WrenArgument< float > {
     static float get( WrenVM* vm, int slot ) {
         return float(wrenGetSlotDouble( vm, slot ));
     }
+
+    static void set(WrenVM* vm, int slot, float val) {
+        wrenSetSlotDouble( vm, slot, double(val) );
+    }
 };
 
 template<>
@@ -324,7 +328,7 @@ decltype( auto ) invokeWithWrenArguments( WrenVM* vm, Function&& f ) {
 template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
-    C* c = static_cast<C*>( wrenGetArgumentForeign( vm, 0 ) );
+    C* c = static_cast<C*>( wrenGetSlotForeign( vm, 0 ) );
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
@@ -332,7 +336,7 @@ decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
 template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
-    const C* c = static_cast<const C*>( wrenGetArgumentForeign( vm, 0 ) );
+    const C* c = static_cast<const C*>( wrenGetSlotForeign( vm, 0 ) );
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 

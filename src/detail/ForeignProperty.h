@@ -11,13 +11,13 @@ namespace detail {
 
 template< typename T, typename U, U T::*Field >
 void propertyGetter( WrenVM* vm ) {
-    const T* obj = (const T*)wrenGetArgumentForeign( vm, 0 );
-    WrenReturnValue< U >::ret( vm, obj->*Field );
+    const T* obj = (const T*)wrenGetSlotForeign( vm, 0 );
+    WrenReturnValue< U >::set( vm, obj->*Field );
 }
 
 template< typename T, typename U, U T::*Field >
 void propertySetter( WrenVM* vm ) {
-    T* obj = (T* )wrenGetArgumentForeign( vm, 0 );
+    T* obj = (T* )wrenGetSlotForeign( vm, 0 );
     obj->*Field = WrenArgument< U >::get( vm, 1 );
 }
 
