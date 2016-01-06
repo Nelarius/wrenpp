@@ -256,6 +256,7 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
     printf( "%s", text );
+    fflush(stdout);
 };
 
 Wren::Wren()
@@ -302,7 +303,7 @@ Result Wren::executeModule( const std::string& mod ) {
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
         return Result::RuntimeError;
     }
-    
+
     return Result::Success;
 }
 

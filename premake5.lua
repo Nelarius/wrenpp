@@ -1,8 +1,14 @@
 
 newoption {
-    trigger     = "wren",
+    trigger     = "include",
     value       = "path",
     description = "The location of wren.h"
+}
+
+newoption {
+    trigger     = "link",
+    value       = "path",
+    description = "The location of the wren static lib"
 }
 
 workspace "wrenly"
@@ -12,26 +18,55 @@ workspace "wrenly"
         location( "build/" .. _ACTION )
     end
     configurations { "Debug", "Release" }
-    
+
+    -- global configuration
+    filter "configurations:Debug"
+        defines { "DEBUG" }
+        flags { "Symbols" }
+
+    filter "configurations:Release"
+        defines { "NDEBUG" }
+        optimize "On"
+
     project "lib"
         kind "StaticLib"
         language "C++"
         targetdir "lib/"
         targetname "wrenly"
-        if _OPTIONS["wren"] then
-            includedirs { _OPTIONS["wren"] }
+        if _OPTIONS["include"] then
+            includedirs { _OPTIONS["include"] }
         end
 
         files { "src/**.cpp", "src/**.h" }
         includedirs { "src" }
 
-        filter "configurations:Debug"
-            defines { "DEBUG" }
-            flags { "Symbols" }
-
-        filter "configurations:Release"
-            defines { "NDEBUG" }
-            optimize "On"
-
         filter "action:gmake"
             buildoptions { "-std=gnu++14" }
+
+    project "test"
+        kind "ConsoleApp"
+        language "C++"
+        targetdir "bin"
+        targetname "test"
+        files { "test/**.cpp", "test/***.h", "test/**.wren" }
+        includedirs { "src", "test" }
+        if _OPTIONS["include"] then
+            includedirs { _OPTIONS["include"] }
+        end
+
+        if _OPTIONS["link"] then
+            libdirs {
+                _OPTIONS["link"]
+            }
+        end
+
+        configuration "vs*"
+            links { "lib", "wren_static" }
+            filter "files:**.wren"
+                buildcommands { "copy ..\\..\\test\\%{file.name} ..\\..\\bin" }
+                buildoutputs { "..\\..\\bin\\%{file.name}" }
+
+        configuration "gmake"
+            filter "files:**.wren"
+                buildcommands { "cp ../../test/%{file.name} ../../bin" }
+                buildoutputs { "../../bin/test/%{file.name}" }

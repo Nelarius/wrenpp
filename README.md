@@ -16,13 +16,13 @@ Currently developing against `wren:master@f9d1e99`.
 
 Checkout the repository using `git clone https://github.com/nelarius/wrenly.git`. The easiest way to build the project is to include contents of the `src/` folder in your project. Just remember to compile with C++14 features turned on!
 
-To build a stand-alone static library, you can use premake to generate your build scripts. Just remember to include the path to `wren.h`:
+To build a stand-alone static library, you can use premake to generate your build scripts. Include the path to `wren.h` and the wren library via the command line:
 
 ```sh
-premake5 vs2015 --wren=<path-to-wren.h>
+premake5 vs2015 --include=<path to wren.h> --link=<path to wren-static>
 ```
 
-The build script will be located in `build/`, and the library in `lib/`. 
+The build script will be located in `build/`, and the library in `lib/`. You don't have to use `--link=<path>` if you don't want to run the tests. In that case, build the `lib` target and leave the `test` target alone.
 
 ## Getting started
 
@@ -34,7 +34,7 @@ Here's how you would initialize an instance of the virtual machine and execute f
 int main() {
   wrenly::Wren wren{};
   wren.executeModule( "hello" );	// refers to the file hello.wren
-  
+
   return 0;
 }
 ```

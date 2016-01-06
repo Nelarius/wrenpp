@@ -28,5 +28,5 @@ wrenly.txt
 build/
 build.sh
 *.cc
-*.wren
-
+bin/
+lib/
