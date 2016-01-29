@@ -332,8 +332,8 @@ Method Wren::method(
     const std::string& sig
 ) {
     wrenEnsureSlots( vm_, 1 );
-    wrenGetVariable( vm_, mod.c_str(), var.c_str(), 1 );
-    WrenValue* variable = wrenGetSlotValue( vm_, 1 );
+    wrenGetVariable( vm_, mod.c_str(), var.c_str(), 0 );
+    WrenValue* variable = wrenGetSlotValue( vm_, 0 );
     WrenValue* handle = wrenMakeCallHandle(vm_, sig.c_str());
     return Method( vm_, variable, handle );
 }

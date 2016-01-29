@@ -28,7 +28,7 @@ template< typename T, typename... Args >
 void allocate( WrenVM* vm ) {
     // this is the function which handles the object construction
     // it should get arguments passed to the constructor
-    void* memory = wrenAllocateForeign( vm, sizeof(T) );
+    void* memory = wrenSetSlotNewForeign( vm, 0, 0, sizeof(T) );
     construct< T, Args... >( vm, memory, std::make_index_sequence< ParameterPackTraits< Args... >::size > {} );
 }
 
