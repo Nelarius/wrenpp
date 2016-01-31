@@ -4,20 +4,13 @@
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp
 #include <cstdio>
+#include <cassert>
 
 namespace {
 
 std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
 std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
 
-/*
-    * This function is going to use a global pointer to a bound method tree.
-    *
-    * When the correspodning wren vm executes a module, it has to bind its instances
-    * of the bound method/class tree to the global variable.
-    *
-    * There is no way to avoid this static/global function
-    * */
 WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
                                 const char* module,
                                 const char* className,
@@ -250,6 +243,7 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
         return NULL;
     }
     char* buffer = (char*) malloc( source.size() );
+    assert(buffer != nullptr);
     memcpy( buffer, source.c_str(), source.size() );
     return buffer;
 };
