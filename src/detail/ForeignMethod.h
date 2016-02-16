@@ -308,8 +308,15 @@ struct WrenReturnValue< bool > {
 
 template<>
 struct WrenReturnValue< std::string > {
-    static void ret( WrenVM* vm, std::string val ) {
+    static void set( WrenVM* vm, std::string val ) {
         wrenSetSlotString( vm, 0, val.c_str() );
+    }
+};
+
+template<>
+struct WrenReturnValue< const char* > {
+    static void set( WrenVM* vm, const char* val ) {
+        wrenSetSlotString( vm, 0, val );
     }
 };
 
