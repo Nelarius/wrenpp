@@ -54,14 +54,22 @@ workspace "wrenly"
             includedirs { _OPTIONS["include"] }
         end
 
-        if _OPTIONS["link"] then
-            libdirs {
-                _OPTIONS["link"]
-            }
-        end
-
         configuration "vs*"
-            links { "lib", "wren_static" }
+            if _OPTIONS["link"] then
+                filter "configurations:Debug"
+                    libdirs {
+                        _OPTIONS["link"] .. "/Debug"
+                    }
+                    links { "lib", "wren_static_d" }
+                    project "test"
+                filter "configurations:Release"
+                    libdirs {
+                        _OPTIONS["link"] .. "/Release"
+                    }
+                    links { "lib", "wren_static" }
+                    project "test"
+            end
+            project "test"
             filter "files:**.wren"
                 buildcommands { "copy ..\\..\\test\\%{file.name} ..\\..\\bin" }
                 buildoutputs { "..\\..\\bin\\%{file.name}" }
