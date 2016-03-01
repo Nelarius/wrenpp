@@ -1,5 +1,5 @@
 
-# wrenly
+# Wren++
 
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
@@ -370,9 +370,37 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 };
 ```
 
-### Customize heap allocation
+### Customize heap allocation & garbage collection
 
-**TODO**
+You can use your own allocation/free functions assigning your them to the `Wren::allocateFn` and `Wren::freeFn` callback functions. By default, they are just wrappers around the system malloc/free:
+
+```cpp
+Wren::allocateFn = []( std::size_t bytes ) -> void* {
+  return malloc( bytes );
+};
+
+Wren::freeFn = []( void* memory ) -> void {
+  free(memory);
+};
+```
+
+These functions are used by the Wren VM itself to allocate a block of memory to use. These bindings allocate an additional (small) block of memory in order to store foreign objects. Here are the other variables which control how the heap is used.
+
+The initial heap size is the number of bytes Wren will allocate before triggering the first garbage collection. By default, it's 10 MiB.
+
+`wrenly::Wren::initialHeapSize = 0xA00000u;`
+
+The stack size is the actual block size in bytes that this binding code will allocate for the VM heap. It should be larger than the VM heap size. By making the block larger than the initial heap size, we can let the wren VM simply grow within the same block with no need for an actual reallocation. By default, the value is set to 20 MiB.
+
+`wrenly::Wren::stackSize = 0x1400000u;`
+
+The heap size in bytes, below which collections will stop. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage of heap growth, explained next) and thus frequent collections. By default, the minimum heap size is 1 MiB.
+
+`wrenly::Wren::minHeapSize = 0x100000u;`
+
+After a collection occurs, Wren will allow the heap to grow to (100 + heapGrowthPercent) % of the current heap size before the next collection occurs. By default, the heap growth percentage is 50 %.
+
+`wrenly::Wren::heapGrowthPercent = 50;`
 
 ## TODO:
 

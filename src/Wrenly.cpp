@@ -2,7 +2,7 @@
 #include "Wrenly.h"
 #include "File.h"
 #include <cstdlib>  // for malloc
-#include <cstring>  // for strcmp
+#include <cstring>  // for strcmp, memcpy
 #include <cstdio>
 #include <cassert>
 
@@ -39,6 +39,20 @@ char* loadModuleFnWrapper( WrenVM* vm, const char* mod ) {
 
 void writeFnWrapper( WrenVM* vm, const char* text ) {
     wrenly::Wren::writeFn( vm, text );
+}
+
+void* reallocateFnWrapper(void* memory, std::size_t newSize) {
+    // this is where the memory manager should be placed
+    if (!memory && newSize) {
+        return wrenly::Wren::allocateFn(newSize);
+    }
+    if (memory && newSize) {
+        return realloc(memory, newSize);
+    }
+    if (memory && newSize == 0u) {
+        wrenly::Wren::freeFn(memory);
+        return NULL;
+    }
 }
 
 }
@@ -253,15 +267,36 @@ WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
     fflush(stdout);
 };
 
+AllocateFn Wren::allocateFn = [](std::size_t bytes) -> void* {
+    printf("Allocating %u bytes\n", bytes);
+    return malloc(bytes);
+};
+
+FreeFn Wren::freeFn = [](void* memory) -> void {
+    free(memory);
+};
+
+std::size_t Wren::initialHeapSize = 0xA00000u;
+
+std::size_t Wren::stackSize = 0x1400000u;
+
+std::size_t Wren::minHeapSize = 0x100000u;
+
+int Wren::heapGrowthPercent = 50;
+
 Wren::Wren()
 :   vm_( nullptr ) {
-    
+
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
-    configuration.bindForeignMethodFn = foreignMethodProvider;
-    configuration.loadModuleFn = loadModuleFnWrapper;
-    configuration.bindForeignClassFn = foreignClassProvider;
-    configuration.writeFn = writeFnWrapper;
+    configuration.reallocateFn = reallocateFnWrapper;
+    configuration.bindForeignMethodFn = ForeignMethodProvider;
+    configuration.loadModuleFn = LoadModuleFnWrapper;
+    configuration.bindForeignClassFn = ForeignClassProvider;
+    configuration.writeFn = WriteFnWrapper;
+    configuration.initialHeapSize = initialHeapSize;
+    configuration.minHeapSize = minHeapSize;
+    configuration.heapGrowthPercent = heapGrowthPercent;
     vm_ = wrenNewVM( &configuration );
 }
 

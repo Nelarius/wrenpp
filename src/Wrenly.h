@@ -18,9 +18,11 @@ extern "C" {
 
 namespace wrenly {
 
-using FunctionPtr = WrenForeignMethodFn;
-using LoadModuleFn = std::function< char*( const char* ) >;
-using WriteFn = std::function< void( WrenVM*, const char* ) >;
+using FunctionPtr   = WrenForeignMethodFn;
+using LoadModuleFn  = std::function< char*( const char* ) >;
+using WriteFn       = std::function< void( WrenVM*, const char* ) >;
+using AllocateFn    = std::function<void*(std::size_t)>;
+using FreeFn        = std::function<void(void*)>;
 
 namespace detail {
     void registerFunction(
@@ -253,7 +255,13 @@ class Wren {
         );
 
         static LoadModuleFn loadModuleFn;
-        static WriteFn writeFn;
+        static WriteFn      writeFn;
+        static AllocateFn   allocateFn;
+        static FreeFn       freeFn;
+        static std::size_t  initialHeapSize;
+        static std::size_t  stackSize;
+        static std::size_t  minHeapSize;
+        static int          heapGrowthPercent;
 
     private:
         friend class ModuleContext;
