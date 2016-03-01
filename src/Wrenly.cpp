@@ -11,7 +11,7 @@ namespace {
 std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
 std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
 
-WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
+WrenForeignMethodFn foreignMethodProvider( WrenVM* vm,
                                 const char* module,
                                 const char* className,
                                 bool isStatic,
@@ -24,7 +24,7 @@ WrenForeignMethodFn ForeignMethodProvider( WrenVM* vm,
     return it->second;
 }
 
-WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const char* c ) {
+WrenForeignClassMethods foreignClassProvider( WrenVM* vm, const char* m, const char* c ) {
     auto it = boundForeignClasses.find( wrenly::detail::hashClassSignature( m, c ) );
     if ( it == boundForeignClasses.end() ) {
         return WrenForeignClassMethods{ nullptr, nullptr };
@@ -33,11 +33,11 @@ WrenForeignClassMethods ForeignClassProvider( WrenVM* vm, const char* m, const c
     return it->second;
 }
 
-char* LoadModuleFnWrapper( WrenVM* vm, const char* mod ) {
+char* loadModuleFnWrapper( WrenVM* vm, const char* mod ) {
     return wrenly::Wren::loadModuleFn( mod );
 }
 
-void WriteFnWrapper( WrenVM* vm, const char* text ) {
+void writeFnWrapper( WrenVM* vm, const char* text ) {
     wrenly::Wren::writeFn( vm, text );
 }
 
@@ -258,10 +258,10 @@ Wren::Wren()
     
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
-    configuration.bindForeignMethodFn = ForeignMethodProvider;
-    configuration.loadModuleFn = LoadModuleFnWrapper;
-    configuration.bindForeignClassFn = ForeignClassProvider;
-    configuration.writeFn = WriteFnWrapper;
+    configuration.bindForeignMethodFn = foreignMethodProvider;
+    configuration.loadModuleFn = loadModuleFnWrapper;
+    configuration.bindForeignClassFn = foreignClassProvider;
+    configuration.writeFn = writeFnWrapper;
     vm_ = wrenNewVM( &configuration );
 }
 
