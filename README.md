@@ -354,11 +354,15 @@ Wren::loadModuleFn = []( const char* mod ) -> char* {
 
 ## TODO:
 
-* Another major shortcoming is non-ability to store references to instances.
-* Return registered foreign classes by value.
+* Assert when an object pointer is misaligned
+* Return registered foreign classes by value, and by reference
+* Add function to get the value returned by the wren method.
+  * A Value class is needed. Has template methods to get the actual value on the Wren stack.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
 * I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
   * Ideally there would be a wrapper for WrenValue, which might be null.
 * There needs to be better error handling for not finding a method.
   * Is Wren actually responsible for crashing the program when a method is not found?
+* Does Wren actually crash the program when an invalid operator is used on a class instance?
+* Make Wren::collectGarbage less verbodes

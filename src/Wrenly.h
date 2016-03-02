@@ -14,7 +14,6 @@ extern "C" {
 #include <cstdint>
 #include <cstdlib>      // for std::size_t
 #include <unordered_map>
-#include <set>
 
 namespace wrenly {
 
