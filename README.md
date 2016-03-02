@@ -397,6 +397,10 @@ After a collection occurs, Wren will allow the heap to grow to (100 + heapGrowth
 
 `wrenly::Wren::heapGrowthPercent = 50;`
 
+Wrenly uses the provided allocation/free functions as rarely as possible. They are used to allocate one big block of memory at a time. The `chunkSize` parameter specifies how much memory is reserved at a time. The default value for the block size is 5 MiB.
+
+`wrenly::Wren::chunkSize = 0x500000u;`
+
 ## TODO:
 
 * Assert when an object pointer is misaligned

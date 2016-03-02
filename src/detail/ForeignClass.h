@@ -40,7 +40,7 @@ void finalize( void* bytes ) {
     objWrapper->~ForeignObject();
 }
 
-}   // detail
-}   // wrenly
+}
+}
 
 #endif  // FOREIGNCLASS_H_INCLUDED

@@ -16,7 +16,18 @@ extern "C" {
 #include <cstdlib>      // for std::size_t
 #include <unordered_map>
 
+#include <limits>
+
 namespace wrenly {
+
+struct AllocStats {
+    std::size_t largestByte{ std::numeric_limits<std::size_t>::min() };
+    std::size_t smallestByte{std::numeric_limits<std::size_t>::max() };
+    std::size_t count{ 0u };
+    std::size_t accumulation{ 0u };
+};
+
+extern AllocStats stats;
 
 using FunctionPtr   = WrenForeignMethodFn;
 using LoadModuleFn  = std::function< char*( const char* ) >;
@@ -261,6 +272,7 @@ class Wren {
         static std::size_t  initialHeapSize;
         static std::size_t  minHeapSize;
         static int          heapGrowthPercent;
+        static std::size_t  chunkSize;
 
     private:
         friend class ModuleContext;

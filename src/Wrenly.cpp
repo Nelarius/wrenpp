@@ -1,10 +1,15 @@
 
 #include "Wrenly.h"
 #include "File.h"
+#include "detail/ChunkAllocator.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp, memcpy
 #include <cstdio>
 #include <cassert>
+
+namespace wrenly {
+AllocStats stats{};
+}
 
 namespace {
 
@@ -41,18 +46,20 @@ void writeFnWrapper( WrenVM* vm, const char* text ) {
     wrenly::Wren::writeFn( vm, text );
 }
 
+// memory management
+// this class contains an std::vector in its private state
+wrenly::detail::ChunkAllocator allocator{};
+
 void* reallocateFnWrapper(void* memory, std::size_t newSize) {
-    // this is where the memory manager should be placed
-    if (!memory && newSize) {
-        return wrenly::Wren::allocateFn(newSize);
+    if (newSize > wrenly::stats.largestByte) {
+        wrenly::stats.largestByte = newSize;
     }
-    if (memory && newSize) {
-        return realloc(memory, newSize);
+    else if (newSize < wrenly::stats.smallestByte) {
+        wrenly::stats.smallestByte = newSize;
     }
-    if (memory && newSize == 0u) {
-        wrenly::Wren::freeFn(memory);
-        return NULL;
-    }
+    wrenly::stats.count++;
+    wrenly::stats.accumulation += newSize;
+    return realloc(memory, newSize);
 }
 
 }
@@ -282,12 +289,14 @@ std::size_t Wren::minHeapSize = 0x100000u;
 
 int Wren::heapGrowthPercent = 50;
 
+std::size_t Wren::chunkSize = 0x500000u;;
+
 Wren::Wren()
 :   vm_( nullptr ) {
 
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
-    //configuration.reallocateFn = reallocateFnWrapper;
+    configuration.reallocateFn = reallocateFnWrapper;
     configuration.bindForeignMethodFn = foreignMethodProvider;
     configuration.loadModuleFn = loadModuleFnWrapper;
     configuration.bindForeignClassFn = foreignClassProvider;
@@ -362,4 +371,4 @@ Method Wren::method(
     return Method( vm_, variable, handle );
 }
 
-}   // wrenly
+}
