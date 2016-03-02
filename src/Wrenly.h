@@ -259,7 +259,6 @@ class Wren {
         static AllocateFn   allocateFn;
         static FreeFn       freeFn;
         static std::size_t  initialHeapSize;
-        static std::size_t  stackSize;
         static std::size_t  minHeapSize;
         static int          heapGrowthPercent;
 

@@ -1,5 +1,5 @@
 
-# Wren++
+# wren++
 
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
@@ -14,8 +14,7 @@ Current defincies:
 - Wrenly has no concept of const-ness. When you return a const pointer to one of your instances from a bound function, the resulting foreign object in Wren will happily call non-const methods -- yikes!
 - Wren access from C++ is rather minimal
 
-Currently developing against `wren:master@139b447`.
-
+Currently developing against `wren:master@139b447`. This project is being developed at the whim of my [game engine](https://github.com/nelarius/playground) project.
 ## Build
 
 Clone the repository using `git clone https://github.com/nelarius/wrenly.git`. The easiest way to build the project is to include the contents of the `src/` folder in your project, since there's so little code. Just remember to compile with C++14 features turned on!
@@ -361,12 +360,12 @@ By default, `Wren::loadModuleFn` has the following value.
 
 ```cpp
 Wren::loadModuleFn = []( const char* mod ) -> char* {
-    std::string path( mod );
-    path += ".wren";
-    auto source = wrenly::FileToString( path );
-    char* buffer = (char*) malloc( source.size() );
-    memcpy( buffer, source.c_str(), source.size() );
-    return buffer;
+  std::string path( mod );
+  path += ".wren";
+  auto source = wrenly::FileToString( path );
+  char* buffer = (char*) malloc( source.size() );
+  memcpy( buffer, source.c_str(), source.size() );
+  return buffer;
 };
 ```
 
@@ -389,10 +388,6 @@ These functions are used by the Wren VM itself to allocate a block of memory to 
 The initial heap size is the number of bytes Wren will allocate before triggering the first garbage collection. By default, it's 10 MiB.
 
 `wrenly::Wren::initialHeapSize = 0xA00000u;`
-
-The stack size is the actual block size in bytes that this binding code will allocate for the VM heap. It should be larger than the VM heap size. By making the block larger than the initial heap size, we can let the wren VM simply grow within the same block with no need for an actual reallocation. By default, the value is set to 20 MiB.
-
-`wrenly::Wren::stackSize = 0x1400000u;`
 
 The heap size in bytes, below which collections will stop. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage of heap growth, explained next) and thus frequent collections. By default, the minimum heap size is 1 MiB.
 

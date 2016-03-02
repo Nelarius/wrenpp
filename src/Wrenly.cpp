@@ -278,8 +278,6 @@ FreeFn Wren::freeFn = [](void* memory) -> void {
 
 std::size_t Wren::initialHeapSize = 0xA00000u;
 
-std::size_t Wren::stackSize = 0x1400000u;
-
 std::size_t Wren::minHeapSize = 0x100000u;
 
 int Wren::heapGrowthPercent = 50;
@@ -289,14 +287,11 @@ Wren::Wren()
 
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
-    configuration.reallocateFn = reallocateFnWrapper;
-    configuration.bindForeignMethodFn = ForeignMethodProvider;
-    configuration.loadModuleFn = LoadModuleFnWrapper;
-    configuration.bindForeignClassFn = ForeignClassProvider;
-    configuration.writeFn = WriteFnWrapper;
-    configuration.initialHeapSize = initialHeapSize;
-    configuration.minHeapSize = minHeapSize;
-    configuration.heapGrowthPercent = heapGrowthPercent;
+    //configuration.reallocateFn = reallocateFnWrapper;
+    configuration.bindForeignMethodFn = foreignMethodProvider;
+    configuration.loadModuleFn = loadModuleFnWrapper;
+    configuration.bindForeignClassFn = foreignClassProvider;
+    configuration.writeFn = writeFnWrapper;
     vm_ = wrenNewVM( &configuration );
 }
 
