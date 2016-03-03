@@ -20,7 +20,7 @@ uint32_t getTypeIdImpl() {
 
 template<typename T>
 uint32_t getTypeId() {
-    return getTypeId<std::decay_t<T>>();
+    return getTypeIdImpl<std::decay_t<T>>();
 }
 
 }
