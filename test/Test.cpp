@@ -11,6 +11,8 @@ struct Vec3 {
     Vec3(float x, float y, float z)
         : x{ x }, y{ y }, z{ z } {}
 
+    Vec3(const Vec3&) = default;
+
     float norm() const {
         return std::sqrt(x*x + y*y + z*z);
     }
@@ -36,10 +38,7 @@ void plus(WrenVM* vm) {
     Vec3* lhs = wrenly::getForeignSlotPtr<Vec3, 0>(vm);
     Vec3* rhs = wrenly::getForeignSlotPtr<Vec3, 1>(vm);
     Vec3 res = lhs->plus(*rhs);
-    wrenGetVariable(vm, "vector", "Vec3", 0);
-    void* data = wrenSetSlotNewForeign(vm, 0, 0, sizeof(wrenly::detail::ForeignObjectValue<Vec3>));
-    wrenly::detail::ForeignObjectValue<Vec3>* obj = new (data) wrenly::detail::ForeignObjectValue<Vec3>();
-    std::memcpy(obj->objectPtr(), static_cast<void*>(&res), sizeof(Vec3));
+    wrenly::setForeignSlotValue(vm, res);   // must be copyable
 }
 
 void testMethodCall() {

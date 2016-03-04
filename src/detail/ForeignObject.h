@@ -106,7 +106,7 @@ public:
         // get the foreign class value here somehow, and stick it in slot Slot
         wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), Slot);
         ForeignObjectValue<T>* val = new (wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectValue<T>))) ForeignObjectValue<T>();
-        new (val->objectPtr()) T{ std::forward<Args>(args)... };
+        new (val->objectPtr()) T{ std::forward<Args>(arg)... };
     }
 
 private:

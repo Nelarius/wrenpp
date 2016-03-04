@@ -350,6 +350,11 @@ T* getForeignSlotPtr(WrenVM* vm) {
     return static_cast<T*>(obj->objectPtr());
 }
 
+template<typename T>
+void setForeignSlotValue(WrenVM* vm, const T& obj) {
+    detail::ForeignObjectValue<T>::setInSlot<0>(vm, obj);
+}
+
 }   // wrenly
 
 #endif  // WRENLY_H_INCLUDED
