@@ -1,17 +1,67 @@
 #ifndef FOREIGNOBJECT_H_INCLUDED
 #define FOREIGNOBJECT_H_INCLUDED
 
+#include "detail/TypeId.h"
 extern "C" {
 #include <wren.h>
 }
-#include <type_traits>
 #include <cstdint>
 #include <cstdlib>
 #include <cassert>
+#include <vector>
+#include <type_traits>
 
 namespace wrenly {
 namespace detail {
 
+inline std::vector<std::string>& classNameStorage() {
+    static std::vector<std::string> classNames{};
+    return classNames;
+}
+
+inline std::vector<std::string>& moduleNameStorage() {
+    static std::vector<std::string> moduleNames{};
+    return moduleNames;
+}
+
+inline void storeClassName(std::uint32_t index, const std::string& className) {
+    assert(classNameStorage().size() == index);
+    classNameStorage().push_back(className);
+}
+
+inline void storeModuleName(std::uint32_t index, const std::string& moduleName) {
+    assert(moduleNameStorage().size() == index);
+    moduleNameStorage().push_back(moduleName);
+}
+
+template<typename T>
+void bindTypeToClassName(const std::string& className) {
+    std::uint32_t id = getTypeId<T>();
+    storeClassName(id, className);
+}
+
+template<typename T>
+void bindTypeToModuleName(const std::string& moduleName) {
+    std::uint32_t id = getTypeId<T>();
+    storeModuleName(id, moduleName);
+}
+
+template<typename T>
+const char* getWrenClassString() {
+    std::uint32_t id = getTypeId<T>();
+    return classNameStorage()[id].c_str();
+}
+
+template<typename T>
+const char* getWrenModuleString() {
+    std::uint32_t id = getTypeId<T>();
+    return moduleNameStorage()[id].c_str();
+}
+
+/*
+ * The interface for getting the object pointer. The actual C++ object may lie within the Wren
+ * object, or may live in C++.
+ */
 class IForeignObject {
 public:
     virtual void* objectPtr() = 0;
@@ -50,11 +100,12 @@ public:
     }
 
     template<int Slot, typename... Args>
-    static void setInSlot(WrenVM* vm, const T& obj) {
+    static void setInSlot(WrenVM* vm, Args... arg) {
         wrenEnsureSlots(vm, Slot + 1);
         // get the foreign class value here somehow, and stick it in slot Slot
+        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), Slot);
         ForeignObjectValue<T>* val = new (wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectValue<T>))) ForeignObjectValue<T>();
-        new (val->objectPtr()) T{ std::forward<Args>()... };
+        new (val->objectPtr()) T{ std::forward<Args>(args)... };
     }
 
 private:
@@ -67,9 +118,10 @@ private:
  * Wraps a pointer to a class object. The lifetimes of the pointed-to objects are managed by the 
  * host program.
  */
+template<typename T>
 class ForeignObjectPtr : public IForeignObject {
 public:
-    explicit ForeignObjectPtr(void* object)
+    explicit ForeignObjectPtr(T* object)
         : object_{ object } {}
     virtual ~ForeignObjectPtr() = default;
 
@@ -78,7 +130,7 @@ public:
     }
 
     // TODO: ensure that the pointer is not const
-    template<int Slot, typename T>
+    template<int Slot>
     static void setInSlot(WrenVM* vm, T* obj) {
         wrenEnsureSlots(vm, Slot + 1);
         void* bytes = wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectPtr));
@@ -86,7 +138,7 @@ public:
     }
 
 private:
-    void* object_;
+    T* object_;
 };
 
 }

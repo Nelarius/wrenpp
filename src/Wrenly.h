@@ -3,14 +3,15 @@
 
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
+#include "detail/ForeignMethod.h"
+#include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
 extern "C" {
     #include <wren.h>
 }
-#include <sstream>
 #include <string>
-#include <vector>
 #include <functional>   // for std::hash
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>      // for std::size_t
 #include <unordered_map>
@@ -276,10 +277,15 @@ void Method::operator()( Args... args ) const {
 }
 
 template< typename T, typename... Args >
-RegisteredClassContext<T> ModuleContext::bindClass( std::string c ) {
+RegisteredClassContext<T> ModuleContext::bindClass( std::string className ) {
     WrenForeignClassMethods wrapper{ &detail::allocate< T, Args... >, &detail::finalize< T > };
-    detail::registerClass( name_, c, wrapper );
-    return RegisteredClassContext<T>( c, this );
+    detail::registerClass( name_, className, wrapper );
+    // store the name and module
+    assert(detail::classNameStorage().size() == detail::getTypeId<T>());
+    assert(detail::moduleNameStorage().size() == detail::getTypeId<T>());
+    detail::bindTypeToModuleName<T>(name_);
+    detail::bindTypeToClassName<T>(className);
+    return RegisteredClassContext<T>( className, this );
 }
 
 template< typename F, F f >
