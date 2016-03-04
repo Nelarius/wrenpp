@@ -287,7 +287,7 @@ WrenVM* Wren::vm() {
 }
 
 Result Wren::executeModule( const std::string& mod ) {
-    std::string source( loadModuleFn( mod.c_str() ) );
+    const std::string source( loadModuleFn( mod.c_str() ) );
     auto res = wrenInterpret( vm_, source.c_str() );
     
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {

@@ -10,5 +10,5 @@ foreign class Vec3 {
     foreign z=( rhs )
     foreign norm()
     foreign dot( rhs )
-    //foreign plus( rhs )
+    foreign plus( rhs )
 }

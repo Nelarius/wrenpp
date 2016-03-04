@@ -62,8 +62,9 @@ const char* getWrenModuleString() {
  * The interface for getting the object pointer. The actual C++ object may lie within the Wren
  * object, or may live in C++.
  */
-class IForeignObject {
+class ForeignObject {
 public:
+    virtual ~ForeignObject() = default;
     virtual void* objectPtr() = 0;
 };
 
@@ -71,7 +72,7 @@ public:
  * This wraps a class object by value. The lifetimes of these objects are managed in Wren.
  */
 template<typename T>
-class ForeignObjectValue : public IForeignObject {
+class ForeignObjectValue : public ForeignObject {
 public:
     ForeignObjectValue() {
         if (Padding > 0u) {
@@ -119,7 +120,7 @@ private:
  * host program.
  */
 template<typename T>
-class ForeignObjectPtr : public IForeignObject {
+class ForeignObjectPtr : public ForeignObject {
 public:
     explicit ForeignObjectPtr(T* object)
         : object_{ object } {}

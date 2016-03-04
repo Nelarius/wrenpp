@@ -9,7 +9,6 @@ extern "C" {
 #include <type_traits>
 #include <functional>   // for std::hash
 #include <utility>  // for index_sequence
-#include <iostream>
 #include <cstdlib>
 
 namespace wrenly {
@@ -89,28 +88,32 @@ struct WrenArgument {
 template < typename T >
 struct WrenArgument< T& > {
     static T& get( WrenVM* vm, int slot ) {
-        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
+        ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
+        return *static_cast< T* >(obj->objectPtr());
     }
 };
 
 template< typename T >
 struct WrenArgument< const T& > {
     static const T& get( WrenVM* vm, int slot ) {
-        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
+        ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
+        return *static_cast< T* >(obj->objectPtr());
     }
 };
 
 template< typename T >
 struct WrenArgument< T* > {
-    static T* get( WrenVM* vm, int slot ) {
-        return static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
+    static T* get(WrenVM* vm, int slot) {
+        ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, slot));
+        return static_cast<T*>(obj->objectPtr());
     }
 };
 
 template< typename T >
 struct WrenArgument< const T* > {
     static const T* get( WrenVM* vm, int slot ) {
-        return static_cast< const T* >( wrenGetSlotForeign( vm, slot ) );
+        ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
+        return static_cast< const T* >(obj->objectPtr());
     }
 };
 
@@ -335,7 +338,8 @@ decltype( auto ) invokeWithWrenArguments( WrenVM* vm, Function&& f ) {
 template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
-    C* c = static_cast<C*>( wrenGetSlotForeign( vm, 0 ) );
+    ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
+    C* obj = static_cast<C*>(objWrapper->objectPtr());
     return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
@@ -343,8 +347,9 @@ decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
 template< typename R, typename C, typename... Args, std::size_t... index >
 decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< decltype(f) >;
-    const C* c = static_cast<const C*>( wrenGetSlotForeign( vm, 0 ) );
-    return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+    ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
+    const C* obj = static_cast<const C*>(objWrapper->objectPtr());
+    return (obj->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename R, typename C, typename... Args >

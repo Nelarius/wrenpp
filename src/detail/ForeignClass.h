@@ -2,10 +2,12 @@
 #define FOREIGNCLASS_H_INCLUDED
 
 #include "detail/ForeignMethod.h"
-#include <type_traits>
+#include "detail/ForeignObject.h"
+#include <cassert>
+#include <cstdint>
 #include <functional>   // for std::hash
 #include <utility>  // for index_sequence
-#include <iostream>
+#include <type_traits>
 
 namespace wrenly {
 namespace detail {
@@ -21,21 +23,21 @@ inline std::size_t hashClassSignature( const char* module, const char* className
 template< typename T, typename... Args, std::size_t... index >
 void construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
     using Traits = ParameterPackTraits< Args... >;
-    new ( memory ) T{ WrenArgument< typename Traits::template ParameterType<index> >::get( vm, index + 1 )... };
+    ForeignObjectValue<T>* obj = new (memory) ForeignObjectValue<T>{};
+    new (obj->objectPtr()) T{ WrenArgument< typename Traits::template ParameterType<index> >::get(vm, index + 1)... };
 }
 
 template< typename T, typename... Args >
 void allocate( WrenVM* vm ) {
-    // this is the function which handles the object construction
-    // it should get arguments passed to the constructor
-    void* memory = wrenSetSlotNewForeign( vm, 0, 0, sizeof(T) );
+    void* memory = wrenSetSlotNewForeign(vm, 0, 0, sizeof(ForeignObjectValue<T>));
     construct< T, Args... >( vm, memory, std::make_index_sequence< ParameterPackTraits< Args... >::size > {} );
 }
 
 template< typename T >
 void finalize( void* bytes ) {
-    T* instance = static_cast<T*>( bytes );
-    instance->~T();
+    // might be a foreign value OR ptr
+    ForeignObject* objWrapper = static_cast<ForeignObject*>(bytes);
+    objWrapper->~ForeignObject();
 }
 
 }   // detail

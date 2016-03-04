@@ -2,6 +2,7 @@
 #include "Wrenly.h"
 #include <cmath>
 #include <cstdlib>
+#include <cstring>
 
 // a small class to test class & method binding with
 struct Vec3 {
@@ -30,6 +31,16 @@ struct Vec3 {
         return Vec3{ x + rhs.x, y + rhs.y, z + rhs.z };
     }
 };
+
+void plus(WrenVM* vm) {
+    wrenly::detail::ForeignObject* lhs = static_cast<wrenly::detail::ForeignObject*>(wrenGetSlotForeign(vm, 0));
+    wrenly::detail::ForeignObject* rhs = static_cast<wrenly::detail::ForeignObject*>(wrenGetSlotForeign(vm, 1));
+    Vec3 res = static_cast<Vec3*>(lhs->objectPtr())->plus(*static_cast<Vec3*>(rhs->objectPtr()));
+    wrenGetVariable(vm, "vector", "Vec3", 0);
+    void* data = wrenSetSlotNewForeign(vm, 0, 0, sizeof(wrenly::detail::ForeignObjectValue<Vec3>));
+    wrenly::detail::ForeignObjectValue<Vec3>* obj = new (data) wrenly::detail::ForeignObjectValue<Vec3>();
+    std::memcpy(obj->objectPtr(), static_cast<void*>(&res), sizeof(Vec3));
+}
 
 void testMethodCall() {
     wrenly::Wren wren{};
@@ -61,7 +72,7 @@ void testClassMethods() {
             .bindSetter< decltype(Vec3::z), &Vec3::z >(false, "z=(_)")
             .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
             .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
-            //.bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
+            .bindCFunction(false, "plus(_)", plus)
         .endClass()
     .endModule();
 
@@ -72,11 +83,11 @@ void testClassMethods() {
 
 int main() {
 
-    printf("Calling Wren code from C++...\n\n");
+    printf("\nCalling Wren code from C++...\n\n");
 
     testMethodCall();
 
-    printf("Testing method calls...\n\n");
+    printf("\nTesting method calls...\n\n");
 
     testClassMethods();
 
