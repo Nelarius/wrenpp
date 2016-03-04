@@ -22,6 +22,16 @@ class Assert {
         }
     }
 
+    static isNear(a, b, epsilon) {
+        var diff = a - b
+        if (diff < 0.0) {
+            diff = -diff
+        }
+        if (diff > epsilon) {
+            abortCurrentFiber("isNear, values are %(a) and %(b)")
+        }
+    }
+
     static notEqual(a, b ) {
         if (a == b) {
             abortCurrentFiber("notEqual, values are %(a) and %(b)")
