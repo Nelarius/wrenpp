@@ -340,7 +340,7 @@ decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
     using Traits = FunctionTraits< decltype(f) >;
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
     C* obj = static_cast<C*>(objWrapper->objectPtr());
-    return (c->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+    return (obj->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 // const variant
