@@ -81,7 +81,8 @@ struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( Ar
 template< typename T >
 struct WrenArgument {
     static T get( WrenVM* vm, int slot ) {
-        return *static_cast< T* >( wrenGetSlotForeign( vm, slot ) );
+        ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, slot));
+        return *static_cast< T* >(obj->objectPtr());
     }
 };
 
