@@ -33,9 +33,9 @@ struct Vec3 {
 };
 
 void plus(WrenVM* vm) {
-    wrenly::detail::ForeignObject* lhs = static_cast<wrenly::detail::ForeignObject*>(wrenGetSlotForeign(vm, 0));
-    wrenly::detail::ForeignObject* rhs = static_cast<wrenly::detail::ForeignObject*>(wrenGetSlotForeign(vm, 1));
-    Vec3 res = static_cast<Vec3*>(lhs->objectPtr())->plus(*static_cast<Vec3*>(rhs->objectPtr()));
+    Vec3* lhs = wrenly::getForeignSlotPtr<Vec3, 0>(vm);
+    Vec3* rhs = wrenly::getForeignSlotPtr<Vec3, 1>(vm);
+    Vec3 res = lhs->plus(*rhs);
     wrenGetVariable(vm, "vector", "Vec3", 0);
     void* data = wrenSetSlotNewForeign(vm, 0, 0, sizeof(wrenly::detail::ForeignObjectValue<Vec3>));
     wrenly::detail::ForeignObjectValue<Vec3>* obj = new (data) wrenly::detail::ForeignObjectValue<Vec3>();
