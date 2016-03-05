@@ -2,6 +2,10 @@ import "test" for TestRunner
 import "assert" for Assert
 import "vector" for Vec3
 
+class VectorReference {
+    foreign static get()
+}
+
 var testRunner = TestRunner.new()
 
 var v1 = Vec3.new(1.0, 3.0, 5.0)
@@ -31,4 +35,16 @@ testRunner.test("Number should be 3.0", Fn.new {
 
 testRunner.test("Number should be 11.0", Fn.new {
     Assert.isNear(v3.z, 11.0, epsilon)
+})
+
+var v4 = VectorReference.get()
+
+testRunner.test("Number should be 2.0", Fn.new {
+    Assert.isEqual(v4.x, 2.0)
+})
+
+VectorReference.get().x = 10.0
+
+testRunner.test("Number should be 10.0", Fn.new {
+    Assert.isEqual(v4.x, 10.0)
 })

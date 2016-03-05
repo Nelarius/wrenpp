@@ -41,6 +41,11 @@ void plus(WrenVM* vm) {
     wrenly::setForeignSlotValue(vm, res);   // must be copyable
 }
 
+void returnVectorReference(WrenVM* vm) {
+    static Vec3 v{ 2.0, 1.0, 1.0 };
+    wrenly::setForeignSlotPtr(vm, &v);
+}
+
 void testMethodCall() {
     wrenly::Wren wren{};
 
@@ -72,6 +77,11 @@ void testClassMethods() {
             .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
             .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
             .bindCFunction(false, "plus(_)", plus)
+        .endClass()
+    .endModule();
+    wrenly::beginModule("main")
+        .beginClass("VectorReference")
+            .bindCFunction(true, "get()", returnVectorReference)
         .endClass()
     .endModule();
 

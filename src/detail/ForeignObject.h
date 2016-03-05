@@ -130,12 +130,12 @@ public:
         return object_;
     }
 
-    // TODO: ensure that the pointer is not const
     template<int Slot>
     static void setInSlot(WrenVM* vm, T* obj) {
         wrenEnsureSlots(vm, Slot + 1);
-        void* bytes = wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectPtr));
-        new (bytes) ForeignObjectPtr{ obj };
+        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), Slot);
+        void* bytes = wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectPtr<T>));
+        new (bytes) ForeignObjectPtr<T>{ obj };
     }
 
 private:
