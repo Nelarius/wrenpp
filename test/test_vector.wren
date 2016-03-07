@@ -2,8 +2,12 @@ import "test" for TestRunner
 import "assert" for Assert
 import "vector" for Vec3
 
-class VectorReference {
-    foreign static get()
+class VectorReferences {
+    foreign static getCFunction()
+    foreign static getPtr()
+    foreign static getRef()
+    foreign static getConstPtr()
+    foreign static getConstRef()
 }
 
 var testRunner = TestRunner.new()
@@ -37,14 +41,31 @@ testRunner.test("Number should be 11.0", Fn.new {
     Assert.isNear(v3.z, 11.0, epsilon)
 })
 
-var v4 = VectorReference.get()
+var v4 = VectorReferences.getCFunction()
 
 testRunner.test("Number should be 2.0", Fn.new {
     Assert.isEqual(v4.x, 2.0)
 })
 
-VectorReference.get().x = 10.0
+VectorReferences.getCFunction().x = 10.0
 
 testRunner.test("Number should be 10.0", Fn.new {
     Assert.isEqual(v4.x, 10.0)
 })
+
+testRunner.test("Number should be 1.0", Fn.new {
+   Assert.isEqual(VectorReferences.getPtr().x, 1.0)
+})
+
+testRunner.test("Number should be 1.0", Fn.new {
+    Assert.isEqual(VectorReferences.getRef().x, 1.0)
+})
+
+testRunner.test("Number should be 1.0", Fn.new {
+    Assert.isEqual(VectorReferences.getConstPtr().x, 1.0)
+})
+
+testRunner.test("Number should be 1.0", Fn.new {
+    Assert.isEqual(VectorReferences.getConstRef().x, 1.0)
+})
+

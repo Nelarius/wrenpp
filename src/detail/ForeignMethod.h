@@ -217,7 +217,39 @@ void passArgumentsToWren( WrenVM* vm, const std::tuple<Args...>& tuple, std::ind
 }
 
 template< typename T >
-struct WrenReturnValue;
+struct WrenReturnValue {
+    static void set(WrenVM* vm, T val) {
+        ForeignObjectValue<T>::setInSlot<0>(vm, val);
+    }
+};
+
+template<typename T>
+struct WrenReturnValue<T&> {
+    static void set(WrenVM* vm, T& ref) {
+        ForeignObjectPtr<T>::setInSlot<0>(vm, &ref);
+    }
+};
+
+template<typename T>
+struct WrenReturnValue<const T&> {
+    static void set(WrenVM* vm, const T& ref) {
+        ForeignObjectPtr<T>::setInSlot<0>(vm, const_cast<T*>(&ref));
+    }
+};
+
+template<typename T>
+struct WrenReturnValue<T*> {
+    static void set(WrenVM* vm, T* ptr) {
+        ForeignObjectPtr<T>::setInSlot<0>(vm, ptr);
+    }
+};
+
+template<typename T>
+struct WrenReturnValue<const T*> {
+    static void set(WrenVM* vm, const T* ptr) {
+        ForeignObjectPtr<T>::setInSlot<0>(vm, const_cast<T*>(ptr));
+    }
+};
 
 template<>
 struct WrenReturnValue< float > {

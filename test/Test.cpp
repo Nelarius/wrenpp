@@ -34,16 +34,33 @@ struct Vec3 {
     }
 };
 
-void plus(WrenVM* vm) {
-    Vec3* lhs = wrenly::getForeignSlotPtr<Vec3, 0>(vm);
-    Vec3* rhs = wrenly::getForeignSlotPtr<Vec3, 1>(vm);
-    Vec3 res = lhs->plus(*rhs);
-    wrenly::setForeignSlotValue(vm, res);   // must be copyable
-}
+struct Transform {
+    Vec3 position{ 0.f, 0.f, 0.f };
+};
 
-void returnVectorReference(WrenVM* vm) {
+void CFunctionVectorReference(WrenVM* vm) {
     static Vec3 v{ 2.0, 1.0, 1.0 };
     wrenly::setForeignSlotPtr(vm, &v);
+}
+
+Vec3* returnVec3Ptr() {
+    static Vec3 v{ 1.f, 1.f, 1.f };
+    return &v;
+}
+
+Vec3& returnVec3Ref() {
+    static Vec3 v{ 1.f, 1.f, 1.f };
+    return v;
+}
+
+const Vec3* returnVec3ConstPtr() {
+    static Vec3 v{ 1.f, 1.f, 1.f };
+    return &v;
+}
+
+const Vec3& returnVec3ConstRef() {
+    static Vec3 v{ 1.f, 1.f, 1.f };
+    return v;
 }
 
 void testMethodCall() {
@@ -76,12 +93,17 @@ void testClassMethods() {
             .bindSetter< decltype(Vec3::z), &Vec3::z >(false, "z=(_)")
             .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
             .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
-            .bindCFunction(false, "plus(_)", plus)
+            //.bindCFunction(false, "plus(_)", plus)
+            .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
         .endClass()
     .endModule();
     wrenly::beginModule("main")
-        .beginClass("VectorReference")
-            .bindCFunction(true, "get()", returnVectorReference)
+        .beginClass("VectorReferences")
+            .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
+            .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
+            .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
+            .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
+            .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
         .endClass()
     .endModule();
 
