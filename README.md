@@ -322,7 +322,7 @@ wrenly::beginModule( "builtin/imgui" )
   .beginClass( "Imgui" )
     // windows & their formatting
     .bindCFunction( true, "begin(_)", wren::begin )
-    .bindFunction< decltype(&ImGui::End), &ig::End>( true, "end()" )
+    .bindFunction< decltype(&ImGui::End), &ImGui::End>( true, "end()" )
     .bindCFunction( true, "sliderFloat(_,_,_,_)", wren::sliderFloat)
   .endClass();
 ```
@@ -339,9 +339,9 @@ void setWindowSize(WrenVM* vm) {
 
 Use `wrenly::setForeignSlotValue<T>(WrenVM*, const T&)` and `wrenly::setForeignSlotPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenly::setForeignSlotValue<T>` uses the type's copy constructor to copy the object into the new value.
 
-#### C++ and Wren lifetimes
+### C++ and Wren lifetimes
 
-If the return type of a bound method or function is a reference or pointer to an object, then the returned wren object will have C++ lifetime, and Wren will not garbage collect the object pointed to. If an object is returned by value, then a new instance of the object is also constructed withing the returned Wren object. In this situation the returned Wren object has Wren lifetime and is garbage collected.
+If the return type of a bound method or function is a reference or pointer to an object, then the returned wren object will have C++ lifetime, and Wren will not garbage collect the object pointed to. If an object is returned by value, then a new instance of the object is also constructed withing the returned Wren object. In this situation, the returned Wren object has Wren lifetime and is garbage collected.
 
 ## Customize VM behavior
 
