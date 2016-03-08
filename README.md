@@ -3,50 +3,56 @@
 
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). As the language itself and this library are both heavily WIP, expect everything in here to change.
 
-The goals of this library are
-* provide a RAII wrapper for the Wren virtual machine
-* to wrap the method call function
-* to generate automatic wrappers for free functions and methods implementing Wren foreign methods
-* to generate automatic wrappers for classes implementing Wren foreign classes
-* template-based -- no macros!
+Wrenly currently provides:
+- a RAII wrapper for the Wren virtual machine
+- convenient access to calling Wren class methods from C++
+- automatic wrapping code generation for any C++ functions and classes
+- template-based -- no macros!
 
-Currently developing against `wren:master@ffb5ada`.
+Current defincies:
+- not that type-safe. It's pretty undefined what happens when you try to bind code that returns a type which hasn't itself been bound
+- Wrenly has no concept of const-ness. When you return a const pointer to one of your instances from a bound function, the resulting foreign object in Wren will happily call non-const methods -- yikes!
+- Wren access from C++ is rather minimal
+
+Currently developing against `wren:master@139b447`.
 
 ## Build
 
-Checkout the repository using `git clone https://github.com/nelarius/wrenly.git`. The easiest way to build the project is to include contents of the `src/` folder in your project. Just remember to compile with C++14 features turned on!
+Clone the repository using `git clone https://github.com/nelarius/wrenly.git`. The easiest way to build the project is to include the contents of the `src/` folder in your project, since there's so little code. Just remember to compile with C++14 features turned on!
 
-To build a stand-alone static library, you can use premake to generate your build scripts. Include the path to `wren.h` and the wren library via the command line:
+Alternatively, you can build the static library with premake:
 
 ```sh
-premake5 vs2015 --include=<path to wren.h> --link=<path to wren-static>
+premake5 vs2015 --include=<path to wren.h>
 ```
 
-The build script will be located in `build/`, and the library in `lib/`. You don't have to use `--link=<path>` if you don't want to run the tests. In that case, build the `lib` target and leave the `test` target alone.
+If you want to build the tests as well, then you need to include the location of wren's `lib/` folder.
 
-## Getting started
+```sh
+premake5 vs2015 --include=<path to wren.h> --link=<path to wren/lib>
+``` 
 
-Here's how you would initialize an instance of the virtual machine and execute from a module:
+## At a glance
+
+Let's fire up an instance of the Wren VM and execute some code:
 
 ```cpp
 #include "Wrenly.h"
 
 int main() {
-  wrenly::Wren wren{};
-  wren.executeModule( "hello" );	// refers to the file hello.wren
+  wrenly::Wren vm{};
+  vm.executeString( "System.print(\"Hello, world!\")" );
 
   return 0;
 }
 ```
 
-The virtual machine is held internally by a pointer. `Wren` uniquely owns the virtual machine, which means that the `Wren` instance can't be copied, but can be moved when needed - just like a unique pointer.
+The virtual machine is held internally in a pointer. `Wren` uniquely owns the virtual machine, which means that the `Wren` instance can't be copied, but can be moved when needed - just like a unique pointer.
 
 Module names work the same way by default as the module names of the Wren command line module. You specify the location of the module without the `.wren` postfix.
 
-Strings can also be executed:
-
 ```cpp
-wren.executeString( "System.print(\"Hello from a C++ string!\")" );
+vm.executeModule( "script" );   // refers to script.wren
 ```
 
 Both `executeString` and `executeModule` return a code indicating if the interpretation encountered any errors.
@@ -100,6 +106,8 @@ Method Wren::method(
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
 ## Accessing C++ from Wren
+
+**TODO:** improve
 
 Wrenly allows you to bind C++ functions and methods to Wren classes. This is done by storing the names or signatures along with the function pointers, so that Wren can find them. That is, you bind all your code once, after which all your Wren instances can use them.
 
@@ -233,12 +241,12 @@ If your class or struct has public fields you wish to expose, you can do so by u
 ```cpp
 wrenly::beginModule( "main" )
   .bindClass< Vec3, float, float, float >( "Vec3" )
-    .bindGetter< decltype(Vec3::x), &Vec3::x >( false, "x" )
-    .bindSetter< declType(Vec3::x), &Vec3::x >( false, "x=(_)" )
-    .bindGetter< decltype(Vec3::y), &Vec3::y >( false, "y" )
-    .bindSetter< declType(Vec3::y), &Vec3::y >( false, "y=(_)" )
-    .bindGetter< decltype(Vec3::z), &Vec3::z >( false, "z" )
-    .bindSetter< declType(Vec3::z), &Vec3::z >( false, "z=(_)" );
+    .bindGetter< decltype(&Vec3::x), &Vec3::x >( false, "x" )
+    .bindSetter< decltype(&Vec3::x), &Vec3::x >( false, "x=(_)" )
+    .bindGetter< decltype(&Vec3::y), &Vec3::y >( false, "y" )
+    .bindSetter< decltype(&Vec3::y), &Vec3::y >( false, "y=(_)" )
+    .bindGetter< decltype(&Vec3::z), &Vec3::z >( false, "z" )
+    .bindSetter< decltype(&Vec3::z), &Vec3::z >( false, "z=(_)" );
 ```
 
 #### Methods
@@ -253,12 +261,12 @@ int main() {
   wrenly::beginModule( "main" )
     .bindClass< Vec3, float, float, float >( "Vec3" )
       // properties
-      .bindGetter< decltype(Vec3::x), &Vec3::x >( false, "x" )
-      .bindSetter< declType(Vec3::x), &Vec3::x >( false, "x=(_)" )
-      .bindGetter< decltype(Vec3::y), &Vec3::y >( false, "y" )
-      .bindSetter< declType(Vec3::y), &Vec3::y >( false, "y=(_)" )
-      .bindGetter< decltype(Vec3::z), &Vec3::z >( false, "z" )
-      .bindSetter< declType(Vec3::z), &Vec3::z >( false, "z=(_)" )
+      .bindGetter< decltype(&Vec3::x), &Vec3::x >( false, "x" )
+      .bindSetter< decltype(&Vec3::x), &Vec3::x >( false, "x=(_)" )
+      .bindGetter< decltype(&Vec3::y), &Vec3::y >( false, "y" )
+      .bindSetter< decltype(&Vec3::y), &Vec3::y >( false, "y=(_)" )
+      .bindGetter< decltype(&Vec3::z), &Vec3::z >( false, "z" )
+      .bindSetter< decltype(&Vec3::z), &Vec3::z >( false, "z=(_)" )
       // methods
       .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
       .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
@@ -275,51 +283,65 @@ We've now implemented two of `Vec3`'s three foreign functions -- what about the 
 
 ### CFunctions
 
-You can register a free function taking nothing but a pointer to the VM (called a CFunction, after Lua) to "manually" implement a foreign method. Why would we want to do this?
+Wrenly let's you bind functions of the type `WrenForeignMethodFn`, typedefed in `wren.h`, directly. They're called CFunctions for brevity (and because of Lua). Sometimes it's convenient to wrap a collection of C++ code manually. This happens when the C++ library interface doesn't match Wren classes that well. Let's take a look at binding the excellent [dear imgui](https://github.com/ocornut/imgui) library to Wren.
 
-The problem with `cross(_)` within `Vec3` is that it should return a new instance of `Vec3` -- and we need to do that in C++, and return it to Wren. Currently, there's no way of doing that via Wren's C API. So here's a horribly hacky way of doing that, using a CFunction.
+Many functions to ImGui are very overloaded and have lengthy signatures. We would have to fully qualify the function pointers, which would make the automatic bindings a mess. Additionally, many ImGui functions (such as SliderFloat) take in pointers to primitive types, like float, bool. Wren doesn't have any concept of `out` parameters, so we will make our Wren ImGui API take in a number by value, and return the new value.
 
-```cpp
-// somewhere, in a source file far, far away...
+```dart
+class Imgui {
 
-extern "C" {
-  #include <wren.h>
-}
-// we need get the foreign arguments from the `cross(_)` invocation
-// and do the cross product ourselves, and then return it to Wren
-void cross( WrenVM* vm ) {
-  const Vec3* lhs = (const Vec3*)wrenGetArgumentForeign( vm, 0 );
-  const Vec3* rhs = (const Vec3*)wrenGetArgumentForeign( vm, 1 );
-  Vec3 res = lhs->cross( *rhs );
-  WrenValue* ret = nullptr;
-  WrenValue* constructor  = wrenGetMethod( vm, "main, "createVector3", "call(_,_,_)" );
-  wrenCall( vm, constructor, &ret, "ddd", res.x, res.y, res.z );
-  wrenReturnValue( vm, ret );
-  wrenReleaseValue( vm, ret );
+  // windows
+  foreign static begin( name )    // begin a window scope
+  foreign static end()            // end a window scope
+
+  foreign static sliderFloat( label, value, min, max )  // RETURNS the new value
 }
 ```
 
-Finally, here's what our full binding code for `Vec3` now looks like.
+First, let's implement wrappers for `ImGui::Begin` and `ImGui::SliderFloat` with reasonable default values.
 
 ```cpp
-  wrenly::beginModule( "main" )
-    .bindClass< math::Vector3f, float, float, float >( "Vec3" )
-      .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
-      .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
-      .bindCFunction( false, "cross(_)", cross )
-    .endClass()
-  .endModule();
+void begin(WrenVM* vm) {
+  ImGui::Begin((const char*)wrenGetSlotString(vm, 1), NULL, 0);
+}
+
+void sliderFloat(WrenVM* vm) {
+  const char* label = wrenGetSlotString(vm, 1);
+  float value = float(wrenGetSlotDouble(vm, 2));
+  float min =   float(wrenGetSlotDouble(vm, 3));
+  float max =   float(wrenGetSlotDouble(vm, 4));
+  ImGui::SliderFloat(label, &value, min, max);
+  wrenSetSlotDouble(vm, 0, value);
+}
 ```
 
-### Foreign classes as foreign method arguments
+Here's what the binding code looks like. Note that ImGui::End is trivial to bind as it takes no arguments.
 
-Note that a class bound to Wren as a foreign class can be passed to foreign functions as an argument. It may be passed as a pointer, reference, or by value, `const`, or not.
+```cpp
+wrenly::beginModule( "builtin/imgui" )
+  .beginClass( "Imgui" )
+    // windows & their formatting
+    .bindCFunction( true, "begin(_)", wren::begin )
+    .bindFunction< decltype(&ImGui::End), &ig::End>( true, "end()" )
+    .bindCFunction( true, "sliderFloat(_,_,_,_)", wren::sliderFloat)
+  .endClass();
+```
 
-### Foreign method return values
+If you need to access and return foreign object instances within your CFunction, you can use the following two helper functions.
 
-Note that only the following types can be returned to Wren: `int` (and anything which can be cast to `int`), `const char*`, `std::string`, `bool`, `float`, `double`. A foreign method implementor may be left `void`, of course.
+Use `wrenly::getForeignSlotPtr<T, int>(WrenVM*)` to get a bound type from the slot API:
 
-This will hopefully change in the future!
+```cpp
+void setWindowSize(WrenVM* vm) {
+  ImGui::SetNextWindowSize(*(const ImVec2*)wrenly::getForeignSlotPtr<Vec2i, 1>(vm));
+}
+```
+
+Use `wrenly::setForeignSlotValue<T>(WrenVM*, const T&)` and `wrenly::setForeignSlotPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenly::setForeignSlotValue<T>` uses the type's copy constructor to copy the object into the new value.
+
+#### C++ and Wren lifetimes
+
+If the return type of a bound method or function is a reference or pointer to an object, then the returned wren object will have C++ lifetime, and Wren will not garbage collect the object pointed to. If an object is returned by value, then a new instance of the object is also constructed withing the returned Wren object. In this situation the returned Wren object has Wren lifetime and is garbage collected.
 
 ## Customize VM behavior
 
