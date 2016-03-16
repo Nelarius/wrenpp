@@ -4,7 +4,7 @@
 #include <type_traits>
 #include <cstdint>
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 inline uint32_t& typeId() {

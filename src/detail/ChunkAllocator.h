@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdlib>
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 // A page allocator. It uses the provided allocation/free functions to allocate

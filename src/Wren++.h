@@ -1,5 +1,5 @@
-#ifndef WRENLY_H_INCLUDED
-#define WRENLY_H_INCLUDED
+#ifndef WRENPP_H_INCLUDED
+#define WRENPP_H_INCLUDED
 
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
@@ -16,9 +16,7 @@ extern "C" {
 #include <cstdlib>      // for std::size_t
 #include <unordered_map>
 
-#include <limits>
-
-namespace wrenly {
+namespace wrenpp {
 
 struct AllocStats {
     std::size_t largestByte{ std::numeric_limits<std::size_t>::min() };
@@ -77,9 +75,6 @@ class Value {
 
 /**
  * @class Method
- * @author Muszynski Johann M
- * @date 13/08/15
- * @file Wrenly.h
  * @brief Use this to call a wren method from C++.
  * Make sure that the Wren instance which dispensed this object does not go out of scope
  * before this instance does. A segfault will occur otherwise.
@@ -113,14 +108,10 @@ class Method {
         unsigned*               refCount_;
 };
 
-class Wren;
 class ModuleContext;
 
 /**
  * @class ClassContext
- * @author Muszynski Johann M
- * @date 31/08/15
- * @file Wrenly.h
  * @brief Stores the class and module name. Gives easier access to function registration.
  */
 class ClassContext {
@@ -130,7 +121,7 @@ class ClassContext {
         virtual ~ClassContext() = default;
 
         /**
-         * @brief Register a free function with Wrenly.
+         * @brief Register a free function.
          * @param isStatic true, if the wrapping method is static, false otherwise
          * @param signature The Wren signature of the function. Include parenthesized argument list, with an underscore in place of each argument, or no parenthesis if the method doesn't contain any.
          */
@@ -169,9 +160,6 @@ class RegisteredClassContext: public ClassContext {
 
 /**
  * @class ModuleContext
- * @author Muszynski Johann M
- * @date 31/08/15
- * @file Wrenly.h
  * @brief Stores the module name. Gives access to class context.
  */
 class ModuleContext {
@@ -223,15 +211,15 @@ enum class Result {
  * owns the pointer uniquely. The contents of this class may be moved, 
  * but not copied.
  */
-class Wren {
+class VM {
 
     public:
-        Wren();
-        Wren( const Wren& )             = delete;
-        Wren( Wren&& );
-        Wren& operator=( const Wren& )  = delete;
-        Wren& operator=( Wren&& );
-        ~Wren();
+        VM();
+        VM( const VM& )             = delete;
+        VM(VM&& );
+        VM& operator=( const VM& )  = delete;
+        VM& operator=(VM&& );
+        ~VM();
 
         WrenVM* vm();
 
@@ -381,4 +369,4 @@ void setForeignSlotPtr(WrenVM* vm, T* obj) {
 
 }
 
-#endif  // WRENLY_H_INCLUDED
+#endif  // WRENPP_H_INCLUDED

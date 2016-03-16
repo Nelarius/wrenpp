@@ -7,7 +7,7 @@ extern "C" {
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 template< typename T, typename U, U T::*Field >

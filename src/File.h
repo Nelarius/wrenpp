@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <sys/stat.h>
 
-namespace wrenly {
+namespace wrenpp {
 
     /// \brief Check whether a file of the given name exists.
     inline bool fileExists( const std::string& file ) {

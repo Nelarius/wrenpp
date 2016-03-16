@@ -11,7 +11,7 @@ extern "C" {
 #include <vector>
 #include <type_traits>
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 inline std::vector<std::string>& classNameStorage() {

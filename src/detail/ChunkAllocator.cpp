@@ -1,5 +1,5 @@
 #include "detail/ChunkAllocator.h"
-#include "Wrenly.h"
+#include "Wren++.h"
 #include <cstdint>
 #include <limits>
 
@@ -26,20 +26,20 @@ void* writeHeader(void* memory, std::size_t blockSize) {
 
 }
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 ChunkAllocator::~ChunkAllocator() {
     for (auto& block : chunks_) {
-        Wren::freeFn(block.memory);
+        VM::freeFn(block.memory);
     }
     chunks_.clear();
 }
 
 void ChunkAllocator::getNewChunk_() {
-    void* memory = Wren::allocateFn(Wren::chunkSize);
+    void* memory = VM::allocateFn(VM::chunkSize);
     assert(memory);
-    chunks_.emplace_back(memory, Wren::chunkSize, 0u);
+    chunks_.emplace_back(memory, VM::chunkSize, 0u);
 }
 
 void* ChunkAllocator::alloc(std::size_t bytes) {
