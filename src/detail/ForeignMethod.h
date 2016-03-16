@@ -11,7 +11,7 @@ extern "C" {
 #include <utility>  // for index_sequence
 #include <cstdlib>
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 // given a Wren method signature, this returns a unique value 

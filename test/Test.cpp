@@ -1,5 +1,5 @@
 
-#include "Wrenly.h"
+#include "Wren++.h"
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -40,7 +40,7 @@ struct Transform {
 
 void CFunctionVectorReference(WrenVM* vm) {
     static Vec3 v{ 2.0, 1.0, 1.0 };
-    wrenly::setForeignSlotPtr(vm, &v);
+    wrenpp::setForeignSlotPtr(vm, &v);
 }
 
 Vec3* returnVec3Ptr() {
@@ -64,7 +64,7 @@ const Vec3& returnVec3ConstRef() {
 }
 
 void testMethodCall() {
-    wrenly::Wren wren{};
+    wrenpp::VM wren{};
 
     wren.executeModule("test_method");
     auto passNum = wren.method("main", "passNumber", "call(_)");
@@ -83,7 +83,7 @@ void testMethodCall() {
 
 void testClassMethods() {
 
-    wrenly::beginModule("vector")
+    wrenpp::beginModule("vector")
         .bindClass<Vec3, float, float, float>("Vec3")
             .bindGetter< decltype(Vec3::x), &Vec3::x >(false, "x")
             .bindSetter< decltype(Vec3::x), &Vec3::x >(false, "x=(_)")
@@ -97,7 +97,7 @@ void testClassMethods() {
             .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
         .endClass()
     .endModule();
-    wrenly::beginModule("main")
+    wrenpp::beginModule("main")
         .beginClass("VectorReferences")
             .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
             .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
@@ -107,7 +107,7 @@ void testClassMethods() {
         .endClass()
     .endModule();
 
-    wrenly::Wren wren{};
+    wrenpp::VM wren{};
 
     wren.executeModule("test_vector");
 }

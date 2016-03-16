@@ -16,7 +16,7 @@ extern "C" {
 #include <cstdlib>      // for std::size_t
 #include <unordered_map>
 
-namespace wrenly {
+namespace wrenpp {
 
 using FunctionPtr = WrenForeignMethodFn;
 using LoadModuleFn = std::function< char*( const char* ) >;
@@ -210,15 +210,15 @@ enum class Result {
  * owns the pointer uniquely. The contents of this class may be moved, 
  * but not copied.
  */
-class Wren {
+class VM {
 
     public:
-        Wren();
-        Wren( const Wren& )             = delete;
-        Wren( Wren&& );
-        Wren& operator=( const Wren& )  = delete;
-        Wren& operator=( Wren&& );
-        ~Wren();
+        VM();
+        VM( const VM& )             = delete;
+        VM(VM&& );
+        VM& operator=( const VM& )  = delete;
+        VM& operator=(VM&& );
+        ~VM();
 
         WrenVM* vm();
 

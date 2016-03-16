@@ -1,5 +1,5 @@
 
-#include "Wrenly.h"
+#include "Wren++.h"
 #include "File.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp
@@ -16,7 +16,7 @@ WrenForeignMethodFn foreignMethodProvider( WrenVM* vm,
                                 const char* className,
                                 bool isStatic,
                                 const char* signature ) {
-    auto it = boundForeignMethods.find( wrenly::detail::hashMethodSignature( module, className, isStatic, signature ) );
+    auto it = boundForeignMethods.find( wrenpp::detail::hashMethodSignature( module, className, isStatic, signature ) );
     if ( it == boundForeignMethods.end() ) {
         return NULL;
     }
@@ -25,7 +25,7 @@ WrenForeignMethodFn foreignMethodProvider( WrenVM* vm,
 }
 
 WrenForeignClassMethods foreignClassProvider( WrenVM* vm, const char* m, const char* c ) {
-    auto it = boundForeignClasses.find( wrenly::detail::hashClassSignature( m, c ) );
+    auto it = boundForeignClasses.find( wrenpp::detail::hashClassSignature( m, c ) );
     if ( it == boundForeignClasses.end() ) {
         return WrenForeignClassMethods{ nullptr, nullptr };
     }
@@ -34,16 +34,16 @@ WrenForeignClassMethods foreignClassProvider( WrenVM* vm, const char* m, const c
 }
 
 char* loadModuleFnWrapper( WrenVM* vm, const char* mod ) {
-    return wrenly::Wren::loadModuleFn( mod );
+    return wrenpp::VM::loadModuleFn( mod );
 }
 
 void writeFnWrapper( WrenVM* vm, const char* text ) {
-    wrenly::Wren::writeFn( vm, text );
+    wrenpp::VM::writeFn( vm, text );
 }
 
 }
 
-namespace wrenly {
+namespace wrenpp {
 
 namespace detail {
     void registerFunction( const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function ) {
@@ -233,12 +233,12 @@ ClassContext& ClassContext::bindCFunction( bool isStatic, std::string signature,
  * Uses malloc, because our reallocateFn is set to default:
  * it uses malloc, realloc and free.
  * */
-LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
+LoadModuleFn VM::loadModuleFn = []( const char* mod ) -> char* {
     std::string path( mod );
     path += ".wren";
     std::string source;
     try {
-        source = wrenly::fileToString( path );
+        source = wrenpp::fileToString( path );
     } catch( const std::exception& ) {
         return NULL;
     }
@@ -248,12 +248,12 @@ LoadModuleFn Wren::loadModuleFn = []( const char* mod ) -> char* {
     return buffer;
 };
 
-WriteFn Wren::writeFn = []( WrenVM* vm, const char* text ) -> void {
+WriteFn VM::writeFn = []( WrenVM* vm, const char* text ) -> void {
     printf( "%s", text );
     fflush(stdout);
 };
 
-Wren::Wren()
+VM::VM()
 :   vm_( nullptr ) {
     
     WrenConfiguration configuration{};
@@ -265,28 +265,28 @@ Wren::Wren()
     vm_ = wrenNewVM( &configuration );
 }
 
-Wren::Wren( Wren&& other )
+VM::VM(VM&& other )
 :   vm_( other.vm_ ) {
     other.vm_ = nullptr;
 }
 
-Wren& Wren::operator=( Wren&& rhs ) {
+VM& VM::operator=(VM&& rhs ) {
     vm_             = rhs.vm_;
     rhs.vm_         = nullptr;
     return *this;
 }
 
-Wren::~Wren() {
+VM::~VM() {
     if ( vm_ != nullptr ) {
         wrenFreeVM( vm_ );
     }
 }
 
-WrenVM* Wren::vm() {
+WrenVM* VM::vm() {
     return vm_;
 }
 
-Result Wren::executeModule( const std::string& mod ) {
+Result VM::executeModule( const std::string& mod ) {
     const std::string source( loadModuleFn( mod.c_str() ) );
     auto res = wrenInterpret( vm_, source.c_str() );
     
@@ -301,7 +301,7 @@ Result Wren::executeModule( const std::string& mod ) {
     return Result::Success;
 }
 
-Result Wren::executeString( const std::string& code ) {
+Result VM::executeString( const std::string& code ) {
 
     auto res = wrenInterpret( vm_, code.c_str() );
 
@@ -316,11 +316,11 @@ Result Wren::executeString( const std::string& code ) {
     return Result::Success;
 }
 
-void Wren::collectGarbage() {
+void VM::collectGarbage() {
     wrenCollectGarbage( vm_ );
 }
 
-Method Wren::method( 
+Method VM::method( 
     const std::string& mod,
     const std::string& var,
     const std::string& sig

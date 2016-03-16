@@ -9,7 +9,7 @@
 #include <utility>  // for index_sequence
 #include <type_traits>
 
-namespace wrenly {
+namespace wrenpp {
 namespace detail {
 
 // given a Wren class signature, this returns a unique value 
