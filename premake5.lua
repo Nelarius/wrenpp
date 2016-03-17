@@ -11,7 +11,7 @@ newoption {
     description = "The location of the wren static lib"
 }
 
-workspace "wrenly"
+workspace "wrenpp"
     if _ACTION then
         -- guard this in case the user is calling `premake5 --help`
         -- in which case there will be no action
@@ -32,7 +32,7 @@ workspace "wrenly"
         kind "StaticLib"
         language "C++"
         targetdir "lib/"
-        targetname "wrenly"
+        targetname "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
