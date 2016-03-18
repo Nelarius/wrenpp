@@ -59,7 +59,8 @@ void* reallocateFnWrapper(void* memory, std::size_t newSize) {
     }
     wrenpp::stats.count++;
     wrenpp::stats.accumulation += newSize;
-    return realloc(memory, newSize);
+
+    return allocator.realloc(memory, newSize);
 }
 
 }
@@ -276,11 +277,11 @@ WriteFn VM::writeFn = []( WrenVM* vm, const char* text ) -> void {
 
 AllocateFn VM::allocateFn = [](std::size_t bytes) -> void* {
     printf("Allocating %u bytes\n", bytes);
-    return malloc(bytes);
+    return std::malloc(bytes);
 };
 
 FreeFn VM::freeFn = [](void* memory) -> void {
-    free(memory);
+    std::free(memory);
 };
 
 std::size_t VM::initialHeapSize = 0xA00000u;
@@ -289,7 +290,7 @@ std::size_t VM::minHeapSize = 0x100000u;
 
 int VM::heapGrowthPercent = 50;
 
-std::size_t VM::chunkSize = 0x500000u;;
+std::size_t VM::chunkSize = 0xF000000u;
 
 VM::VM()
 :   vm_( nullptr ) {
