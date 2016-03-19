@@ -63,7 +63,7 @@ namespace detail {
 
 ChunkAllocator::ChunkAllocator()
     : chunks_{},
-    freeBlocks_{ nullptr } {
+    freeListHead_{ nullptr } {
     getNewChunk_();
 }
 
@@ -80,10 +80,16 @@ void ChunkAllocator::getNewChunk_() {
     chunks_.push_back(Block{ memory, VM::chunkSize, 0u });
 }
 
+void* ChunkAllocator::prepareMemory_(void* memory, std::uint32_t bytes) {
+    memory = writeGuardBytes(memory, bytes, BEEFCAFE);
+    memory = writeHeader(memory, bytes);
+    markAllocBytes(memory, bytes - GuardBytes_ - HeaderBytes_);
+    return memory;
+}
+
 // TODO: maybe we should only request bytes within std::uint32_t
 // we don't want a single alloc to be larger than 2 GB
 void* ChunkAllocator::alloc(std::size_t requestedBytes) {
-
     std::uint32_t blockSize = requestedBytes;
     //we need space for the header, as well as the guard bytes. Inflate the block size accordingly
     blockSize += HeaderBytes_ + GuardBytes_;
@@ -96,30 +102,37 @@ void* ChunkAllocator::alloc(std::size_t requestedBytes) {
     assert(actualBytes - HeaderBytes_ - GuardBytes_ >= requestedBytes);
 
     // fetch the memory from the free list
-    // TODO
-    // try to get the memory from a free block first
-    //auto* freeBlock = freeBlocks_;
-    //while (freeBlocks_ != nullptr) {
-    //    // if the requested block size doesn't fit in this free block, then try the next
-    //    if (freeBlock->size < actualBytes) {
-    //        freeBlock = freeBlock->next;
-    //        continue;
-    //    }
-    //    // fetch block from the free block list here
-    //}
+    FreeBlock* curBlock = freeListHead_;
+    FreeBlock* prevBlock = nullptr;
+    while (curBlock) {
+        if (curBlock->size - GuardBytes_ - HeaderBytes_ < requestedBytes) {
+            prevBlock = curBlock;
+            curBlock = curBlock->next;
+            continue;
+        }
+        if (prevBlock) {
+            prevBlock->next = curBlock->next;
+        }
+        else {
+            freeListHead_ = freeListHead_->next;
+        }
+        void* memory = curBlock;
+        std::uint32_t size = curBlock->size;
+        return prepareMemory_(memory, size);
+    }
 
-    if (chunks_.back().size - chunks_.back().currentOffset < actualBytes) {
-        // TODO: stick the remainder of the block into the free list
+    std::uintptr_t remainder = chunks_.back().size - chunks_.back().currentOffset;
+    if (remainder < actualBytes) {
+        if (remainder >= MinimumBlockSize_) {
+            auto& chunk = chunks_.back();
+            addToFreeList_((std::uint8_t*)chunk.memory + chunk.currentOffset, remainder);
+        }
         getNewChunk_();
     }
     auto& chunk = chunks_.back();
     void* memory = (std::uint8_t*)chunk.memory + chunk.currentOffset;
     chunk.currentOffset += actualBytes;
-    memory = writeGuardBytes(memory, actualBytes, BEEFCAFE);
-    memory = writeHeader(memory, actualBytes);
-    markAllocBytes(memory, actualBytes - GuardBytes_ - HeaderBytes_);
-
-    return memory;
+    return prepareMemory_(memory, actualBytes);
 }
 
 void* ChunkAllocator::realloc(void* memory, std::size_t bytes) {
@@ -154,7 +167,7 @@ void ChunkAllocator::free(void* memory) {
     assert(*intPtr == BEEFCAFE);
     assert(*(intPtr + blockSize / 4u - 1u) == BEEFCAFE);
     markFreeBytes(intPtr, blockSize); // the block size includes the guard bytes as well!
-    // memory block goes into the free list here
+    addToFreeList_(intPtr, blockSize);
 }
 
 std::size_t ChunkAllocator::currentMemorySize() const {

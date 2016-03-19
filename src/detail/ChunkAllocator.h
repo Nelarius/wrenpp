@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cstdlib>
+#include <cassert>
 
 namespace wrenpp {
 namespace detail {
@@ -42,14 +43,26 @@ private:
         std::uintptr_t currentOffset;
     };
 
+    void* prepareMemory_(void*, std::uint32_t);
     void getNewChunk_();
+    inline void addToFreeList_(void* memory, std::uint32_t size) {
+        FreeBlock* freeBlock = reinterpret_cast<FreeBlock*>(memory);
+        freeBlock->size = size;
+        if (freeListHead_) {
+            freeBlock->next = freeListHead_;
+        }
+        else {
+            freeBlock->next = nullptr;
+        }
+        freeListHead_ = freeBlock;
+    }
 
     const std::uint32_t GuardBytes_{ 2u * sizeof(std::uint32_t) };
     const std::uint32_t HeaderBytes_{ sizeof(std::uint32_t) };
     const std::size_t   MinimumBlockSize_{ sizeof(FreeBlock) };
 
     std::vector<Block>  chunks_{};
-    FreeBlock*          freeBlocks_{ nullptr };
+    FreeBlock*          freeListHead_{ nullptr };
 };
 
 }

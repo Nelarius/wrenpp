@@ -285,7 +285,7 @@ std::size_t VM::minHeapSize = 0x100000u;
 
 int VM::heapGrowthPercent = 50;
 
-std::size_t VM::chunkSize = 0xF000000u;
+std::size_t VM::chunkSize = 0x500000u;
 
 VM::VM()
     : vm_{ nullptr },
