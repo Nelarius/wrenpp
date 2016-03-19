@@ -275,14 +275,9 @@ WriteFn VM::writeFn = [](WrenVM* vm, const char* text) -> void {
     fflush(stdout);
 };
 
-AllocateFn VM::allocateFn = [](std::size_t bytes) -> void* {
-    printf("Allocating %u bytes\n", bytes);
-    return std::malloc(bytes);
-};
+AllocateFn VM::allocateFn = std::malloc;
 
-FreeFn VM::freeFn = [](void* memory) -> void {
-    std::free(memory);
-};
+FreeFn VM::freeFn = std::free;
 
 std::size_t VM::initialHeapSize = 0xA00000u;
 
@@ -300,6 +295,9 @@ VM::VM()
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
     configuration.reallocateFn = reallocateFnWrapper;
+    configuration.initialHeapSize = initialHeapSize;
+    configuration.minHeapSize = minHeapSize;
+    configuration.heapGrowthPercent = heapGrowthPercent;
     configuration.bindForeignMethodFn = foreignMethodProvider;
     configuration.loadModuleFn = loadModuleFnWrapper;
     configuration.bindForeignClassFn = foreignClassProvider;

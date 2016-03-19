@@ -77,7 +77,7 @@ ChunkAllocator::~ChunkAllocator() {
 void ChunkAllocator::getNewChunk_() {
     void* memory = VM::allocateFn(VM::chunkSize);
     assert(memory);
-    chunks_.emplace_back(memory, VM::chunkSize, 0u);
+    chunks_.push_back(Block{ memory, VM::chunkSize, 0u });
 }
 
 // TODO: maybe we should only request bytes within std::uint32_t
@@ -108,13 +108,11 @@ void* ChunkAllocator::alloc(std::size_t requestedBytes) {
     //    // fetch block from the free block list here
     //}
 
-    // else, we need to fetch it from the top of our chunk
-    auto& chunk = chunks_.back();
-    if (chunk.size - chunk.currentOffset < actualBytes) {
+    if (chunks_.back().size - chunks_.back().currentOffset < actualBytes) {
         // TODO: stick the remainder of the block into the free list
         getNewChunk_();
-        chunk = chunks_.back();
     }
+    auto& chunk = chunks_.back();
     void* memory = (std::uint8_t*)chunk.memory + chunk.currentOffset;
     chunk.currentOffset += actualBytes;
     memory = writeGuardBytes(memory, actualBytes, BEEFCAFE);

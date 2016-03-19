@@ -37,10 +37,6 @@ private:
     };
 
     struct Block {
-
-        Block(void* m, std::size_t b, std::uintptr_t c)
-            : memory{ m }, size{ b }, currentOffset{ c } {}
-
         void*          memory;
         std::uintptr_t size;
         std::uintptr_t currentOffset;
