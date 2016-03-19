@@ -16,7 +16,7 @@ namespace detail {
 // When DEBUG is defined, freed memory is set to 0xEE.
 class ChunkAllocator {
 public:
-    ChunkAllocator()                                 = default;
+    ChunkAllocator();
     ChunkAllocator(const ChunkAllocator&)            = delete;
     ChunkAllocator(ChunkAllocator&&)                 = delete;
     ChunkAllocator& operator=(const ChunkAllocator&) = delete;

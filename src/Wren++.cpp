@@ -46,9 +46,7 @@ void writeFnWrapper(WrenVM* vm, const char* text) {
     wrenpp::VM::writeFn(vm, text);
 }
 
-// memory management
-// this class contains an std::vector in its private state
-wrenpp::detail::ChunkAllocator allocator{};
+wrenpp::detail::ChunkAllocator* allocator{ nullptr };
 
 void* reallocateFnWrapper(void* memory, std::size_t newSize) {
     if (newSize > wrenpp::stats.largestByte) {
@@ -60,7 +58,8 @@ void* reallocateFnWrapper(void* memory, std::size_t newSize) {
     wrenpp::stats.count++;
     wrenpp::stats.accumulation += newSize;
 
-    return allocator.realloc(memory, newSize);
+    assert(allocator != nullptr);
+    return allocator->realloc(memory, newSize);
 }
 
 }
@@ -68,34 +67,34 @@ void* reallocateFnWrapper(void* memory, std::size_t newSize) {
 namespace wrenpp {
 
 namespace detail {
-    void registerFunction( const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function ) {
-        std::size_t hash = detail::hashMethodSignature( mod.c_str(), cName.c_str(), isStatic, sig.c_str() );
-        boundForeignMethods.insert( std::make_pair( hash, function ) );
-    }
-
-    void registerClass( const std::string& mod, std::string cName, WrenForeignClassMethods methods ) {
-        std::size_t hash = detail::hashClassSignature( mod.c_str(), cName.c_str() );
-        boundForeignClasses.insert( std::make_pair( hash, methods ) );
-    }
+void registerFunction(const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function) {
+    std::size_t hash = detail::hashMethodSignature(mod.c_str(), cName.c_str(), isStatic, sig.c_str());
+    boundForeignMethods.insert(std::make_pair(hash, function));
 }
 
-Value::Value( WrenVM* vm, WrenValue* val )
-:   vm_{ vm },
+void registerClass(const std::string& mod, std::string cName, WrenForeignClassMethods methods) {
+    std::size_t hash = detail::hashClassSignature(mod.c_str(), cName.c_str());
+    boundForeignClasses.insert(std::make_pair(hash, methods));
+}
+}
+
+Value::Value(WrenVM* vm, WrenValue* val)
+    : vm_{ vm },
     value_{ val },
     refCount_{ nullptr } {
     refCount_ = new unsigned;
     *refCount_ = 1u;
 }
 
-Value::Value( const Value& other )
-:   vm_{ other.vm_ },
+Value::Value(const Value& other)
+    : vm_{ other.vm_ },
     value_{ other.value_ },
     refCount_{ other.refCount_ } {
     retain_();
 }
 
-Value::Value( Value&& other )
-:   vm_{ other.vm_ },
+Value::Value(Value&& other)
+    : vm_{ other.vm_ },
     value_{ other.value_ },
     refCount_{ other.refCount_ } {
     other.vm_ = nullptr;
@@ -103,7 +102,7 @@ Value::Value( Value&& other )
     other.refCount_ = nullptr;
 }
 
-Value& Value::operator=( const Value& rhs ) {
+Value& Value::operator=(const Value& rhs) {
     release_();
     vm_ = rhs.vm_;
     value_ = rhs.value_;
@@ -141,38 +140,38 @@ void Value::retain_() {
 }
 
 void Value::release_() {
-    if ( refCount_ ) {
+    if (refCount_) {
         *refCount_ -= 1u;
-        if ( *refCount_ == 0u ) {
-            wrenReleaseValue( vm_, value_ );
+        if (*refCount_ == 0u) {
+            wrenReleaseValue(vm_, value_);
             delete refCount_;
             refCount_ = nullptr;
         }
     }
 }
 
-Method::Method( WrenVM* vm, WrenValue* variable, WrenValue* method )
-:   vm_( vm ),
-    method_( method ),
-    variable_( variable ),
-    refCount_( nullptr ) {
+Method::Method(WrenVM* vm, WrenValue* variable, WrenValue* method)
+    : vm_(vm),
+    method_(method),
+    variable_(variable),
+    refCount_(nullptr) {
     refCount_ = new unsigned;
     *refCount_ = 1u;
 }
 
-Method::Method( const Method& other )
-:   vm_( other.vm_ ),
-    method_( other.method_ ),
-    variable_( other.variable_ ),
-    refCount_( other.refCount_ ) {
+Method::Method(const Method& other)
+    : vm_(other.vm_),
+    method_(other.method_),
+    variable_(other.variable_),
+    refCount_(other.refCount_) {
     retain_();
 }
 
-Method::Method( Method&& other )
-:   vm_( other.vm_ ),
-    method_( other.method_ ),
-    variable_( other.variable_ ),
-    refCount_( other.refCount_ ) {
+Method::Method(Method&& other)
+    : vm_(other.vm_),
+    method_(other.method_),
+    variable_(other.variable_),
+    refCount_(other.refCount_) {
     other.vm_ = nullptr;
     other.method_ = nullptr;
     other.variable_ = nullptr;
@@ -183,7 +182,7 @@ Method::~Method() {
     release_();
 }
 
-Method& Method::operator=( const Method& rhs ) {
+Method& Method::operator=(const Method& rhs) {
     release_();
     vm_ = rhs.vm_;
     method_ = rhs.method_;
@@ -211,28 +210,28 @@ void Method::retain_() {
 }
 
 void Method::release_() {
-    if ( refCount_ ) {
+    if (refCount_) {
         *refCount_ -= 1u;
-        if ( *refCount_ == 0u ) {
-            wrenReleaseValue( vm_, method_ );
-            wrenReleaseValue( vm_, variable_ );
+        if (*refCount_ == 0u) {
+            wrenReleaseValue(vm_, method_);
+            wrenReleaseValue(vm_, variable_);
             delete refCount_;
             refCount_ = nullptr;
         }
     }
 }
 
-ModuleContext::ModuleContext( std::string module )
-:   name_( module )
-    {}
+ModuleContext::ModuleContext(std::string module)
+    : name_(module)
+{}
 
-ClassContext ModuleContext::beginClass( std::string c ) {
-    return ClassContext( c, this );
+ClassContext ModuleContext::beginClass(std::string c) {
+    return ClassContext(c, this);
 }
 
 void ModuleContext::endModule() {}
 
-ModuleContext beginModule( std::string mod ) {
+ModuleContext beginModule(std::string mod) {
     return ModuleContext{ mod };
 }
 
@@ -240,13 +239,13 @@ ModuleContext& ClassContext::endClass() {
     return *module_;
 }
 
-ClassContext::ClassContext( std::string c, ModuleContext* mod )
-:   module_( mod ),
-    class_( c )
-    {}
+ClassContext::ClassContext(std::string c, ModuleContext* mod)
+    : module_(mod),
+    class_(c)
+{}
 
-ClassContext& ClassContext::bindCFunction( bool isStatic, std::string signature, FunctionPtr function ) {
-    detail::registerFunction( module_->name_, class_, isStatic, signature, function );
+ClassContext& ClassContext::bindCFunction(bool isStatic, std::string signature, FunctionPtr function) {
+    detail::registerFunction(module_->name_, class_, isStatic, signature, function);
     return *this;
 }
 
@@ -255,23 +254,24 @@ ClassContext& ClassContext::bindCFunction( bool isStatic, std::string signature,
  * Uses malloc, because our reallocateFn is set to default:
  * it uses malloc, realloc and free.
  * */
-LoadModuleFn VM::loadModuleFn = []( const char* mod ) -> char* {
-    std::string path( mod );
+LoadModuleFn VM::loadModuleFn = [](const char* mod) -> char* {
+    std::string path(mod);
     path += ".wren";
     std::string source;
     try {
-        source = wrenpp::fileToString( path );
-    } catch( const std::exception& ) {
+        source = wrenpp::fileToString(path);
+    }
+    catch (const std::exception&) {
         return NULL;
     }
-    char* buffer = (char*) malloc( source.size() );
+    char* buffer = (char*)malloc(source.size());
     assert(buffer != nullptr);
-    memcpy( buffer, source.c_str(), source.size() );
+    memcpy(buffer, source.c_str(), source.size());
     return buffer;
 };
 
-WriteFn VM::writeFn = []( WrenVM* vm, const char* text ) -> void {
-    printf( "%s", text );
+WriteFn VM::writeFn = [](WrenVM* vm, const char* text) -> void {
+    printf("%s", text);
     fflush(stdout);
 };
 
@@ -293,8 +293,10 @@ int VM::heapGrowthPercent = 50;
 std::size_t VM::chunkSize = 0xF000000u;
 
 VM::VM()
-:   vm_( nullptr ) {
-    
+    : vm_{ nullptr },
+    allocator_{} {
+    setState_();
+
     WrenConfiguration configuration{};
     wrenInitConfiguration( &configuration );
     configuration.reallocateFn = reallocateFnWrapper;
@@ -320,6 +322,7 @@ VM::~VM() {
     if ( vm_ != nullptr ) {
         wrenFreeVM( vm_ );
     }
+    allocator = nullptr;
 }
 
 WrenVM* VM::vm() {
@@ -327,6 +330,7 @@ WrenVM* VM::vm() {
 }
 
 Result VM::executeModule( const std::string& mod ) {
+    setState_();
     const std::string source( loadModuleFn( mod.c_str() ) );
     auto res = wrenInterpret( vm_, source.c_str() );
     
@@ -342,7 +346,7 @@ Result VM::executeModule( const std::string& mod ) {
 }
 
 Result VM::executeString( const std::string& code ) {
-
+    setState_();
     auto res = wrenInterpret( vm_, code.c_str() );
 
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
@@ -352,7 +356,7 @@ Result VM::executeString( const std::string& code ) {
     if ( res == WrenInterpretResult::WREN_RESULT_RUNTIME_ERROR ) {
         return Result::RuntimeError;
     }
-    
+
     return Result::Success;
 }
 
@@ -370,6 +374,10 @@ Method VM::method(
     WrenValue* variable = wrenGetSlotValue( vm_, 0 );
     WrenValue* handle = wrenMakeCallHandle(vm_, sig.c_str());
     return Method( vm_, variable, handle );
+}
+
+void VM::setState_() {
+    allocator = &allocator_;
 }
 
 }

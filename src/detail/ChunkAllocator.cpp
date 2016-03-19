@@ -61,12 +61,17 @@ void* writeHeader(void* memory, std::size_t blockSize) {
 namespace wrenpp {
 namespace detail {
 
+ChunkAllocator::ChunkAllocator()
+    : chunks_{},
+    freeBlocks_{ nullptr } {
+    getNewChunk_();
+}
+
 ChunkAllocator::~ChunkAllocator() {
-    // TODO: freeFn is out of scope by the time this gets called :/
-    /*for (auto& block : chunks_) {
+    for (auto& block : chunks_) {
         VM::freeFn(block.memory);
     }
-    chunks_.clear();*/
+    chunks_.clear();
 }
 
 void ChunkAllocator::getNewChunk_() {
@@ -78,10 +83,6 @@ void ChunkAllocator::getNewChunk_() {
 // TODO: maybe we should only request bytes within std::uint32_t
 // we don't want a single alloc to be larger than 2 GB
 void* ChunkAllocator::alloc(std::size_t requestedBytes) {
-
-    if (chunks_.empty()) {
-        getNewChunk_();
-    }
 
     std::uint32_t blockSize = requestedBytes;
     //we need space for the header, as well as the guard bytes. Inflate the block size accordingly

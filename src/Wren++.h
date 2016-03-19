@@ -6,6 +6,7 @@
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
+#include "detail/ChunkAllocator.h"
 extern "C" {
     #include <wren.h>
 }
@@ -267,7 +268,10 @@ class VM {
         friend class ClassContext;
         template< typename T > friend class RegisteredClassContext;
 
-        WrenVM*	    vm_;
+        void setState_();
+
+        WrenVM*	               vm_;
+        detail::ChunkAllocator allocator_;
 };
 
 template< typename... Args >
