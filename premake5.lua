@@ -53,6 +53,9 @@ workspace "wrenly"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
+        filter "configurations:Debug"
+            debugdir "bin"
+            project "test"
 
         configuration "vs*"
             if _OPTIONS["link"] then
