@@ -150,7 +150,7 @@ void Value::release_() {
     }
 }
 
-Method::Method(WrenVM* vm, WrenValue* variable, WrenValue* method)
+Method::Method(VM* vm, WrenValue* variable, WrenValue* method)
     : vm_(vm),
     method_(method),
     variable_(variable),
@@ -213,8 +213,8 @@ void Method::release_() {
     if (refCount_) {
         *refCount_ -= 1u;
         if (*refCount_ == 0u) {
-            wrenReleaseValue(vm_, method_);
-            wrenReleaseValue(vm_, variable_);
+            wrenReleaseValue(vm_->vm(), method_);
+            wrenReleaseValue(vm_->vm(), variable_);
             delete refCount_;
             refCount_ = nullptr;
         }
@@ -367,11 +367,12 @@ Method VM::method(
     const std::string& var,
     const std::string& sig
 ) {
+    setState_();
     wrenEnsureSlots( vm_, 1 );
     wrenGetVariable( vm_, mod.c_str(), var.c_str(), 0 );
     WrenValue* variable = wrenGetSlotValue( vm_, 0 );
     WrenValue* handle = wrenMakeCallHandle(vm_, sig.c_str());
-    return Method( vm_, variable, handle );
+    return Method( this, variable, handle );
 }
 
 void VM::setState_() {

@@ -74,6 +74,8 @@ class Value {
         unsigned*   refCount_;
 };
 
+class VM;
+
 /**
  * @class Method
  * @brief Use this to call a wren method from C++.
@@ -82,7 +84,7 @@ class Value {
  */
 class Method {
     public:
-        Method( WrenVM*, WrenValue* variable, WrenValue* method );
+        Method( VM*, WrenValue* variable, WrenValue* method );
         Method() = delete;
         Method( const Method& );
         Method( Method&& );
@@ -103,7 +105,7 @@ class Method {
         void retain_();
         void release_();
 
-        mutable WrenVM*         vm_;    // this pointer is not managed here
+        mutable VM*             vm_;    // this pointer is not managed here
         mutable WrenValue*      method_;
         mutable WrenValue*      variable_;
         unsigned*               refCount_;
@@ -266,6 +268,7 @@ class VM {
     private:
         friend class ModuleContext;
         friend class ClassContext;
+        friend class Method;
         template< typename T > friend class RegisteredClassContext;
 
         void setState_();
@@ -276,14 +279,15 @@ class VM {
 
 template< typename... Args >
 void Method::operator()( Args... args ) const {
+    vm_->setState_();
     constexpr const std::size_t Arity = sizeof...( Args );
-    wrenEnsureSlots( vm_, Arity + 1u );
-    wrenSetSlotValue(vm_, 0, variable_);
+    wrenEnsureSlots( vm_->vm(), Arity + 1u );
+    wrenSetSlotValue(vm_->vm(), 0, variable_);
 
     std::tuple<Args...> tuple = std::make_tuple( args... );
-    detail::passArgumentsToWren( vm_, tuple, std::make_index_sequence<Arity> {} );
+    detail::passArgumentsToWren( vm_->vm(), tuple, std::make_index_sequence<Arity> {} );
 
-    wrenCall( vm_, method_ );
+    wrenCall( vm_->vm(), method_ );
 }
 
 template< typename T, typename... Args >
