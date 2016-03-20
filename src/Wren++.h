@@ -360,18 +360,18 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::bindCFunction( bool isStat
 }
 
 template<typename T, int Slot>
-T* getForeignSlotPtr(WrenVM* vm) {
+T* getSlotForeign(WrenVM* vm) {
     detail::ForeignObject* obj = static_cast<detail::ForeignObject*>(wrenGetSlotForeign(vm, Slot));
     return static_cast<T*>(obj->objectPtr());
 }
 
 template<typename T>
-void setForeignSlotValue(WrenVM* vm, const T& obj) {
+void setSlotForeignValue(WrenVM* vm, const T& obj) {
     detail::ForeignObjectValue<T>::setInSlot<0>(vm, obj);
 }
 
 template<typename T>
-void setForeignSlotPtr(WrenVM* vm, T* obj) {
+void setSlotForeignPtr(WrenVM* vm, T* obj) {
     detail::ForeignObjectPtr<T>::setInSlot<0>(vm, obj);
 }
 

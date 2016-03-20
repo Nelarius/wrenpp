@@ -317,15 +317,15 @@ wrenpp::beginModule( "builtin/imgui" )
 
 If you need to access and return foreign object instances within your CFunction, you can use the following two helper functions.
 
-Use `wrenpp::getForeignSlotPtr<T, int>(WrenVM*)` to get a bound type from the slot API:
+Use `wrenpp::getSlotForeign<T, int>(WrenVM*)` to get a bound type from the slot API:
 
 ```cpp
 void setWindowSize(WrenVM* vm) {
-  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getForeignSlotPtr<Vec2i, 1>(vm));
+  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getSlotForeign<Vec2i, 1>(vm));
 }
 ```
 
-Use `wrenpp::setForeignSlotValue<T>(WrenVM*, const T&)` and `wrenpp::setForeignSlotPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenpp::setForeignSlotValue<T>` uses the type's copy constructor to copy the object into the new value.
+Use `wrenpp::setSlotForeignValue<T>(WrenVM*, const T&)` and `wrenpp::setSlotForeignPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenpp::setSlotForeignValue<T>` uses the type's copy constructor to copy the object into the new value.
 
 ### C++ and Wren lifetimes
 
@@ -396,4 +396,3 @@ The minimum heap size is the heap size, in bytes, below which collections will n
 * There needs to be better error handling for not finding a method.
   * Is Wren actually responsible for crashing the program when a method is not found?
 * Does Wren actually crash the program when an invalid operator is used on a class instance?
-* Make VM::collectGarbage less verbose
