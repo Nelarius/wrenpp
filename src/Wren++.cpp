@@ -213,6 +213,7 @@ void Method::release_() {
     if (refCount_) {
         *refCount_ -= 1u;
         if (*refCount_ == 0u) {
+            vm_->setState_();   // wrenReelaseValue will cause wren to free memory
             wrenReleaseValue(vm_->vm(), method_);
             wrenReleaseValue(vm_->vm(), variable_);
             delete refCount_;
@@ -306,12 +307,14 @@ VM::VM()
 }
 
 VM::VM(VM&& other )
-:   vm_( other.vm_ ) {
+    : vm_{ other.vm_ },
+    allocator_{ std::move(other.allocator_) } {
     other.vm_ = nullptr;
 }
 
 VM& VM::operator=(VM&& rhs ) {
     vm_             = rhs.vm_;
+    allocator_      = std::move(rhs.allocator_);
     rhs.vm_         = nullptr;
     return *this;
 }
