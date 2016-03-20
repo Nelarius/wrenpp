@@ -9,7 +9,7 @@ Wren++ currently provides:
 - convenient access to calling Wren class methods from C++
 - template-based -- no macros!
 
-Current defincies:
+Current deficiencies:
 - not that type-safe. It's pretty undefined what happens when you try to bind code that returns a type which hasn't itself been bound
 - Wren++ has no concept of const-ness. When you return a const pointer to one of your instances from a bound function, the resulting foreign object in Wren will happily call non-const methods -- yikes!
 - Wren access from C++ is rather minimal
@@ -171,15 +171,6 @@ foreign class Vec3 {
   foreign y=( rhs )
   foreign z
   foreign z=( rhs )
-}
-
-/*
- * This is a creator object for the C++ API to use in order to create foreign objects
- * and return them back to Wren with the required state
- */
-
-var createVector3 = Fn.new { | x, y, z |
-  return Vec3.new( x, y, z )
 }
 ```
 
@@ -369,47 +360,40 @@ VM::loadModuleFn = []( const char* mod ) -> char* {
 
 ### Customize heap allocation & garbage collection
 
-You can use your own allocation/free functions assigning your them to the `Wren::allocateFn` and `Wren::freeFn` callback functions. By default, they are just wrappers around the system malloc/free:
+You can use your own allocation/free functions assigning them to the `wrenpp::VM::allocateFn` and `wrenpp::VM::freeFn` callbacks. `allocateFn` must be a callable with the `void*(std::size_t)` signature, and `freeFn` must be a callable with the `void(void*)` signature. By default, the callbacks are just set to the system malloc/free:
 
 ```cpp
-Wren::allocateFn = []( std::size_t bytes ) -> void* {
-  return malloc( bytes );
-};
+wrenpp::VM::allocateFn = std::malloc;
 
-Wren::freeFn = []( void* memory ) -> void {
-  free(memory);
-};
+wrenpp::VM::freeFn = std::free;
 ```
 
-These functions are used by the Wren VM itself to allocate a block of memory to use. These bindings allocate an additional (small) block of memory in order to store foreign objects. Here are the other variables which control how the heap is used.
+Wren++ uses the allocation and free function to allocate large chunks of memory at a time. The `chunkSize` parameter specifies how much memory is reserved at a time, in bytes. The default value for the block size is 5 MiB.
 
-The initial heap size is the number of bytes Wren will allocate before triggering the first garbage collection. By default, it's 10 MiB.
+`wrenpp::VM::chunkSize = 0x500000u;`
 
-`wrenly::Wren::initialHeapSize = 0xA00000u;`
+The purpose of allocating memory chunks is to avoid expensive system calls for allocating memory, if you're using the default malloc and free. Wren++ contains a small memory manager, which emulates malloc/free/realloc within the memory chunks. These are the functions that are actually passed to Wren as callbacks. The memory manager tries to keep fragmentation low by always allocating blocks of memory which are powers of two in size. This means that the blocks are frequently larger than necessary, but it also means that realloc calls often don't require a memory move. As a result, Wren usually runs slightly faster (around 5%) under Wren++. Currently, the memory manager uses a first-fit policy to determine which free memory blocks are to be reused.
 
-The heap size in bytes, below which collections will stop. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage of heap growth, explained next) and thus frequent collections. By default, the minimum heap size is 1 MiB.
+The initial heap size is the number of bytes Wren will have allocated before triggering the first garbage collection. By default, it's 10 MiB.
 
-`wrenly::Wren::minHeapSize = 0x100000u;`
+`wrenpp::VM::initialHeapSize = 0xA00000u;`
 
-After a collection occurs, Wren will allow the heap to grow to (100 + heapGrowthPercent) % of the current heap size before the next collection occurs. By default, the heap growth percentage is 50 %.
+After a collection occurs the heap will have shrunk. Wren will allow the heap to grow to (100 + heapGrowthPercent) % of the current heap size before the next collection occurs. By default, the heap growth percentage is 50 %.
 
-`wrenly::Wren::heapGrowthPercent = 50;`
+`wrenpp::VM::heapGrowthPercent = 50;`
 
-Wrenly uses the provided allocation/free functions as rarely as possible. They are used to allocate one big block of memory at a time. The `chunkSize` parameter specifies how much memory is reserved at a time. The default value for the block size is 5 MiB.
+The minimum heap size is the heap size, in bytes, below which collections will not be carried out. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage mentioned previously) and thus very frequent collections. By default, the minimum heap size is 1 MiB.
 
-`wrenly::Wren::chunkSize = 0x500000u;`
+`wrenpp::VM::minHeapSize = 0x100000u;`
 
 ## TODO:
 
 * Assert when an object pointer is misaligned
-* Return registered foreign classes by value, and by reference
 * Add function to get the value returned by the wren method.
   * A Value class is needed. Has template methods to get the actual value on the Wren stack.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
-* I need to be able to receive the return value of a foreign method, and return that from `operator()( Args... args ).`
-  * Ideally there would be a wrapper for WrenValue, which might be null.
 * There needs to be better error handling for not finding a method.
   * Is Wren actually responsible for crashing the program when a method is not found?
 * Does Wren actually crash the program when an invalid operator is used on a class instance?
-* Make VM::collectGarbage less verbodes
+* Make VM::collectGarbage less verbose
