@@ -67,6 +67,19 @@ ChunkAllocator::ChunkAllocator()
     getNewChunk_();
 }
 
+ChunkAllocator::ChunkAllocator(ChunkAllocator&& other)
+    : chunks_{ std::move(other.chunks_) },
+    freeListHead_{ other.freeListHead_ } {
+    other.freeListHead_ = nullptr;
+}
+
+ChunkAllocator& ChunkAllocator::operator=(ChunkAllocator&& rhs) {
+    chunks_ = std::move(rhs.chunks_);
+    freeListHead_ = rhs.freeListHead_;
+    rhs.freeListHead_ = nullptr;
+    return *this;
+}
+
 ChunkAllocator::~ChunkAllocator() {
     for (auto& block : chunks_) {
         VM::freeFn(block.memory);
@@ -158,7 +171,7 @@ void* ChunkAllocator::realloc(void* memory, std::size_t bytes) {
 
 void ChunkAllocator::free(void* memory) {
     if (!memory) {
-        nullptr;
+        return;
     }
     std::uint32_t* intPtr = (std::uint32_t*)memory;
     std::uint32_t blockSize = *(intPtr - 1u);

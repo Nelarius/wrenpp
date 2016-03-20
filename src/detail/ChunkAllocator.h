@@ -18,10 +18,11 @@ namespace detail {
 class ChunkAllocator {
 public:
     ChunkAllocator();
+    // TODO: this needs to be made movable, because it is owned by VM, a movable entity!
     ChunkAllocator(const ChunkAllocator&)            = delete;
-    ChunkAllocator(ChunkAllocator&&)                 = delete;
+    ChunkAllocator(ChunkAllocator&&);
     ChunkAllocator& operator=(const ChunkAllocator&) = delete;
-    ChunkAllocator& operator=(ChunkAllocator&&)      = delete;
+    ChunkAllocator& operator=(ChunkAllocator&&);
     ~ChunkAllocator();
 
     void*  alloc(std::size_t bytes);
