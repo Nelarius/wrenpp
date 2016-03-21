@@ -85,3 +85,46 @@ workspace "wrenpp"
                 }
             end
             links { "lib", "wren" }
+
+    project "benchmark"
+        kind "ConsoleApp"
+        language "C++"
+        targetdir "bin"
+        targetname "benchmark"
+        files { "bench/**.cpp", "bench/**.wren" }
+        includedirs { "src" }
+        if _OPTIONS["include"] then
+            includedirs { _OPTIONS["include"] }
+        end
+
+        filter "files:**.wren"
+            buildcommands { "{COPY} ../../bench/%{file.name} ../../bin" }
+            buildoutputs { "../../bin/%{file.name}" }
+
+        filter "configurations:Debug"
+            debugdir "bin"
+            project "benchmark"
+
+        filter "vs*"
+            if _OPTIONS["link"] then
+                filter "configurations:Debug"
+                    libdirs {
+                        _OPTIONS["link"] .. "/Debug"
+                    }
+                    links { "lib", "wren_static_d" }
+                    project "benchmark"
+                filter "configurations:Release"
+                    libdirs {
+                        _OPTIONS["link"] .. "/Release"
+                    }
+                    links { "lib", "wren_static" }
+                    project "benchmark"
+            end
+
+        filter "not vs*"
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"]
+                }
+            end
+            links { "lib", "wren" }
