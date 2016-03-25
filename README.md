@@ -230,13 +230,15 @@ If your class or struct has public fields you wish to expose, you can do so by u
 ```cpp
 wrenpp::beginModule( "main" )
   .bindClass< Vec3, float, float, float >( "Vec3" )
-    .bindGetter< decltype(&Vec3::x), &Vec3::x >( false, "x" )
-    .bindSetter< decltype(&Vec3::x), &Vec3::x >( false, "x=(_)" )
-    .bindGetter< decltype(&Vec3::y), &Vec3::y >( false, "y" )
-    .bindSetter< decltype(&Vec3::y), &Vec3::y >( false, "y=(_)" )
-    .bindGetter< decltype(&Vec3::z), &Vec3::z >( false, "z" )
-    .bindSetter< decltype(&Vec3::z), &Vec3::z >( false, "z=(_)" );
+    .bindGetter< decltype(&Vec3::x), &Vec3::x >( "x" )
+    .bindSetter< decltype(&Vec3::x), &Vec3::x >( "x=(_)" )
+    .bindGetter< decltype(&Vec3::y), &Vec3::y >( "y" )
+    .bindSetter< decltype(&Vec3::y), &Vec3::y >( "y=(_)" )
+    .bindGetter< decltype(&Vec3::z), &Vec3::z >( "z" )
+    .bindSetter< decltype(&Vec3::z), &Vec3::z >( "z=(_)" );
 ```
+
+Getters and setters are implicitly assumed to be non-static methods.
 
 #### Methods
 
@@ -249,12 +251,12 @@ int main() {
   wrenpp::beginModule( "main" )
     .bindClass< Vec3, float, float, float >( "Vec3" )
       // properties
-      .bindGetter< decltype(&Vec3::x), &Vec3::x >( false, "x" )
-      .bindSetter< decltype(&Vec3::x), &Vec3::x >( false, "x=(_)" )
-      .bindGetter< decltype(&Vec3::y), &Vec3::y >( false, "y" )
-      .bindSetter< decltype(&Vec3::y), &Vec3::y >( false, "y=(_)" )
-      .bindGetter< decltype(&Vec3::z), &Vec3::z >( false, "z" )
-      .bindSetter< decltype(&Vec3::z), &Vec3::z >( false, "z=(_)" )
+      .bindGetter< decltype(&Vec3::x), &Vec3::x >( "x" )
+      .bindSetter< decltype(&Vec3::x), &Vec3::x >( "x=(_)" )
+      .bindGetter< decltype(&Vec3::y), &Vec3::y >( "y" )
+      .bindSetter< decltype(&Vec3::y), &Vec3::y >( "y=(_)" )
+      .bindGetter< decltype(&Vec3::z), &Vec3::z >( "z" )
+      .bindSetter< decltype(&Vec3::z), &Vec3::z >( "z=(_)" )
       // methods
       .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
       .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )

@@ -155,9 +155,9 @@ class RegisteredClassContext: public ClassContext {
         template< typename F, F f >
         RegisteredClassContext& bindMethod( bool isStatic, std::string signature );
         template< typename U, U T::*Field >
-        RegisteredClassContext& bindGetter( bool isStatic, std::string signature );
+        RegisteredClassContext& bindGetter( std::string signature );
         template< typename U, U T::*Field >
-        RegisteredClassContext& bindSetter( bool isStatic, std::string signature );
+        RegisteredClassContext& bindSetter( std::string signature );
         RegisteredClassContext& bindCFunction( bool isStatic, std::string signature, FunctionPtr function );
 };
 
@@ -327,10 +327,10 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::bindMethod( bool isStatic,
 
 template< typename T >
 template< typename U, U T::*Field >
-RegisteredClassContext<T>& RegisteredClassContext<T>::bindGetter( bool isStatic, std::string s ) {
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindGetter( std::string s ) {
     detail::registerFunction(
         module_->name_,
-        class_, isStatic,
+        class_, false,
         s,
         detail::propertyGetter< T, U, Field >
     );
@@ -339,10 +339,10 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::bindGetter( bool isStatic,
 
 template< typename T >
 template< typename U, U T::*Field >
-RegisteredClassContext<T>& RegisteredClassContext<T>::bindSetter( bool isStatic, std::string s ) {
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindSetter( std::string s ) {
     detail::registerFunction(
         module_->name_,
-        class_, isStatic,
+        class_, false,
         s,
         detail::propertySetter< T, U, Field >
     );
