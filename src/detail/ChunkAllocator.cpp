@@ -61,9 +61,7 @@ void* writeHeader(void* memory, std::size_t blockSize) {
 namespace wrenpp {
 namespace detail {
 
-ChunkAllocator::ChunkAllocator()
-    : chunks_{},
-    freeListHead_{ nullptr } {
+ChunkAllocator::ChunkAllocator() {
     getNewChunk_();
 }
 
@@ -178,9 +176,49 @@ void ChunkAllocator::free(void* memory) {
     intPtr -= 2u;
     assert(blockSize >= sizeof(FreeBlock));
     assert(*intPtr == BEEFCAFE);
+    // the size of the block minus one uint32 is where the last guard byte resides
     assert(*(intPtr + blockSize / 4u - 1u) == BEEFCAFE);
-    markFreeBytes(intPtr, blockSize); // the block size includes the guard bytes as well!
-    addToFreeList_(intPtr, blockSize);
+    markFreeBytes(intPtr, blockSize);
+    //addToFreeList_(intPtr, blockSize);
+    std::uintptr_t blockStart = reinterpret_cast<std::uintptr_t>(intPtr);
+    std::uintptr_t blockEnd = blockStart + blockSize;
+    FreeBlock* curBlock = freeListHead_;
+    FreeBlock* prevBlock = nullptr;
+    while (curBlock != nullptr) {
+        if (reinterpret_cast<std::uintptr_t>(curBlock) >= blockEnd) {
+            break;
+        }
+        prevBlock = curBlock;
+        curBlock = curBlock->next;
+    }
+
+    // freeListHead_ was null or the next element was null
+    if (prevBlock == nullptr) {
+        prevBlock = reinterpret_cast<FreeBlock*>(blockStart);
+        prevBlock->size = blockSize;
+        prevBlock->next = freeListHead_;
+        freeListHead_ = prevBlock;
+    }
+    // prevBlock is adjacent to the block being freed
+    else if (reinterpret_cast<std::uintptr_t>(prevBlock) + prevBlock->size == blockStart) {
+        prevBlock->size += blockSize;
+    }
+    // insert a new block in between curBlock and prevBlock
+    // set the new block as prevBlock in preparation to check if the following
+    // block is adjacent to the new block
+    else {
+        FreeBlock* newBlock = reinterpret_cast<FreeBlock*>(blockStart);
+        newBlock->next = prevBlock->next;
+        newBlock->size = blockSize;
+        prevBlock->next = newBlock;
+        prevBlock = newBlock;
+    }
+    // check if curBlock is adjacent to the freed block
+    if (curBlock != nullptr && reinterpret_cast<std::uintptr_t>(curBlock) == blockEnd) {
+        // we merge curBlock into prevBlock
+        prevBlock->size += curBlock->size;
+        prevBlock->next = curBlock->next;
+    }
 }
 
 std::size_t ChunkAllocator::currentMemorySize() const {
