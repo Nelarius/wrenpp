@@ -7,10 +7,6 @@
 #include <cstdio>
 #include <cassert>
 
-namespace wrenpp {
-AllocStats stats{};
-}
-
 namespace {
 
 std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
@@ -49,15 +45,6 @@ void writeFnWrapper(WrenVM* vm, const char* text) {
 wrenpp::detail::ChunkAllocator* allocator{ nullptr };
 
 void* reallocateFnWrapper(void* memory, std::size_t newSize) {
-    if (newSize > wrenpp::stats.largestByte) {
-        wrenpp::stats.largestByte = newSize;
-    }
-    else if (newSize < wrenpp::stats.smallestByte) {
-        wrenpp::stats.smallestByte = newSize;
-    }
-    wrenpp::stats.count++;
-    wrenpp::stats.accumulation += newSize;
-
     assert(allocator != nullptr);
     return allocator->realloc(memory, newSize);
 }
@@ -76,78 +63,7 @@ void registerClass(const std::string& mod, std::string cName, WrenForeignClassMe
     std::size_t hash = detail::hashClassSignature(mod.c_str(), cName.c_str());
     boundForeignClasses.insert(std::make_pair(hash, methods));
 }
-}
 
-Value::Value(WrenVM* vm, WrenValue* val)
-    : vm_{ vm },
-    value_{ val },
-    refCount_{ nullptr } {
-    refCount_ = new unsigned;
-    *refCount_ = 1u;
-}
-
-Value::Value(const Value& other)
-    : vm_{ other.vm_ },
-    value_{ other.value_ },
-    refCount_{ other.refCount_ } {
-    retain_();
-}
-
-Value::Value(Value&& other)
-    : vm_{ other.vm_ },
-    value_{ other.value_ },
-    refCount_{ other.refCount_ } {
-    other.vm_ = nullptr;
-    other.value_ = nullptr;
-    other.refCount_ = nullptr;
-}
-
-Value& Value::operator=(const Value& rhs) {
-    release_();
-    vm_ = rhs.vm_;
-    value_ = rhs.value_;
-    refCount_ = rhs.refCount_;
-    retain_();
-    return *this;
-}
-
-Value& Value::operator=(Value&& rhs) {
-    release_();
-    vm_ = rhs.vm_;
-    value_ = rhs.value_;
-    refCount_ = rhs.refCount_;
-    rhs.vm_ = nullptr;
-    rhs.value_ = nullptr;
-    rhs.refCount_ = nullptr;
-    return *this;
-
-}
-
-Value::~Value() {
-    release_();
-}
-
-bool Value::isNull() const {
-    return value_ == nullptr;
-}
-
-WrenValue* Value::pointer() {
-    return value_;
-}
-
-void Value::retain_() {
-    *refCount_ += 1u;
-}
-
-void Value::release_() {
-    if (refCount_) {
-        *refCount_ -= 1u;
-        if (*refCount_ == 0u) {
-            wrenReleaseValue(vm_, value_);
-            delete refCount_;
-            refCount_ = nullptr;
-        }
-    }
 }
 
 Method::Method(VM* vm, WrenValue* variable, WrenValue* method)
