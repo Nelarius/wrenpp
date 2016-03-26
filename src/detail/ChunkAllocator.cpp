@@ -50,9 +50,17 @@ void* writeHeader(void* memory, std::size_t blockSize) {
 #ifdef DEBUG
 #define markAllocBytes(memory, numBytes) std::memset(memory, 0xa5, numBytes)
 #define markFreeBytes(memory, numBytes) std::memset(memory, 0xee, numBytes)
+#define collectAllocStat(stats) stats.numAllocs++
+#define collectFreeStat(stats) stats.numFrees++
+#define collectMemoryMoveStat(stats) stats.numMoves++
+#define collectMemoryAvailableStat(stats) stats.numAvailable++
 #else
 #define markAllocBytes(memory, bytes)
 #define markFreeBytes(memory, bytes)
+#define collectAllocStats(numBytes, stats)
+#define collectFreeStat(stats)
+#define collectMemoryMoveStat(stats)
+#define collectMemoryAvailableStat(stats)
 #endif
 
 #define BEEFCAFE 0xfecaefbe
@@ -130,6 +138,10 @@ void* ChunkAllocator::alloc(std::size_t requestedBytes) {
         }
         void* memory = curBlock;
         std::uint32_t size = curBlock->size;
+
+        assert(stats_.freeListSize != 0u);
+        stats_.freeListSize--;
+
         return prepareMemory_(memory, size);
     }
 
@@ -152,16 +164,20 @@ void* ChunkAllocator::realloc(void* memory, std::size_t bytes) {
         return nullptr;
     }
     if (memory == nullptr) {
+        collectAllocStat(stats_);
         return alloc(bytes);
     }
     if (memory && bytes == 0u) {
+        collectFreeStat(stats_);
         free(memory);
         return nullptr;
     }
     std::uint32_t availableSize = *((std::uint32_t*)memory - 1u) - HeaderBytes_ - GuardBytes_;
     if (availableSize >= bytes) {
+        collectMemoryAvailableStat(stats_);
         return memory;
     }
+    collectMemoryMoveStat(stats_);
     void* newMem = alloc(bytes);
     std::memcpy(newMem, memory, bytes);
     free(memory);
@@ -172,6 +188,12 @@ void ChunkAllocator::free(void* memory) {
     if (!memory) {
         return;
     }
+
+    stats_.freeListSize++;
+    if (stats_.freeListSize > stats_.maxFreeListSize) {
+        stats_.maxFreeListSize = stats_.freeListSize;
+    }
+
     std::uint32_t* intPtr = (std::uint32_t*)memory;
     std::uint32_t blockSize = *(intPtr - 1u);
     intPtr -= 2u;

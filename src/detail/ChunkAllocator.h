@@ -7,7 +7,19 @@
 #include <cassert>
 
 namespace wrenpp {
+
+struct AllocStats {
+    std::size_t numAllocs{ 0u };
+    std::size_t numFrees{ 0u };
+    std::size_t numMoves{ 0u };
+    // the number of reallocs that did not result in a move
+    std::size_t numAvailable{ 0u };
+    std::size_t freeListSize{ 0u };
+    std::size_t maxFreeListSize{ 0u };
+};
+
 namespace detail {
+
 
 // A chunk allocator. It uses the provided allocation/free functions to allocate
 // one big block of memory at a time.
@@ -31,6 +43,8 @@ public:
     void   free(void* memory);
 
     std::size_t currentMemorySize() const;
+
+    const AllocStats& stats() const { return stats_; }
 
 private:
 
@@ -65,6 +79,7 @@ private:
 
     std::vector<Block>  chunks_{};
     FreeBlock*          freeListHead_{ nullptr };
+    AllocStats          stats_{};
 };
 
 }

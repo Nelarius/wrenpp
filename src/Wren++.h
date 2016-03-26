@@ -229,6 +229,8 @@ class VM {
             const std::string& signature
         );
 
+        const AllocStats& allocStats() const { return allocator_.stats(); }
+
         static LoadModuleFn loadModuleFn;
         static WriteFn      writeFn;
         static AllocateFn   allocateFn;

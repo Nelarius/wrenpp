@@ -103,25 +103,24 @@ workspace "wrenpp"
 
         filter "configurations:Debug"
             debugdir "bin"
-            project "benchmark"
 
-        filter "vs*"
+        filter { "action:vs*", "Debug" }
             if _OPTIONS["link"] then
-                filter "configurations:Debug"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Debug"
-                    }
-                    links { "lib", "wren_static_d" }
-                    project "benchmark"
-                filter "configurations:Release"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Release"
-                    }
-                    links { "lib", "wren_static" }
-                    project "benchmark"
+                libdirs {
+                    _OPTIONS["link"] .. "/Debug"
+                }
             end
+            links { "lib", "wren_static_d" }
 
-        filter "not vs*"
+        filter { "action:vs*", "Release"}
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"] .. "/Release"
+                }
+            end
+            links { "lib", "wren_static" }
+
+        filter "not action:vs*"
             if _OPTIONS["link"] then
                 libdirs {
                     _OPTIONS["link"]
