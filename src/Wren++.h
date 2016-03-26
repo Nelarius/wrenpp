@@ -157,6 +157,8 @@ class VM {
             const std::string& signature
         );
 
+        inline const AllocStats& memoryStats() const { return allocator_.stats(); }
+
         static LoadModuleFn loadModuleFn;
         static WriteFn      writeFn;
         static AllocateFn   allocateFn;

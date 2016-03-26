@@ -64,21 +64,25 @@ const Vec3& returnVec3ConstRef() {
 }
 
 void testMethodCall() {
-    wrenpp::VM wren{};
+    wrenpp::VM vm;
 
-    wren.executeModule("test_method");
-    auto passNum = wren.method("main", "passNumber", "call(_)");
+    vm.executeModule("test_method");
+    auto passNum = vm.method("main", "passNumber", "call(_)");
     passNum(5.0);
     passNum(5.f);
     passNum(5);
     passNum(5u);
 
-    auto passBool = wren.method("main", "passBool", "call(_)");
+    auto passBool = vm.method("main", "passBool", "call(_)");
     passBool(true);
 
-    auto passStr = wren.method("main", "passString", "call(_)");
+    auto passStr = vm.method("main", "passString", "call(_)");
     passStr("hello");
     passStr(std::string("hello"));
+
+    const wrenpp::AllocStats& stats = vm.memoryStats();
+    printf("\nallocations: %u\n", stats.allocCountAtLargest);
+    printf("freeBlocks: %u\n", stats.freeBlocksAtLargest);
 }
 
 void testClassMethods() {
@@ -107,9 +111,13 @@ void testClassMethods() {
         .endClass()
     .endModule();
 
-    wrenpp::VM wren{};
+    wrenpp::VM vm;
 
-    wren.executeModule("test_vector");
+    vm.executeModule("test_vector");
+
+    const wrenpp::AllocStats& stats = vm.memoryStats();
+    printf("\nallocations: %u\n", stats.allocCountAtLargest);
+    printf("freeBlocks: %u\n", stats.freeBlocksAtLargest);
 }
 
 int main() {

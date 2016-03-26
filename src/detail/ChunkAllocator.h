@@ -11,10 +11,14 @@
 namespace wrenpp {
 
 struct AllocStats {
-    std::size_t allocCount;
-    std::size_t heapSize;
-    std::size_t usedMemory;
-    std::size_t freeBlocks;
+    std::size_t allocCount{ 0u };
+    std::size_t heapSize{ 0u };
+    std::size_t usedMemory{ 0u };
+    std::size_t freeBlocks{ 0u };
+
+    std::size_t allocCountAtLargest{ 0u };
+    std::size_t usedMemoryAtLargest{ 0u };
+    std::size_t freeBlocksAtLargest{ 0u };
 };
 
 namespace detail {
@@ -40,7 +44,7 @@ public:
     void*  realloc(void* memory, std::size_t bytes);
     void   free(void* memory);
 
-    std::size_t currentMemorySize() const;
+    inline const AllocStats& stats() const { return stats_; }
 
 private:
 
@@ -70,8 +74,9 @@ private:
     const std::uint32_t HeaderBytes_{ sizeof(std::uint32_t) };
     const std::size_t   MinimumBlockSize_{ sizeof(FreeBlock) };
 
-    std::vector<Block>      chunks_{};
-    FreeBlock*              freeListHead_{ nullptr };
+    std::vector<Block>  chunks_{};
+    FreeBlock*          freeListHead_{ nullptr };
+    AllocStats          stats_{};
 };
 
 }

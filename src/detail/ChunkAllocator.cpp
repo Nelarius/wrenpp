@@ -86,6 +86,7 @@ ChunkAllocator::~ChunkAllocator() {
 }
 
 void ChunkAllocator::getNewChunk_() {
+    stats_.heapSize += VM::chunkSize;
     void* memory = VM::allocateFn(VM::chunkSize);
     assert(memory);
     chunks_.push_back(Block{ memory, VM::chunkSize, 0u });
@@ -111,6 +112,15 @@ void* ChunkAllocator::alloc(std::size_t requestedBytes) {
     assert(VM::chunkSize >= actualBytes);
     assert(actualBytes >= sizeof(FreeBlock));
     assert(actualBytes - HeaderBytes_ - GuardBytes_ >= requestedBytes);
+
+    stats_.allocCount++;
+    stats_.usedMemory += actualBytes;
+    if (stats_.allocCount > stats_.allocCountAtLargest) {
+        stats_.allocCountAtLargest = stats_.allocCount;
+    }
+    if (stats_.usedMemory > stats_.usedMemoryAtLargest) {
+        stats_.usedMemoryAtLargest = stats_.usedMemory;
+    }
 
     // fetch the memory from the free list
     FreeBlock* curBlock = freeListHead_;
@@ -198,6 +208,7 @@ void ChunkAllocator::free(void* memory) {
         prevBlock->size = blockSize;
         prevBlock->next = freeListHead_;
         freeListHead_ = prevBlock;
+        stats_.freeBlocks++;
     }
     // prevBlock is adjacent to the block being freed
     else if (reinterpret_cast<std::uintptr_t>(prevBlock) + prevBlock->size == blockStart) {
@@ -212,21 +223,25 @@ void ChunkAllocator::free(void* memory) {
         newBlock->size = blockSize;
         prevBlock->next = newBlock;
         prevBlock = newBlock;
+        stats_.freeBlocks++;
     }
+
+    if (stats_.freeBlocks > stats_.freeBlocksAtLargest) {
+        stats_.freeBlocksAtLargest = stats_.freeBlocks;
+    }
+
     // check if curBlock is adjacent to the freed block
     if (curBlock != nullptr && reinterpret_cast<std::uintptr_t>(curBlock) == blockEnd) {
         // we merge curBlock into prevBlock
         prevBlock->size += curBlock->size;
         prevBlock->next = curBlock->next;
+        assert(stats_.freeBlocks != 0u);
+        stats_.freeBlocks--;
     }
-}
 
-std::size_t ChunkAllocator::currentMemorySize() const {
-    std::size_t res = 0u;
-    for (auto block : chunks_) {
-        res += block.size;
-    }
-    return res;
+    assert(stats_.allocCount != 0u);
+    stats_.allocCount--;
+    stats_.usedMemory -= blockSize;
 }
 
 }
