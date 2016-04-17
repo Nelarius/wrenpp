@@ -74,10 +74,5 @@ workspace "wrenpp"
             end
             project "test"
             filter "files:**.wren"
-                buildcommands { "copy ..\\..\\test\\%{file.name} ..\\..\\bin" }
-                buildoutputs { "..\\..\\bin\\%{file.name}" }
-
-        configuration "gmake"
-            filter "files:**.wren"
-                buildcommands { "cp ../../test/%{file.name} ../../bin" }
-                buildoutputs { "../../bin/test/%{file.name}" }
+                buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
+                buildoutputs { "../../bin/%{file.name}" }
