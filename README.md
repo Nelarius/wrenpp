@@ -87,7 +87,7 @@ you can call the static method `say` from C++ by using `void Method::operator( A
 ```cpp
 wrenpp::VM vm{};
 vm.executeModule( "bar" );
-    
+
 wrenpp::Method say = vm.method( "main", "Foo", "say(_)" );
 say( "Hello from C++!" );
 ```
@@ -103,6 +103,16 @@ Method VM::method(
 ```
 
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
+
+The return value of a Wren method can be accessed by doing
+
+```cpp
+wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
+wrenpp::Value val = returnsThree.call();
+double val = val.as<double>();
+```
+
+The `operator()` method on `wrenpp::Method` returns a `wrenpp::Value` object, which can be cast to the wanted return type by calling `as()`.
 
 ## Accessing C++ from Wren
 
@@ -140,10 +150,10 @@ int main() {
       .bindFunction< decltype(&exp), &exp >( true, "exp(_)" )
     .endClass()
   .endModule();
-        
+
   wrenpp::VM vm;
   vm.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
-    
+
   return 0;
 }
 ```
@@ -194,7 +204,7 @@ struct Vec3 {
   float dot( const Vec3& rhs ) const {
     return x*rhs.x + y*rhs.y + z*rhs.z;
   }
-  
+
   Vec3 cross( const Vec3& rhs ) const {
     return Vec3 {
       y*rhs.z - z*rhs.y,

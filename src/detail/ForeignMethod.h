@@ -221,6 +221,10 @@ struct WrenReturnValue {
     static void set(WrenVM* vm, T val) {
         ForeignObjectValue<T>::setInSlot<0>(vm, val);
     }
+
+    static T& get(WrenVM* vm) {
+        return *getSlotForeign<T, 0>(vm);
+    }
 };
 
 template<typename T>
@@ -256,6 +260,10 @@ struct WrenReturnValue< float > {
     static void set( WrenVM* vm, float val ) {
         wrenSetSlotDouble( vm, 0, double ( val ) );
     }
+
+    static float get(WrenVM* vm) {
+        return float(wrenGetSlotDouble(vm, 0));
+    }
 };
 
 template<>
@@ -277,12 +285,16 @@ struct WrenReturnValue< double > {
     static void set( WrenVM* vm, double val ) {
         wrenSetSlotDouble( vm, 0, val );
     }
+
+    static double get(WrenVM* vm) {
+        return wrenGetSlotDouble(vm, 0);
+    }
 };
 
 template<>
 struct WrenReturnValue< double& > {
-    static void set( WrenVM* vm, double val ) {
-        wrenSetSlotDouble( vm, 0, val );
+    static void set(WrenVM* vm, double val) {
+        wrenSetSlotDouble(vm, 0, val);
     }
 };
 
@@ -297,6 +309,10 @@ template<>
 struct WrenReturnValue< int > {
     static void set( WrenVM* vm, int val ) {
         wrenSetSlotDouble( vm, 0, double ( val ) );
+    }
+
+    static int get(WrenVM* vm) {
+        return int(wrenGetSlotDouble(vm, 0));
     }
 };
 
@@ -319,6 +335,10 @@ struct WrenReturnValue< std::size_t > {
     static void set( WrenVM* vm, std::size_t val ) {
         wrenSetSlotDouble( vm, 0, double( val ) );
     }
+
+    static std::size_t get(WrenVM* vm) {
+        return std::size_t(wrenGetSlotDouble(vm, 0));
+    }
 };
 
 template<>
@@ -340,6 +360,10 @@ struct WrenReturnValue< bool > {
     static void set( WrenVM* vm, bool val ) {
         wrenSetSlotBool( vm, 0, val );
     }
+
+    static bool get(WrenVM* vm) {
+        return wrenGetSlotBool(vm, 0);
+    }
 };
 
 template<>
@@ -353,6 +377,10 @@ template<>
 struct WrenReturnValue< const char* > {
     static void set( WrenVM* vm, const char* val ) {
         wrenSetSlotString( vm, 0, val );
+    }
+
+    static const char* get(WrenVM* vm) {
+        return wrenGetSlotString(vm, 0);
     }
 };
 

@@ -37,6 +37,20 @@ namespace detail {
 
 class VM;
 
+class Value {
+public:
+    Value() = delete;
+    explicit Value(WrenVM* vm)
+        : vm_{ vm } {}
+    ~Value() = default;
+
+    template<typename T>
+    T as() const;
+
+private:
+    WrenVM* vm_;
+};
+
 /**
  * Note that this class stores a reference to the owning VM instance!
  * Make sure you don't move the VM instance which created this object, before
@@ -55,7 +69,7 @@ class Method {
         // this is const because we want to be able to pass this around like
         // immutable data
         template<typename... Args>
-        void operator()( Args... args ) const;
+        Value operator()( Args... args ) const;
 
     private:
         void retain_();
@@ -178,8 +192,13 @@ class VM {
         detail::ChunkAllocator allocator_;
 };
 
+template<typename T>
+T Value::as() const {
+    return detail::WrenReturnValue<T>::get(vm_);
+}
+
 template< typename... Args >
-void Method::operator()( Args... args ) const {
+Value Method::operator()( Args... args ) const {
     vm_->setState_();
     constexpr const std::size_t Arity = sizeof...( Args );
     wrenEnsureSlots( vm_->vm(), Arity + 1u );
@@ -189,6 +208,8 @@ void Method::operator()( Args... args ) const {
     detail::passArgumentsToWren( vm_->vm(), tuple, std::make_index_sequence<Arity> {} );
 
     wrenCall( vm_->vm(), method_ );
+
+    return Value(vm_->vm());
 }
 
 template< typename T, typename... Args >

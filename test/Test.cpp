@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
 // a small class to test class & method binding with
 struct Vec3 {
@@ -112,6 +113,19 @@ void testClassMethods() {
     wren.executeModule("test_vector");
 }
 
+void testReturnValues() {
+    wrenpp::VM vm{};
+
+    vm.executeString(
+        "var returnsThree = Fn.new {\n"
+        "    return 3\n"
+        "}\n"
+    );
+    wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
+    double val = returnsThree().as<double>();
+    assert(val == 3.0);
+}
+
 int main() {
 
     printf("\nCalling Wren code from C++...\n\n");
@@ -121,6 +135,10 @@ int main() {
     printf("\nTesting method calls...\n\n");
 
     testClassMethods();
+
+    printf("\nTesting return values...\n\n");
+
+    testReturnValues();
 
     return 0;
 }
