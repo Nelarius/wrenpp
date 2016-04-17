@@ -14,7 +14,8 @@ Current deficiencies:
 - Wren++ has no concept of const-ness. When you return a const pointer to one of your instances from a bound function, the resulting foreign object in Wren will happily call non-const methods -- yikes!
 - Wren access from C++ is rather minimal
 
-Currently developing against `wren:master@139b447`. This project is being developed at the whim of my [game engine](https://github.com/nelarius/playground) project.
+Currently developing against `wren:master@18b638b`. This project is being developed at the whim of my [game engine](https://github.com/nelarius/playground) project.
+
 ## Build
 
 Clone the repository using `git clone https://github.com/nelarius/wrenpp.git`. The easiest way to build the project is to include the contents of the `src/` folder in your project, since there's so little code. Just remember to compile with C++14 features turned on!
