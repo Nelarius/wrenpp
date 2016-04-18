@@ -34,12 +34,25 @@ WrenForeignClassMethods foreignClassProvider(WrenVM* vm, const char* m, const ch
     return it->second;
 }
 
+inline const char* errorTypeToString(WrenErrorType type) {
+    switch (type) {
+    case WREN_ERROR_COMPILE: return "WREN_ERROR_COMPILE";
+    case WREN_ERROR_RUNTIME: return "WREN_ERROR_RUNTIME";
+    case WREN_ERROR_STACK_TRACE: return "WREN_ERROR_STACK_TRACE";
+    default: assert(false); return "";
+    }
+}
+
 char* loadModuleFnWrapper(WrenVM* vm, const char* mod) {
     return wrenpp::VM::loadModuleFn(mod);
 }
 
 void writeFnWrapper(WrenVM* vm, const char* text) {
     wrenpp::VM::writeFn(vm, text);
+}
+
+void errorFnWrapper(WrenErrorType type, const char* module, int line, const char* message) {
+    wrenpp::VM::errorFn(type, module, line, message);
 }
 
 wrenpp::detail::ChunkAllocator* allocator{ nullptr };
@@ -192,6 +205,12 @@ WriteFn VM::writeFn = [](WrenVM* vm, const char* text) -> void {
     fflush(stdout);
 };
 
+ErrorFn VM::errorFn = [](WrenErrorType type, const char* module, int line, const char* message) -> void {
+    const char* typeStr = errorTypeToString(type);
+    printf("%s in %s:%i > %s\n", typeStr, module, line, message);
+    fflush(stdout);
+};
+
 AllocateFn VM::allocateFn = std::malloc;
 
 FreeFn VM::freeFn = std::free;
@@ -219,6 +238,7 @@ VM::VM()
     configuration.loadModuleFn = loadModuleFnWrapper;
     configuration.bindForeignClassFn = foreignClassProvider;
     configuration.writeFn = writeFnWrapper;
+    configuration.errorFn = errorFnWrapper;
     vm_ = wrenNewVM( &configuration );
 }
 

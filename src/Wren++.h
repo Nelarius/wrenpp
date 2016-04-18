@@ -24,6 +24,7 @@ using LoadModuleFn  = std::function< char*( const char* ) >;
 using WriteFn       = std::function< void( WrenVM*, const char* ) >;
 using AllocateFn    = std::function<void*(std::size_t)>;
 using FreeFn        = std::function<void(void*)>;
+using ErrorFn       = std::function<void(WrenErrorType, const char*, int, const char*)>;
 
 namespace detail {
     void registerFunction(
@@ -175,6 +176,7 @@ class VM {
         static WriteFn      writeFn;
         static AllocateFn   allocateFn;
         static FreeFn       freeFn;
+        static ErrorFn      errorFn;
         static std::size_t  initialHeapSize;
         static std::size_t  minHeapSize;
         static int          heapGrowthPercent;

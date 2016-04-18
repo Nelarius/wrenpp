@@ -348,10 +348,18 @@ If the return type of a bound method or function is a reference or pointer to an
 
 ### Customize `System.print`
 
-The Wren scripting language does not implement `System.print( ... )` itself, but expects the embedder to provide it. The `Wren` wrapper class does exactly that with the static `VM::writeFn` field, which is of type `std::function< void( WrenVM*, const char* ) >`. By default, it is implemented as follows.
+You can provide your own implementation for `System.print` by assigning a callable object with the signature `void(WrenVM*, const char*)` to `wrenpp::VM::writeFn`. By default, `writeFn` is implemented as follows:
 
 ```cpp
 VM::writeFn = []( WrenVM* vm, const char* text ) -> void { printf( text ) };
+```
+
+### Customize error printing
+
+You can provide your own function to route error messages. Assign a callable object with the signature `void(WrenErrorType, const char*, int, const char*)` (see wren.h for the signature of `WrenErrorFn`) to `wrenpp::VM::errorFn`. By default, Wren++ prints errors to `stdout` as
+
+```
+WREN_ERROR_COMPILE in main:15 > Error at 'Vec3': Variable is used but not defined.
 ```
 
 ### Customize module loading
