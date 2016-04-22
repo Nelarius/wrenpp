@@ -36,12 +36,9 @@ workspace "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
-
+        flags { "C++14" }
         files { "src/**.cpp", "src/**.h" }
         includedirs { "src" }
-
-        filter "action:gmake"
-            buildoptions { "-std=gnu++14" }
 
     project "test"
         kind "ConsoleApp"
