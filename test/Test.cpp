@@ -120,10 +120,22 @@ void testReturnValues() {
         "var returnsThree = Fn.new {\n"
         "    return 3\n"
         "}\n"
+        "var returnsTrue = Fn.new {\n"
+        "    return true\n"
+        "}\n"
+        "var returnsGreeting = Fn.new {\n"
+        "    return \"Hello, world\"\n"
+        "}\n"
     );
     wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
-    double val = returnsThree().as<double>();
-    assert(val == 3.0);
+    double nval = returnsThree().as<double>();
+    assert(nval == 3.0);
+    wrenpp::Method returnsTrue = vm.method("main", "returnsTrue", "call()");
+    bool bval = returnsTrue().as<bool>();
+    assert(bval == true);
+    wrenpp::Method returnsGreeting = vm.method("main", "returnsGreeting", "call()");
+    wrenpp::Value sval = returnsGreeting();
+    assert(!strcmp("Hello, world", sval.as<const char*>()));
 }
 
 int main() {

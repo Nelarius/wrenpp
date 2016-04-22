@@ -109,11 +109,24 @@ The return value of a Wren method can be accessed by doing
 
 ```cpp
 wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
-wrenpp::Value val = returnsThree.call();
+wrenpp::Value val = returnsThree();
 double val = val.as<double>();
 ```
 
-The `operator()` method on `wrenpp::Method` returns a `wrenpp::Value` object, which can be cast to the wanted return type by calling `as()`.
+The `operator()` method on `wrenpp::Method` returns a `wrenpp::Value` object, which can be cast to the wanted return type by calling `as<T>()`.
+
+Number, boolean, and string values are stored within `wrenpp::Value` itself. Note that do to this, you *don't* want to write
+
+```cpp
+const char* greeting = returnsGreeting().as<const char*>();
+```
+
+because the string value is storesd in the `wrenpp::Value` instance itself. This would result in trying to dereference a string value which no longer exists. Store it locally before using the string value, like we did above:
+
+```cpp
+wrenpp::Value greeting = returnsGreeting();
+printf("%s\n", greeting.as<const char*>());
+```
 
 ## Accessing C++ from Wren
 
