@@ -344,20 +344,20 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::bindCFunction( bool isStat
     return *this;
 }
 
-template<typename T, int Slot>
-T* getSlotForeign(WrenVM* vm) {
-    detail::ForeignObject* obj = static_cast<detail::ForeignObject*>(wrenGetSlotForeign(vm, Slot));
+template<typename T>
+T* getSlotForeign(WrenVM* vm, int slot) {
+    detail::ForeignObject* obj = static_cast<detail::ForeignObject*>(wrenGetSlotForeign(vm, slot));
     return static_cast<T*>(obj->objectPtr());
 }
 
 template<typename T>
-void setSlotForeignValue(WrenVM* vm, const T& obj) {
-    detail::ForeignObjectValue<T>::setInSlot<0>(vm, obj);
+void setSlotForeignValue(WrenVM* vm, int slot, const T& obj) {
+    detail::ForeignObjectValue<T>::setInSlot(vm, slot, obj);
 }
 
 template<typename T>
-void setSlotForeignPtr(WrenVM* vm, T* obj) {
-    detail::ForeignObjectPtr<T>::setInSlot<0>(vm, obj);
+void setSlotForeignPtr(WrenVM* vm, int slot, T* obj) {
+    detail::ForeignObjectPtr<T>::setInSlot(vm, slot, obj);
 }
 
 }

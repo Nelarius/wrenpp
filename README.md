@@ -361,15 +361,15 @@ wrenpp::beginModule( "builtin/imgui" )
 
 If you need to access and return foreign object instances within your CFunction, you can use the following two helper functions.
 
-Use `wrenpp::getSlotForeign<T, int>(WrenVM*)` to get a bound type from the slot API:
+Use `wrenpp::getSlotForeign<T>(WrenVM*, int)` to get a bound type from the slot API:
 
 ```cpp
 void setWindowSize(WrenVM* vm) {
-  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getSlotForeign<Vec2i, 1>(vm));
+  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getSlotForeign<Vec2i>(vm, 1));
 }
 ```
 
-Use `wrenpp::setSlotForeignValue<T>(WrenVM*, const T&)` and `wrenpp::setSlotForeignPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenpp::setSlotForeignValue<T>` uses the type's copy constructor to copy the object into the new value.
+Use `wrenpp::setSlotForeignValue<T>(WrenVM*, int, const T&)` and `wrenpp::setSlotForeignPtr<T>(WrenVM*, int, T* obj)` to place an object with foreign bytes in a slot, by value and by reference, respectively. `wrenpp::setSlotForeignValue<T>` uses the type's copy constructor to copy the object into the new value.
 
 ### Cpp and Wren lifetimes
 

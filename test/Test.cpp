@@ -41,7 +41,7 @@ struct Transform {
 
 void CFunctionVectorReference(WrenVM* vm) {
     static Vec3 v{ 2.0, 1.0, 1.0 };
-    wrenpp::setSlotForeignPtr(vm, &v);
+    wrenpp::setSlotForeignPtr(vm, 0, &v);
 }
 
 Vec3* returnVec3Ptr() {
