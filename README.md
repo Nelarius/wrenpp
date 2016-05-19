@@ -33,6 +33,7 @@ Currently developing against `wren:master@18b638b`. This project is being develo
   * [Customize error printing](#customize-error-printing)
   * [Customize module loading](#customize-module-loading)
   * [Customize heap allocation and garbage collection](#customize-heap-allocation-and-garbage-collection)
+  * [Known issues](#known-issues)
 
 ## Build
 
@@ -437,6 +438,10 @@ After a collection occurs the heap will have shrunk. Wren will allow the heap to
 The minimum heap size is the heap size, in bytes, below which collections will not be carried out. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage mentioned previously) and thus very frequent collections. By default, the minimum heap size is 1 MiB.
 
 `wrenpp::VM::minHeapSize = 0x100000u;`
+
+### Known issues
+
+* Calling Wren methods from C++, which themselves call foreign methods, doesn't work currently. This is due to a known [issue](https://github.com/munificent/wren/issues/362).
 
 ## TODO:
 
