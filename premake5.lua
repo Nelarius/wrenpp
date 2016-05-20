@@ -45,31 +45,40 @@ workspace "wrenpp"
         language "C++"
         targetdir "bin"
         targetname "test"
+        flags { "C++14" }
         files { "test/**.cpp", "test/***.h", "test/**.wren" }
         includedirs { "src", "test" }
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
+
+        filter "files:**.wren"
+            buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
+            buildoutputs { "../../bin/%{file.name}" }
+            filter {}
+
         filter "configurations:Debug"
             debugdir "bin"
-            project "test"
+            filter {}
 
-        configuration "vs*"
+        filter { "action:vs*", "Debug" }
+            libdirs {
+                _OPTIONS["link"] .. "/Debug"
+            }
+            links { "lib", "wren_static_d" }
+            filter {}
+
+        filter { "action:vs*", "Release"}
+            libdirs {
+                _OPTIONS["link"] .. "/Release"
+            }
+            links { "lib", "wren_static" }
+            filter {}
+
+        filter { "action:gmake" }
             if _OPTIONS["link"] then
-                filter "configurations:Debug"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Debug"
-                    }
-                    links { "lib", "wren_static_d" }
-                    project "test"
-                filter "configurations:Release"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Release"
-                    }
-                    links { "lib", "wren_static" }
-                    project "test"
+                libdirs {
+                    _OPTIONS["link"]
+                }
+                links { "lwren" }
             end
-            project "test"
-            filter "files:**.wren"
-                buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
-                buildoutputs { "../../bin/%{file.name}" }
