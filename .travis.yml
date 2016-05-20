@@ -1,6 +1,6 @@
 # Using trusty should yield newer compilers and packages
 dist: trusty
-sudo: false
+sudo: true
 language: generic
 
 # This build matrix was obtained from
