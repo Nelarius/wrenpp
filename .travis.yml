@@ -7,9 +7,12 @@ compiler:
  - gcc
 
 install:
- - bash install-deps.sh
+ - bash build-wren.sh
+
+before_script:
+ - export PATH=$PATH:$PWD/wren-master/src/include
+ - export PATH=$PATH:$PWD/wren-master/lib
 
 script:
- - ./premake5 gmake --include=wren-master/src/include --link=wren-master/lib
  - cd build/gmake
  - make all

@@ -62,23 +62,25 @@ workspace "wrenpp"
             filter {}
 
         filter { "action:vs*", "Debug" }
-            libdirs {
-                _OPTIONS["link"] .. "/Debug"
-            }
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"] .. "/Debug"
+                }
+            end
             links { "lib", "wren_static_d" }
-            filter {}
 
         filter { "action:vs*", "Release"}
-            libdirs {
-                _OPTIONS["link"] .. "/Release"
-            }
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"] .. "/Release"
+                }
+            end
             links { "lib", "wren_static" }
-            filter {}
 
         filter { "action:gmake" }
             if _OPTIONS["link"] then
                 libdirs {
                     _OPTIONS["link"]
                 }
-                links { "lwren" }
             end
+            links { "lwren" }
