@@ -17,10 +17,9 @@ install:
  - unzip wren-master.zip
  - cd wren-master
  - make vm
- - export PATH=$PATH:$PWD/lib
- - export PATH=$PATH:$PWD/src/include
+ - export PATH=$PATH:$PWD
 
 script:
- - premake5 gmake
+ - premake5 gmake --include=src/include --link=lib
  - cd build/gmake
  - make all
