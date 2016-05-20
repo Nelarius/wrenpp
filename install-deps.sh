@@ -1,6 +1,6 @@
 #!/bin/sh
 
-wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha8/premake-5.0.0-alpha8-linux.tar. O /tmp/premake5.tar.gz
+wget https://github.com/premake/premake-core/releases/download/v5.0.0-alpha8/premake-5.0.0-alpha8-linux.tar.gz -O /tmp/premake5.tar.gz
 mkdir premake5
 tar -zxf /tmp/premake5.tar.gz -C premake5/
 export PATH=$PATH:$PWD/premake5
