@@ -37,4 +37,4 @@ before_script:
 
 script:
  - cd build/gmake
- - make all
+ - make all CXX=$COMPILER
