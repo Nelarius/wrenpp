@@ -10,6 +10,6 @@ install:
  - bash install-deps.sh
 
 script:
-    - ./premake5 gmake --include=wren-master/src/include --link=wren-master/lib
+ - ./premake5 gmake --include=wren-master/src/include --link=wren-master/lib
  - cd build/gmake
  - make all
