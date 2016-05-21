@@ -86,8 +86,8 @@ struct WrenSlotAPI {
         return *static_cast< T* >(obj->objectPtr());
     }
 
-    static void set(WrenVM* vm, int slot, T&& t) {
-        ForeignObjectValue<T>::setInSlot(vm, slot, std::forward<T>(t));
+    static void set(WrenVM* vm, int slot, T t) {
+        ForeignObjectValue<T>::setInSlot(vm, slot, t);
     }
 };
 
