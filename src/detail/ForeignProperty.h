@@ -14,14 +14,14 @@ template< typename T, typename U, U T::*Field >
 void propertyGetter( WrenVM* vm ) {
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
     const T* obj = static_cast<const T*>(objWrapper->objectPtr());
-    WrenReturnValue< U >::set( vm, obj->*Field );
+    WrenSlotAPI< U >::set( vm, 0, obj->*Field );
 }
 
 template< typename T, typename U, U T::*Field >
 void propertySetter( WrenVM* vm ) {
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
     T* obj = static_cast<T*>(objWrapper->objectPtr());
-    obj->*Field = WrenArgument< U >::get( vm, 1 );
+    obj->*Field = WrenSlotAPI< U >::get( vm, 1 );
 }
 
 }
