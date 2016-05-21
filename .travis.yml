@@ -32,6 +32,7 @@ install:
  - bash build-wren.sh
  - export CPLUS_INCLUDE_PATH=$PWD/wren-master/src/include
  - export LIBRARY_PATH=$LIBRARY_PATH:$PWD/wren-master/lib
+ - echo LIBRARY_PATH
 
 script:
  - cd build/gmake
