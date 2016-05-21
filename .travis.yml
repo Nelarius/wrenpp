@@ -38,5 +38,5 @@ script:
  - make all CXX=$COMPILER
 
 after_success:
- - cd bin
+ - cd ../../bin
  - ./test
