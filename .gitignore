@@ -25,7 +25,7 @@ wrenly.mk
 wrenly.txt
 
 # Project files/folders
-build/
+build/vs*
 build.sh
 *.cc
 bin/
