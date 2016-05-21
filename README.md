@@ -14,7 +14,7 @@ Current deficiencies:
 - Wren++ has no concept of const-ness. When you pass an object via const-pointer to Wren, the resulting Wren foreign object will happily call the non-const methods of the object -- yikes!
 - Wren access from C++ is rather minimal
 
-Currently developing against `wren:master@0a060a9`. This project is being developed to serve the needs of my [game engine](https://github.com/nelarius/playground) project.
+Currently developing against `wren:master@0a060a9`. [![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
 
 ## Table of contents
 * [Build](#build)
