@@ -30,11 +30,10 @@ before_install:
 
 install:
  - bash build-wren.sh
- - CPLUS_INCLUDE_PATH=$PWD/wren-master/src/include
- - export CPLUS_INCLUDE_PATH
- - LIBRARY_PATH=$LIBRARY_PATH:$PWD/wren-master/lib
- - export LIBRARY_PATH
+ - export CPLUS_INCLUDE_PATH=$PWD/wren-master/src/include
+ - export LIBRARY_PATH=$PWD/wren-master/lib
 
 script:
  - cd build/gmake
  - make all CXX=$COMPILER
+
