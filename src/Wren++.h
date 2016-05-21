@@ -1,20 +1,21 @@
 #ifndef WRENPP_H_INCLUDED
 #define WRENPP_H_INCLUDED
 
+extern "C" {
+    #include <wren.h>
+}
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
 #include "detail/ChunkAllocator.h"
-extern "C" {
-    #include <wren.h>
-}
 #include <string>
 #include <functional>   // for std::hash
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>      // for std::size_t
+#include <cstring>      // for memcpy, strcpy
 #include <unordered_map>
 
 namespace wrenpp {

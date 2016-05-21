@@ -10,6 +10,7 @@ extern "C" {
 #include <cassert>
 #include <vector>
 #include <type_traits>
+#include <string>
 
 namespace wrenpp {
 namespace detail {
