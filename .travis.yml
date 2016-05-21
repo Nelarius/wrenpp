@@ -36,3 +36,7 @@ install:
 script:
  - cd build/gmake
  - make all CXX=$COMPILER
+
+after_success:
+ - cd bin
+ - ./test
