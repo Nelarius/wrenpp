@@ -1,6 +1,5 @@
 #include "detail/ChunkAllocator.h"
 #include "Wren++.h"
-#include <cstdint>
 #include <cstring>
 #include <limits>
 

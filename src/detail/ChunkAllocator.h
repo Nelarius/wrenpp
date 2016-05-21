@@ -2,6 +2,7 @@
 #define CHUNKALLOCATOR_H_INCLUDED
 
 #include <vector>
+#include <cstdint>
 #include <cstdlib>
 #include <cassert>
 
