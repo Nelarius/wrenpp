@@ -1,10 +1,10 @@
 #ifndef FOREIGNMETHOD_H_INCLUDED
 #define FOREIGNMETHOD_H_INCLUDED
 
-#include "ForeignObject.h"
 extern "C" {
     #include <wren.h>
 }
+#include "ForeignObject.h"
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -221,10 +221,6 @@ template< typename T >
 struct WrenReturnValue {
     static void set(WrenVM* vm, T val) {
         ForeignObjectValue<T>::setInSlot(vm, 0, val);
-    }
-
-    static T& get(WrenVM* vm) {
-        return *getSlotForeign<T>(vm, 0);
     }
 };
 
