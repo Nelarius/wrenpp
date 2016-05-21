@@ -1,7 +1,7 @@
 
 # Wren++
 
-A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). Both Wren and this library are still under development, so not everything here is stable yet.
+A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/), in the spirit of LuaBridge and Luabind. Both Wren and this library are still under development, so breaking changes will occasionally be introduced.
 
 Wren++ currently provides:
 - A RAII wrapper for the Wren virtual machine
@@ -9,12 +9,12 @@ Wren++ currently provides:
 - Convenient access for calling Wren class methods from C++
 - Template-based -- no macros!
 
-Current deficiencies:
+Known issues:
 - Not type-safe. It's undefined what happens when you try to bind code that returns a type which hasn't itself been bound (most likely a crash is going to happen)
-- Wren++ has no concept of const-ness. When you pass an object via const-pointer to Wren, the resulting Wren foreign object will happily call the non-const methods of the object -- yikes!
 - Wren access from C++ is rather minimal
+* Calling Wren methods from C++, which themselves call foreign methods, doesn't work at the moment and will cause a segfault. This is due to a known [issue](https://github.com/munificent/wren/issues/362) in Wren.
 
-Currently developing against `wren:master@0a060a9`. [![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
+[![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
 
 ## Table of contents
 * [Build](#build)
@@ -33,7 +33,6 @@ Currently developing against `wren:master@0a060a9`. [![Build Status](https://tra
   * [Customize error printing](#customize-error-printing)
   * [Customize module loading](#customize-module-loading)
   * [Customize heap allocation and garbage collection](#customize-heap-allocation-and-garbage-collection)
-  * [Known issues](#known-issues)
 
 ## Build
 
@@ -438,10 +437,6 @@ After a collection occurs the heap will have shrunk. Wren will allow the heap to
 The minimum heap size is the heap size, in bytes, below which collections will not be carried out. The idea of the minimum heap size is to avoid miniscule heap growth (calculated based on the percentage mentioned previously) and thus very frequent collections. By default, the minimum heap size is 1 MiB.
 
 `wrenpp::VM::minHeapSize = 0x100000u;`
-
-### Known issues
-
-* Calling Wren methods from C++, which themselves call foreign methods, doesn't work currently. This is due to a known [issue](https://github.com/munificent/wren/issues/362).
 
 ## TODO:
 
