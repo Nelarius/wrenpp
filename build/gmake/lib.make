@@ -13,7 +13,7 @@ endif
 ifeq ($(config),debug)
   RESCOMP = windres
   TARGETDIR = ../../lib
-  TARGET = $(TARGETDIR)/wrenpp.lib
+  TARGET = $(TARGETDIR)/libwrenpp.a
   OBJDIR = obj/Debug/lib
   DEFINES += -DDEBUG
   INCLUDES += -I../../src
@@ -40,7 +40,7 @@ endif
 ifeq ($(config),release)
   RESCOMP = windres
   TARGETDIR = ../../lib
-  TARGET = $(TARGETDIR)/wrenpp.lib
+  TARGET = $(TARGETDIR)/libwrenpp.a
   OBJDIR = obj/Release/lib
   DEFINES += -DNDEBUG
   INCLUDES += -I../../src

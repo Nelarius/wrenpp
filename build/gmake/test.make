@@ -13,7 +13,7 @@ endif
 ifeq ($(config),debug)
   RESCOMP = windres
   TARGETDIR = ../../bin
-  TARGET = $(TARGETDIR)/test.exe
+  TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Debug/test
   DEFINES += -DDEBUG
   INCLUDES += -I../../src -I../../test
@@ -40,7 +40,7 @@ endif
 ifeq ($(config),release)
   RESCOMP = windres
   TARGETDIR = ../../bin
-  TARGET = $(TARGETDIR)/test.exe
+  TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Release/test
   DEFINES += -DNDEBUG
   INCLUDES += -I../../src -I../../test
@@ -149,52 +149,52 @@ $(OBJDIR)/Test.o: ../../test/Test.cpp
 ifeq ($(config),debug)
 ../../../../bin/assert.wren: ../../test/assert.wren
 	@echo "Building ../../test/assert.wren"
-	$(SILENT) IF EXIST ..\..\test\assert.wren\ (xcopy /Q /E /Y /I ..\..\test\assert.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\assert.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/assert.wren ../../bin
 endif
 ifeq ($(config),release)
 ../../../../bin/assert.wren: ../../test/assert.wren
 	@echo "Building ../../test/assert.wren"
-	$(SILENT) IF EXIST ..\..\test\assert.wren\ (xcopy /Q /E /Y /I ..\..\test\assert.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\assert.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/assert.wren ../../bin
 endif
 ifeq ($(config),debug)
 ../../../../bin/test.wren: ../../test/test.wren
 	@echo "Building ../../test/test.wren"
-	$(SILENT) IF EXIST ..\..\test\test.wren\ (xcopy /Q /E /Y /I ..\..\test\test.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test.wren ../../bin
 endif
 ifeq ($(config),release)
 ../../../../bin/test.wren: ../../test/test.wren
 	@echo "Building ../../test/test.wren"
-	$(SILENT) IF EXIST ..\..\test\test.wren\ (xcopy /Q /E /Y /I ..\..\test\test.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test.wren ../../bin
 endif
 ifeq ($(config),debug)
 ../../../../bin/test_method.wren: ../../test/test_method.wren
 	@echo "Building ../../test/test_method.wren"
-	$(SILENT) IF EXIST ..\..\test\test_method.wren\ (xcopy /Q /E /Y /I ..\..\test\test_method.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test_method.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test_method.wren ../../bin
 endif
 ifeq ($(config),release)
 ../../../../bin/test_method.wren: ../../test/test_method.wren
 	@echo "Building ../../test/test_method.wren"
-	$(SILENT) IF EXIST ..\..\test\test_method.wren\ (xcopy /Q /E /Y /I ..\..\test\test_method.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test_method.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test_method.wren ../../bin
 endif
 ifeq ($(config),debug)
 ../../../../bin/test_vector.wren: ../../test/test_vector.wren
 	@echo "Building ../../test/test_vector.wren"
-	$(SILENT) IF EXIST ..\..\test\test_vector.wren\ (xcopy /Q /E /Y /I ..\..\test\test_vector.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test_vector.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin
 endif
 ifeq ($(config),release)
 ../../../../bin/test_vector.wren: ../../test/test_vector.wren
 	@echo "Building ../../test/test_vector.wren"
-	$(SILENT) IF EXIST ..\..\test\test_vector.wren\ (xcopy /Q /E /Y /I ..\..\test\test_vector.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\test_vector.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin
 endif
 ifeq ($(config),debug)
 ../../../../bin/vector.wren: ../../test/vector.wren
 	@echo "Building ../../test/vector.wren"
-	$(SILENT) IF EXIST ..\..\test\vector.wren\ (xcopy /Q /E /Y /I ..\..\test\vector.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\vector.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/vector.wren ../../bin
 endif
 ifeq ($(config),release)
 ../../../../bin/vector.wren: ../../test/vector.wren
 	@echo "Building ../../test/vector.wren"
-	$(SILENT) IF EXIST ..\..\test\vector.wren\ (xcopy /Q /E /Y /I ..\..\test\vector.wren ..\..\bin > nul) ELSE (xcopy /Q /Y /I ..\..\test\vector.wren ..\..\bin > nul)
+	$(SILENT) cp -rf ../../test/vector.wren ../../bin
 endif
 
 -include $(OBJECTS:%.o=%.d)

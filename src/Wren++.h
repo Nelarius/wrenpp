@@ -1,20 +1,21 @@
 #ifndef WRENPP_H_INCLUDED
 #define WRENPP_H_INCLUDED
 
+extern "C" {
+    #include <wren.h>
+}
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
 #include "detail/ChunkAllocator.h"
-extern "C" {
-    #include <wren.h>
-}
 #include <string>
 #include <functional>   // for std::hash
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>      // for std::size_t
+#include <cstring>      // for memcpy, strcpy
 #include <unordered_map>
 
 namespace wrenpp {
@@ -115,7 +116,7 @@ inline const char* Value::as<const char*>() const {
  */
 class Method {
     public:
-        Method( VM*, WrenValue* variable, WrenValue* method );
+        Method( VM*, WrenHandle* variable, WrenHandle* method );
         Method() = delete;
         Method( const Method& );
         Method( Method&& );
@@ -133,8 +134,8 @@ class Method {
         void release_();
 
         mutable VM*             vm_;    // this pointer is not managed here
-        mutable WrenValue*      method_;
-        mutable WrenValue*      variable_;
+        mutable WrenHandle*      method_;
+        mutable WrenHandle*      variable_;
         unsigned*               refCount_;
 };
 
@@ -255,7 +256,7 @@ Value Method::operator()( Args... args ) const {
     vm_->setState_();
     constexpr const std::size_t Arity = sizeof...( Args );
     wrenEnsureSlots( vm_->vm(), Arity + 1u );
-    wrenSetSlotValue(vm_->vm(), 0, variable_);
+    wrenSetSlotHandle(vm_->vm(), 0, variable_);
 
     std::tuple<Args...> tuple = std::make_tuple( args... );
     detail::passArgumentsToWren( vm_->vm(), tuple, std::make_index_sequence<Arity> {} );
