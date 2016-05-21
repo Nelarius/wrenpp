@@ -83,4 +83,4 @@ workspace "wrenpp"
                     _OPTIONS["link"]
                 }
             end
-            links { "wren" }
+            links { "lib", "wren" }

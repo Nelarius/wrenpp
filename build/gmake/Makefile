@@ -31,7 +31,7 @@ ifneq (,$(lib_config))
 	@${MAKE} --no-print-directory -C . -f lib.make config=$(lib_config)
 endif
 
-test:
+test: lib
 ifneq (,$(test_config))
 	@echo "==== Building test ($(test_config)) ===="
 	@${MAKE} --no-print-directory -C . -f test.make config=$(test_config)
