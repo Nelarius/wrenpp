@@ -1,6 +1,7 @@
 #ifndef FOREIGNMETHOD_H_INCLUDED
 #define FOREIGNMETHOD_H_INCLUDED
 
+#include "ForeignObject.h"
 extern "C" {
     #include <wren.h>
 }
@@ -223,7 +224,7 @@ struct WrenReturnValue {
     }
 
     static T& get(WrenVM* vm) {
-        return *getSlotForeign<T, 0>(vm);
+        return *getSlotForeign<T>(vm, 0);
     }
 };
 
