@@ -1,5 +1,6 @@
 #include "detail/ChunkAllocator.h"
 #include "Wren++.h"
+#include <algorithm>
 #include <cstring>
 #include <limits>
 
@@ -18,31 +19,19 @@ std::uint64_t nextPowerOf2(std::uint64_t n) {
     return n;
 }
 
-std::uint32_t nextPowerOf2(std::uint32_t n) {
-    // if given 0, this returns 0
-    n--;
-    n |= n >> 1;
-    n |= n >> 2;
-    n |= n >> 4;
-    n |= n >> 8;
-    n |= n >> 16;
-    n++;
-    return n;
-}
-
 void* writeGuardBytes(void* memory, std::size_t blockSize, std::uint32_t guard) {
     std::uint32_t* intPtr = (std::uint32_t*)memory;
     assert(blockSize % 4 == 0u);
-    intPtr[0] = guard;
+    intPtr[0u] = guard;
     intPtr[(blockSize / 4u) - 1u] = guard;
     // return the memory pointer starting after the guard byte
     return intPtr + 1u;
 }
 
 void* writeHeader(void* memory, std::size_t blockSize) {
-    std::uint32_t* header = (std::uint32_t*)memory;
-    *header = std::uint32_t(blockSize);
-    return static_cast<std::uint8_t*>(memory) + sizeof(std::uint32_t);
+    std::size_t* header = (std::size_t*)memory;
+    *header = blockSize;
+    return static_cast<std::uint8_t*>(memory) + sizeof(std::size_t);
 }
 
 }
@@ -91,23 +80,22 @@ void ChunkAllocator::getNewChunk_() {
     chunks_.push_back(Block{ memory, VM::chunkSize, 0u });
 }
 
-void* ChunkAllocator::prepareMemory_(void* memory, std::uint32_t bytes) {
+void* ChunkAllocator::prepareMemory_(void* memory, std::size_t bytes) {
     memory = writeGuardBytes(memory, bytes, BEEFCAFE);
     memory = writeHeader(memory, bytes);
     markAllocBytes(memory, bytes - GuardBytes_ - HeaderBytes_);
     return memory;
 }
 
-// TODO: maybe we should only request bytes within std::uint32_t
-// we don't want a single alloc to be larger than 2 GB
 void* ChunkAllocator::alloc(std::size_t requestedBytes) {
-    std::uint32_t blockSize = requestedBytes;
+    std::size_t blockSize = requestedBytes;
     //we need space for the header, as well as the guard bytes. Inflate the block size accordingly
     blockSize += HeaderBytes_ + GuardBytes_;
-    blockSize = blockSize < MinimumBlockSize_ ? MinimumBlockSize_ : blockSize;
+    blockSize = std::max(MinimumBlockSize_, blockSize);
     // we want all blocks to be powers of two in size to reduce fragmentation
     // the extra memory could be used in a realloc
-    std::uint32_t actualBytes = nextPowerOf2(blockSize);
+
+    std::size_t actualBytes = nextPowerOf2(std::uint64_t(blockSize));
     assert(VM::chunkSize >= actualBytes);
     assert(actualBytes >= sizeof(FreeBlock));
     assert(actualBytes - HeaderBytes_ - GuardBytes_ >= requestedBytes);
@@ -137,7 +125,7 @@ void* ChunkAllocator::alloc(std::size_t requestedBytes) {
             freeListHead_ = freeListHead_->next;
         }
         void* memory = curBlock;
-        std::uint32_t size = curBlock->size;
+        std::size_t size = curBlock->size;
         return prepareMemory_(memory, size);
     }
 
@@ -166,7 +154,7 @@ void* ChunkAllocator::realloc(void* memory, std::size_t bytes) {
         free(memory);
         return nullptr;
     }
-    std::uint32_t availableSize = *((std::uint32_t*)memory - 1u) - HeaderBytes_ - GuardBytes_;
+    std::size_t availableSize = *((std::size_t*)memory - 1u) - HeaderBytes_ - GuardBytes_;
     if (availableSize >= bytes) {
         return memory;
     }
@@ -181,14 +169,16 @@ void ChunkAllocator::free(void* memory) {
         return;
     }
     std::uint32_t* intPtr = (std::uint32_t*)memory;
-    std::uint32_t blockSize = *(intPtr - 1u);
-    intPtr -= 2u;
+    std::size_t blockSize = *reinterpret_cast<std::size_t*>(intPtr - sizeof(std::size_t) / 4u);
+    intPtr -= 1u + sizeof(std::size_t) / 4u;
     assert(blockSize >= sizeof(FreeBlock));
     assert(*intPtr == BEEFCAFE);
     // the size of the block minus one uint32 is where the last guard byte resides
     assert(*(intPtr + blockSize / 4u - 1u) == BEEFCAFE);
     markFreeBytes(intPtr, blockSize);
-    //addToFreeList_(intPtr, blockSize);
+
+    // the following algorithm adds the newly freed block into the free list
+    // it tries to merge adjacent free blocks into a larger block
     std::uintptr_t blockStart = reinterpret_cast<std::uintptr_t>(intPtr);
     std::uintptr_t blockEnd = blockStart + blockSize;
     FreeBlock* curBlock = freeListHead_;

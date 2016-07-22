@@ -34,7 +34,6 @@ namespace detail {
 class ChunkAllocator {
 public:
     ChunkAllocator();
-    // TODO: this needs to be made movable, because it is owned by VM, a movable entity!
     ChunkAllocator(const ChunkAllocator&)            = delete;
     ChunkAllocator(ChunkAllocator&&);
     ChunkAllocator& operator=(const ChunkAllocator&) = delete;
@@ -50,7 +49,7 @@ public:
 private:
 
     struct FreeBlock {
-        std::uint32_t size;
+        std::size_t size;
         FreeBlock*  next;
     };
 
@@ -60,11 +59,11 @@ private:
         std::size_t currentOffset;
     };
 
-    void* prepareMemory_(void*, std::uint32_t);
+    void* prepareMemory_(void*, std::size_t);
 
     void getNewChunk_();
 
-    inline void addToFreeList_(void* memory, std::uint32_t size) {
+    inline void addToFreeList_(void* memory, std::size_t size) {
         FreeBlock* freeBlock = reinterpret_cast<FreeBlock*>(memory);
         freeBlock->size = size;
         freeBlock->next = freeListHead_;
@@ -72,7 +71,7 @@ private:
     }
 
     const std::uint32_t GuardBytes_{ 2u * sizeof(std::uint32_t) };
-    const std::uint32_t HeaderBytes_{ sizeof(std::uint32_t) };
+    const std::uint32_t HeaderBytes_{ sizeof(std::size_t) };
     const std::size_t   MinimumBlockSize_{ sizeof(FreeBlock) };
 
     std::vector<Block>  chunks_{};
