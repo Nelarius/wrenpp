@@ -2,13 +2,16 @@
 #define FOREIGNPROPERTY_H_INCLUDED
 
 extern "C" {
-    #include <wren.h>
+    #include "wren.h"
 }
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 
 namespace wrenpp {
 namespace detail {
+
+// See this link for more about writing a metaprogramming type is_sharable<t>:
+// http://anthony.noided.media/blog/programming/c++/ruby/2016/05/12/mruby-cpp-and-template-magic.html
 
 template< typename T, typename U, U T::*Field >
 void propertyGetter( WrenVM* vm ) {

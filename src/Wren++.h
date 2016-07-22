@@ -2,7 +2,7 @@
 #define WRENPP_H_INCLUDED
 
 extern "C" {
-    #include <wren.h>
+    #include "wren.h"
 }
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
