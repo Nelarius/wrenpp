@@ -25,7 +25,9 @@ wrenly.mk
 wrenly.txt
 
 # Project files/folders
-build/
+.vscode
+build/vs*
+build/xcode*
 build.sh
 *.cc
 bin/

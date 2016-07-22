@@ -2,8 +2,9 @@
 #define FOREIGNMETHOD_H_INCLUDED
 
 extern "C" {
-    #include <wren.h>
+    #include "wren.h"
 }
+#include "ForeignObject.h"
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -79,48 +80,68 @@ template< typename C, typename R, typename... Args >
 struct FunctionTraits< R(C::*)( Args... ) const > : public FunctionTraits< R( Args... ) > {};
 
 template< typename T >
-struct WrenArgument {
+struct WrenSlotAPI {
     static T get( WrenVM* vm, int slot ) {
         ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, slot));
         return *static_cast< T* >(obj->objectPtr());
     }
+
+    static void set(WrenVM* vm, int slot, T&& t) {
+        ForeignObjectValue<T>::setInSlot(vm, slot, std::forward<T>(t));
+    }
 };
 
 template < typename T >
-struct WrenArgument< T& > {
-    static T& get( WrenVM* vm, int slot ) {
+struct WrenSlotAPI< T& > {
+    static T& get(WrenVM* vm, int slot) {
         ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
         return *static_cast< T* >(obj->objectPtr());
+    }
+
+    static void set(WrenVM* vm, int slot, T& t) {
+        ForeignObjectPtr<T>::setInSlot(vm, slot, &t);
     }
 };
 
 template< typename T >
-struct WrenArgument< const T& > {
-    static const T& get( WrenVM* vm, int slot ) {
+struct WrenSlotAPI< const T& > {
+    static const T& get(WrenVM* vm, int slot) {
         ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
         return *static_cast< T* >(obj->objectPtr());
+    }
+
+    static void set(WrenVM* vm, int slot, const T& t) {
+        ForeignObjectPtr<T>::setInSlot(vm, 0, const_cast<T*>(&t));
     }
 };
 
 template< typename T >
-struct WrenArgument< T* > {
+struct WrenSlotAPI< T* > {
     static T* get(WrenVM* vm, int slot) {
         ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, slot));
         return static_cast<T*>(obj->objectPtr());
     }
+
+    static void set(WrenVM* vm, int slot, T* t) {
+        ForeignObjectPtr<T>::setInSlot(vm, slot, t);
+    }
 };
 
 template< typename T >
-struct WrenArgument< const T* > {
-    static const T* get( WrenVM* vm, int slot ) {
+struct WrenSlotAPI< const T* > {
+    static const T* get(WrenVM* vm, int slot) {
         ForeignObject* obj = static_cast<ForeignObject*>(wrenGetSlotForeign( vm, slot ));
         return static_cast< const T* >(obj->objectPtr());
+    }
+
+    static void set(WrenVM* vm, int slot, const T* t) {
+        ForeignObjectPtr<T>::setInSlot(vm, slot, const_cast<T*>(t));
     }
 };
 
 template<>
-struct WrenArgument< float > {
-    static float get( WrenVM* vm, int slot ) {
+struct WrenSlotAPI< float > {
+    static float get(WrenVM* vm, int slot) {
         return float(wrenGetSlotDouble( vm, slot ));
     }
 
@@ -130,8 +151,8 @@ struct WrenArgument< float > {
 };
 
 template<>
-struct WrenArgument< double > {
-    static double get( WrenVM* vm, int slot ) {
+struct WrenSlotAPI< double > {
+    static double get(WrenVM* vm, int slot) {
         return wrenGetSlotDouble( vm, slot );
     }
 
@@ -141,7 +162,7 @@ struct WrenArgument< double > {
 };
 
 template<>
-struct WrenArgument< int > {
+struct WrenSlotAPI< int > {
     static int get( WrenVM* vm, int slot ) {
         return int(wrenGetSlotDouble( vm, slot ));
     }
@@ -152,7 +173,7 @@ struct WrenArgument< int > {
 };
 
 template<>
-struct WrenArgument< unsigned > {
+struct WrenSlotAPI< unsigned > {
     static unsigned get( WrenVM* vm, int slot ) {
         return unsigned(wrenGetSlotDouble( vm, slot ));
     }
@@ -163,7 +184,7 @@ struct WrenArgument< unsigned > {
 };
 
 template<>
-struct WrenArgument< bool > {
+struct WrenSlotAPI< bool > {
     static bool get( WrenVM* vm, int slot ) {
         return wrenGetSlotBool( vm, slot );
     }
@@ -174,7 +195,7 @@ struct WrenArgument< bool > {
 };
 
 template<>
-struct WrenArgument< const char* > {
+struct WrenSlotAPI< const char* > {
     static const char* get( WrenVM* vm, int slot ) {
         return wrenGetSlotString( vm, slot );
     }
@@ -185,7 +206,7 @@ struct WrenArgument< const char* > {
 };
 
 template<>
-struct WrenArgument< std::string > {
+struct WrenSlotAPI< std::string > {
     static std::string get( WrenVM* vm, int slot ) {
         return std::string( wrenGetSlotString( vm, slot ) );
     }
@@ -208,7 +229,7 @@ void passArgumentsToWren( WrenVM* vm, const std::tuple<Args...>& tuple, std::ind
     using Traits = ParameterPackTraits<Args...>;
     ExpandType{
         0,
-        (WrenArgument<typename Traits::template ParameterType<index>>::set(
+        (WrenSlotAPI<typename Traits::template ParameterType<index>>::set(
             vm,
             index + 1,
             std::get<index>(tuple)
@@ -216,150 +237,10 @@ void passArgumentsToWren( WrenVM* vm, const std::tuple<Args...>& tuple, std::ind
     };
 }
 
-template< typename T >
-struct WrenReturnValue {
-    static void set(WrenVM* vm, T val) {
-        ForeignObjectValue<T>::setInSlot<0>(vm, val);
-    }
-};
-
-template<typename T>
-struct WrenReturnValue<T&> {
-    static void set(WrenVM* vm, T& ref) {
-        ForeignObjectPtr<T>::setInSlot<0>(vm, &ref);
-    }
-};
-
-template<typename T>
-struct WrenReturnValue<const T&> {
-    static void set(WrenVM* vm, const T& ref) {
-        ForeignObjectPtr<T>::setInSlot<0>(vm, const_cast<T*>(&ref));
-    }
-};
-
-template<typename T>
-struct WrenReturnValue<T*> {
-    static void set(WrenVM* vm, T* ptr) {
-        ForeignObjectPtr<T>::setInSlot<0>(vm, ptr);
-    }
-};
-
-template<typename T>
-struct WrenReturnValue<const T*> {
-    static void set(WrenVM* vm, const T* ptr) {
-        ForeignObjectPtr<T>::setInSlot<0>(vm, const_cast<T*>(ptr));
-    }
-};
-
-template<>
-struct WrenReturnValue< float > {
-    static void set( WrenVM* vm, float val ) {
-        wrenSetSlotDouble( vm, 0, double ( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< float& > {
-    static void set( WrenVM* vm, float val ) {
-        wrenSetSlotDouble( vm, 0, double( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< const float& > {
-    static void set( WrenVM* vm, float val ) {
-        wrenSetSlotDouble( vm, 0, double( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< double > {
-    static void set( WrenVM* vm, double val ) {
-        wrenSetSlotDouble( vm, 0, val );
-    }
-};
-
-template<>
-struct WrenReturnValue< double& > {
-    static void set( WrenVM* vm, double val ) {
-        wrenSetSlotDouble( vm, 0, val );
-    }
-};
-
-template<>
-struct WrenReturnValue< const double& > {
-    static void set( WrenVM* vm, double val ) {
-        wrenSetSlotDouble( vm, 0, val );
-    }
-};
-
-template<>
-struct WrenReturnValue< int > {
-    static void set( WrenVM* vm, int val ) {
-        wrenSetSlotDouble( vm, 0, double ( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< int& > {
-    static void set( WrenVM* vm, int val ) {
-        wrenSetSlotDouble( vm, 0, double ( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< const int& > {
-    static void set( WrenVM* vm, int val ) {
-        wrenSetSlotDouble( vm, 0, double ( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< std::size_t > {
-    static void set( WrenVM* vm, std::size_t val ) {
-        wrenSetSlotDouble( vm, 0, double( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< std::size_t& > {
-    static void ret( WrenVM* vm, std::size_t val ) {
-        wrenSetSlotDouble( vm, 0, double( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< const std::size_t& > {
-    static void set( WrenVM* vm, std::size_t val ) {
-        wrenSetSlotDouble( vm, 0, double( val ) );
-    }
-};
-
-template<>
-struct WrenReturnValue< bool > {
-    static void set( WrenVM* vm, bool val ) {
-        wrenSetSlotBool( vm, 0, val );
-    }
-};
-
-template<>
-struct WrenReturnValue< std::string > {
-    static void set( WrenVM* vm, std::string val ) {
-        wrenSetSlotString( vm, 0, val.c_str() );
-    }
-};
-
-template<>
-struct WrenReturnValue< const char* > {
-    static void set( WrenVM* vm, const char* val ) {
-        wrenSetSlotString( vm, 0, val );
-    }
-};
-
 template< typename Function, std::size_t... index>
 decltype( auto ) invokeHelper( WrenVM* vm, Function&& f, std::index_sequence< index... > ) {
     using Traits = FunctionTraits< std::remove_reference_t<decltype(f)> >;
-    return f( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+    return f( WrenSlotAPI< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename Function >
@@ -373,7 +254,7 @@ decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ), std::index_seq
     using Traits = FunctionTraits< decltype(f) >;
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
     C* obj = static_cast<C*>(objWrapper->objectPtr());
-    return (obj->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+    return (obj->*f)( WrenSlotAPI< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 // const variant
@@ -382,7 +263,7 @@ decltype( auto ) invokeHelper( WrenVM* vm, R( C::*f )( Args... ) const, std::ind
     using Traits = FunctionTraits< decltype(f) >;
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
     const C* obj = static_cast<const C*>(objWrapper->objectPtr());
-    return (obj->*f)( WrenArgument< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
+    return (obj->*f)( WrenSlotAPI< typename Traits::template ArgumentType<index> >::get( vm, index + 1 )... );
 }
 
 template< typename R, typename C, typename... Args >
@@ -421,17 +302,17 @@ struct InvokeWithoutReturningIf<false> {
     template< typename Function >
     static void invoke( WrenVM* vm, Function&& f ) {
         using ReturnType = typename FunctionTraits< std::remove_reference_t<decltype(f)> >::ReturnType;
-        WrenReturnValue< ReturnType >::set( vm, invokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
+        WrenSlotAPI< ReturnType >::set( vm, 0, invokeWithWrenArguments( vm, std::forward<Function>( f ) ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) ) {
-        WrenReturnValue< R >::set( vm, invokeWithWrenArguments( vm, f ) );
+        WrenSlotAPI< R >::set( vm, 0, invokeWithWrenArguments( vm, f ) );
     }
 
     template< typename R, typename C, typename... Args >
     static void invoke( WrenVM* vm, R ( C::*f )( Args... ) const ) {
-        WrenReturnValue< R >::set( vm, invokeWithWrenArguments( vm, f ) );
+        WrenSlotAPI< R >::set( vm, 0, invokeWithWrenArguments( vm, f ) );
     }
 };
 
@@ -468,7 +349,7 @@ struct ForeignMethodWrapper< R( C::* )( Args... ) const, m > {
 
 };
 
-}   // detail
-}   // wrenly
+}
+}
 
 #endif  // FOREIGNMETHOD_H_INCLUDED

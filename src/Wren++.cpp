@@ -34,12 +34,25 @@ WrenForeignClassMethods foreignClassProvider(WrenVM* vm, const char* m, const ch
     return it->second;
 }
 
+inline const char* errorTypeToString(WrenErrorType type) {
+    switch (type) {
+    case WREN_ERROR_COMPILE: return "WREN_ERROR_COMPILE";
+    case WREN_ERROR_RUNTIME: return "WREN_ERROR_RUNTIME";
+    case WREN_ERROR_STACK_TRACE: return "WREN_ERROR_STACK_TRACE";
+    default: assert(false); return "";
+    }
+}
+
 char* loadModuleFnWrapper(WrenVM* vm, const char* mod) {
     return wrenpp::VM::loadModuleFn(mod);
 }
 
 void writeFnWrapper(WrenVM* vm, const char* text) {
     wrenpp::VM::writeFn(vm, text);
+}
+
+void errorFnWrapper(WrenErrorType type, const char* module, int line, const char* message) {
+    wrenpp::VM::errorFn(type, module, line, message);
 }
 
 wrenpp::detail::ChunkAllocator* allocator{ nullptr };
@@ -66,7 +79,7 @@ void registerClass(const std::string& mod, std::string cName, WrenForeignClassMe
 
 }
 
-Method::Method(VM* vm, WrenValue* variable, WrenValue* method)
+Method::Method(VM* vm, WrenHandle* variable, WrenHandle* method)
     : vm_(vm),
     method_(method),
     variable_(variable),
@@ -130,8 +143,8 @@ void Method::release_() {
         *refCount_ -= 1u;
         if (*refCount_ == 0u) {
             vm_->setState_();   // wrenReelaseValue will cause wren to free memory
-            wrenReleaseValue(vm_->vm(), method_);
-            wrenReleaseValue(vm_->vm(), variable_);
+            wrenReleaseHandle(vm_->vm(), method_);
+            wrenReleaseHandle(vm_->vm(), variable_);
             delete refCount_;
             refCount_ = nullptr;
         }
@@ -192,6 +205,12 @@ WriteFn VM::writeFn = [](WrenVM* vm, const char* text) -> void {
     fflush(stdout);
 };
 
+ErrorFn VM::errorFn = [](WrenErrorType type, const char* module, int line, const char* message) -> void {
+    const char* typeStr = errorTypeToString(type);
+    printf("%s in %s:%i > %s\n", typeStr, module, line, message);
+    fflush(stdout);
+};
+
 AllocateFn VM::allocateFn = std::malloc;
 
 FreeFn VM::freeFn = std::free;
@@ -219,6 +238,7 @@ VM::VM()
     configuration.loadModuleFn = loadModuleFnWrapper;
     configuration.bindForeignClassFn = foreignClassProvider;
     configuration.writeFn = writeFnWrapper;
+    configuration.errorFn = errorFnWrapper;
     vm_ = wrenNewVM( &configuration );
 }
 
@@ -289,8 +309,8 @@ Method VM::method(
     setState_();
     wrenEnsureSlots( vm_, 1 );
     wrenGetVariable( vm_, mod.c_str(), var.c_str(), 0 );
-    WrenValue* variable = wrenGetSlotValue( vm_, 0 );
-    WrenValue* handle = wrenMakeCallHandle(vm_, sig.c_str());
+    WrenHandle* variable = wrenGetSlotHandle( vm_, 0 );
+    WrenHandle* handle = wrenMakeCallHandle(vm_, sig.c_str());
     return Method( this, variable, handle );
 }
 

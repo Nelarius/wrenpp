@@ -5,6 +5,7 @@
 // it's assumed that there will not be many chunks, so the heap overhead
 // from vector should be small
 #include <vector>
+#include <cstdint>
 #include <cstdlib>
 #include <cassert>
 

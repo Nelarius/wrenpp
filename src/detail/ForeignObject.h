@@ -3,13 +3,14 @@
 
 #include "detail/TypeId.h"
 extern "C" {
-#include <wren.h>
+    #include "wren.h"
 }
 #include <cstdint>
 #include <cstdlib>
 #include <cassert>
 #include <vector>
 #include <type_traits>
+#include <string>
 
 namespace wrenpp {
 namespace detail {
@@ -100,12 +101,12 @@ public:
         }
     }
 
-    template<int Slot, typename... Args>
-    static void setInSlot(WrenVM* vm, Args... arg) {
-        wrenEnsureSlots(vm, Slot + 1);
+    template<typename... Args>
+    static void setInSlot(WrenVM* vm, int slot, Args... arg) {
+        wrenEnsureSlots(vm, slot + 1);
         // get the foreign class value here somehow, and stick it in slot Slot
-        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), Slot);
-        ForeignObjectValue<T>* val = new (wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectValue<T>))) ForeignObjectValue<T>();
+        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), slot);
+        ForeignObjectValue<T>* val = new (wrenSetSlotNewForeign(vm, slot, slot, sizeof(ForeignObjectValue<T>))) ForeignObjectValue<T>();
         new (val->objectPtr()) T{ std::forward<Args>(arg)... };
     }
 
@@ -130,11 +131,10 @@ public:
         return object_;
     }
 
-    template<int Slot>
-    static void setInSlot(WrenVM* vm, T* obj) {
-        wrenEnsureSlots(vm, Slot + 1);
-        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), Slot);
-        void* bytes = wrenSetSlotNewForeign(vm, Slot, Slot, sizeof(ForeignObjectPtr<T>));
+    static void setInSlot(WrenVM* vm, int slot, T* obj) {
+        wrenEnsureSlots(vm, slot + 1);
+        wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), slot);
+        void* bytes = wrenSetSlotNewForeign(vm, slot, slot, sizeof(ForeignObjectPtr<T>));
         new (bytes) ForeignObjectPtr<T>{ obj };
     }
 

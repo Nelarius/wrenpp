@@ -1,0 +1,39 @@
+# Using trusty should yield newer compilers and packages
+dist: trusty
+sudo: true
+language: generic
+
+# This build matrix was obtained from
+# http://genbattle.bitbucket.org/blog/2016/01/17/c++-travis-ci/
+matrix:
+  include:
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-5
+      env: COMPILER=g++-5
+    - compiler: clang
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.7
+          packages:
+            - clang-3.7
+      env: COMPILER=clang++-3.7
+
+before_install:
+ - sudo apt-get update -qq
+
+install:
+ - bash build-wren.sh
+ - export CPLUS_INCLUDE_PATH=$PWD/wren-master/src/include
+ - export LIBRARY_PATH=$PWD/wren-master/lib
+
+script:
+ - cd build/gmake
+ - make all CXX=$COMPILER
+

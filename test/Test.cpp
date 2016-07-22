@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
 // a small class to test class & method binding with
 struct Vec3 {
@@ -40,7 +41,7 @@ struct Transform {
 
 void CFunctionVectorReference(WrenVM* vm) {
     static Vec3 v{ 2.0, 1.0, 1.0 };
-    wrenpp::setSlotForeignPtr(vm, &v);
+    wrenpp::setSlotForeignPtr(vm, 0, &v);
 }
 
 Vec3* returnVec3Ptr() {
@@ -120,6 +121,31 @@ void testClassMethods() {
     printf("freeBlocks: %u\n", stats.freeBlocksAtLargest);
 }
 
+void testReturnValues() {
+    wrenpp::VM vm{};
+
+    vm.executeString(
+        "var returnsThree = Fn.new {\n"
+        "    return 3\n"
+        "}\n"
+        "var returnsTrue = Fn.new {\n"
+        "    return true\n"
+        "}\n"
+        "var returnsGreeting = Fn.new {\n"
+        "    return \"Hello, world\"\n"
+        "}\n"
+    );
+    wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
+    double nval = returnsThree().as<double>();
+    assert(nval == 3.0);
+    wrenpp::Method returnsTrue = vm.method("main", "returnsTrue", "call()");
+    bool bval = returnsTrue().as<bool>();
+    assert(bval == true);
+    wrenpp::Method returnsGreeting = vm.method("main", "returnsGreeting", "call()");
+    wrenpp::Value sval = returnsGreeting();
+    assert(!strcmp("Hello, world", sval.as<const char*>()));
+}
+
 int main() {
 
     printf("\nCalling Wren code from C++...\n\n");
@@ -129,6 +155,10 @@ int main() {
     printf("\nTesting method calls...\n\n");
 
     testClassMethods();
+
+    printf("\nTesting return values...\n\n");
+
+    testReturnValues();
 
     return 0;
 }

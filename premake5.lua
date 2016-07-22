@@ -28,6 +28,9 @@ workspace "wrenpp"
         defines { "NDEBUG" }
         optimize "On"
 
+    filter "not action:vs*"
+        buildoptions { "-std=c++14" }
+
     project "lib"
         kind "StaticLib"
         language "C++"
@@ -36,48 +39,49 @@ workspace "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
-
         files { "src/**.cpp", "src/**.h" }
         includedirs { "src" }
-
-        filter "action:gmake"
-            buildoptions { "-std=gnu++14" }
 
     project "test"
         kind "ConsoleApp"
         language "C++"
         targetdir "bin"
         targetname "test"
+        architecture "x86"
         files { "test/**.cpp", "test/***.h", "test/**.wren" }
         includedirs { "src", "test" }
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
+
+        filter "files:**.wren"
+            buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
+            buildoutputs { "../../bin/%{file.name}" }
+            filter {}
+
         filter "configurations:Debug"
             debugdir "bin"
-            project "test"
 
-        configuration "vs*"
+        filter { "action:vs*", "Debug" }
             if _OPTIONS["link"] then
-                filter "configurations:Debug"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Debug"
-                    }
-                    links { "lib", "wren_static_d" }
-                    project "test"
-                filter "configurations:Release"
-                    libdirs {
-                        _OPTIONS["link"] .. "/Release"
-                    }
-                    links { "lib", "wren_static" }
-                    project "test"
+                libdirs {
+                    _OPTIONS["link"] .. "/Debug"
+                }
             end
-            project "test"
-            filter "files:**.wren"
-                buildcommands { "copy ..\\..\\test\\%{file.name} ..\\..\\bin" }
-                buildoutputs { "..\\..\\bin\\%{file.name}" }
+            links { "lib", "wren_static_d" }
 
-        configuration "gmake"
-            filter "files:**.wren"
-                buildcommands { "cp ../../test/%{file.name} ../../bin" }
-                buildoutputs { "../../bin/test/%{file.name}" }
+        filter { "action:vs*", "Release"}
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"] .. "/Release"
+                }
+            end
+            links { "lib", "wren_static" }
+
+        filter { "not action:vs*" }
+            if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"]
+                }
+            end
+            links { "lib", "wren" }

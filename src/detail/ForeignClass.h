@@ -24,7 +24,7 @@ template< typename T, typename... Args, std::size_t... index >
 void construct( WrenVM* vm, void* memory, std::index_sequence<index...> ) {
     using Traits = ParameterPackTraits< Args... >;
     ForeignObjectValue<T>* obj = new (memory) ForeignObjectValue<T>{};
-    new (obj->objectPtr()) T{ WrenArgument< typename Traits::template ParameterType<index> >::get(vm, index + 1)... };
+    new (obj->objectPtr()) T{ WrenSlotAPI< typename Traits::template ParameterType<index> >::get(vm, index + 1)... };
 }
 
 template< typename T, typename... Args >

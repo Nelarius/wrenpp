@@ -1,20 +1,39 @@
 
 # Wren++
 
-A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/). Both Wren and this library are still under development, so not everything here is stable yet.
+A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/), in the spirit of LuaBridge and Luabind. Both Wren and this library are still under development, so breaking changes will occasionally be introduced.
 
 Wren++ currently provides:
-- a RAII wrapper for the Wren virtual machine
-- automatic binding code generation for any C++ function and class
-- convenient access to calling Wren class methods from C++
-- template-based -- no macros!
+- A RAII wrapper for the Wren virtual machine
+- Automatic binding code generation for any C++ function and class
+- Convenient access for calling Wren class methods from C++
+- Template-based -- no macros!
 
-Current deficiencies:
-- not that type-safe. It's pretty undefined what happens when you try to bind code that returns a type which hasn't itself been bound
-- Wren++ has no concept of const-ness. When you return a const pointer to one of your instances from a bound function, the resulting foreign object in Wren will happily call non-const methods -- yikes!
+Known issues:
+- Not type-safe. It's undefined what happens when you try to bind code that returns a type which hasn't itself been bound (most likely a crash is going to happen)
 - Wren access from C++ is rather minimal
+* Calling Wren methods from C++, which themselves call foreign methods, doesn't work at the moment and will cause a segfault. This is due to a known [issue](https://github.com/munificent/wren/issues/362) in Wren.
 
-Currently developing against `wren:master@139b447`. This project is being developed at the whim of my [game engine](https://github.com/nelarius/playground) project.
+[![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
+
+## Table of contents
+* [Build](#build)
+* [At a glance](#at-a-glance)
+* [Accessing Wren from Cpp](#accessing-wren-from-cpp)
+  * [Methods](#methods)
+* [Accessing Cpp from Wren](#accessing-cpp-from-wren)
+  * [Foreign methods](#foreign-methods)
+  * [Foreign classes](#foreign-classes)
+    * [Properties](#properties)
+    * [Methods](#methods)
+  * [CFunctions](#cfunctions)
+  * [Cpp and Wren lifetimes](#cpp-and-wren-lifetimes)
+* [Customize VM behavior](#customize-vm-behavior)
+  * [Customize printing](#customize-printing)
+  * [Customize error printing](#customize-error-printing)
+  * [Customize module loading](#customize-module-loading)
+  * [Customize heap allocation and garbage collection](#customize-heap-allocation-and-garbage-collection)
+
 ## Build
 
 Clone the repository using `git clone https://github.com/nelarius/wrenpp.git`. The easiest way to build the project is to include the contents of the `src/` folder in your project, since there's so little code. Just remember to compile with C++14 features turned on!
@@ -68,7 +87,7 @@ if ( res == wrenpp::Result::CompileError ) {
 
 There are two other codes: `wrenpp::Result::RuntimeError` and `wrenpp::Result::Success`.
 
-## Accessing Wren from C++
+## Accessing Wren from Cpp
 
 ### Methods
 
@@ -87,7 +106,7 @@ you can call the static method `say` from C++ by using `void Method::operator( A
 ```cpp
 wrenpp::VM vm{};
 vm.executeModule( "bar" );
-    
+
 wrenpp::Method say = vm.method( "main", "Foo", "say(_)" );
 say( "Hello from C++!" );
 ```
@@ -104,7 +123,30 @@ Method VM::method(
 
 `module` will be `"main"`, if you're not in an imported module. `variable` should contain the variable name of the object that you want to call the method on. Note that you use the class name when the method is static. The signature of the method has to be specified, because Wren supports function overloading by arity (overloading by the number of arguments).
 
-## Accessing C++ from Wren
+The return value of a Wren method can be accessed by doing
+
+```cpp
+wrenpp::Method returnsThree = vm.method("main", "returnsThree", "call()");
+wrenpp::Value val = returnsThree();
+double val = val.as<double>();
+```
+
+The `operator()` method on `wrenpp::Method` returns a `wrenpp::Value` object, which can be cast to the wanted return type by calling `as<T>()`.
+
+Number, boolean, and string values are stored within `wrenpp::Value` itself. Note that do to this, you *don't* want to write
+
+```cpp
+const char* greeting = returnsGreeting().as<const char*>();
+```
+
+because the string value is storesd in the `wrenpp::Value` instance itself. This would result in trying to dereference a string value which no longer exists. Store it locally before using the string value, like we did above:
+
+```cpp
+wrenpp::Value greeting = returnsGreeting();
+printf("%s\n", greeting.as<const char*>());
+```
+
+## Accessing Cpp from Wren
 
 **TODO:** improve
 
@@ -140,10 +182,10 @@ int main() {
       .bindFunction< decltype(&exp), &exp >( true, "exp(_)" )
     .endClass()
   .endModule();
-        
+
   wrenpp::VM vm;
   vm.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
-    
+
   return 0;
 }
 ```
@@ -194,7 +236,7 @@ struct Vec3 {
   float dot( const Vec3& rhs ) const {
     return x*rhs.x + y*rhs.y + z*rhs.z;
   }
-  
+
   Vec3 cross( const Vec3& rhs ) const {
     return Vec3 {
       y*rhs.z - z*rhs.y,
@@ -319,28 +361,36 @@ wrenpp::beginModule( "builtin/imgui" )
 
 If you need to access and return foreign object instances within your CFunction, you can use the following two helper functions.
 
-Use `wrenpp::getSlotForeign<T, int>(WrenVM*)` to get a bound type from the slot API:
+Use `wrenpp::getSlotForeign<T>(WrenVM*, int)` to get a bound type from the slot API:
 
 ```cpp
 void setWindowSize(WrenVM* vm) {
-  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getSlotForeign<Vec2i, 1>(vm));
+  ImGui::SetNextWindowSize(*(const ImVec2*)wrenpp::getSlotForeign<Vec2i>(vm, 1));
 }
 ```
 
-Use `wrenpp::setSlotForeignValue<T>(WrenVM*, const T&)` and `wrenpp::setSlotForeignPtr<T>(WrenVM*, T* obj)` to place an object with foreign bytes in slot 0, by value and by reference, respectively. `wrenpp::setSlotForeignValue<T>` uses the type's copy constructor to copy the object into the new value.
+Use `wrenpp::setSlotForeignValue<T>(WrenVM*, int, const T&)` and `wrenpp::setSlotForeignPtr<T>(WrenVM*, int, T* obj)` to place an object with foreign bytes in a slot, by value and by reference, respectively. `wrenpp::setSlotForeignValue<T>` uses the type's copy constructor to copy the object into the new value.
 
-### C++ and Wren lifetimes
+### Cpp and Wren lifetimes
 
 If the return type of a bound method or function is a reference or pointer to an object, then the returned wren object will have C++ lifetime, and Wren will not garbage collect the object pointed to. If an object is returned by value, then a new instance of the object is also constructed withing the returned Wren object. In this situation, the returned Wren object has Wren lifetime and is garbage collected.
 
 ## Customize VM behavior
 
-### Customize `System.print`
+### Customize printing
 
-The Wren scripting language does not implement `System.print( ... )` itself, but expects the embedder to provide it. The `Wren` wrapper class does exactly that with the static `VM::writeFn` field, which is of type `std::function< void( WrenVM*, const char* ) >`. By default, it is implemented as follows.
+You can provide your own implementation for `System.print` by assigning a callable object with the signature `void(WrenVM*, const char*)` to `wrenpp::VM::writeFn`. By default, `writeFn` is implemented as follows:
 
 ```cpp
 VM::writeFn = []( WrenVM* vm, const char* text ) -> void { printf( text ) };
+```
+
+### Customize error printing
+
+You can provide your own function to route error messages. Assign a callable object with the signature `void(WrenErrorType, const char*, int, const char*)` (see wren.h for the signature of `WrenErrorFn`) to `wrenpp::VM::errorFn`. By default, Wren++ prints errors to `stdout` as
+
+```
+WREN_ERROR_COMPILE in main:15 > Error at 'Vec3': Variable is used but not defined.
 ```
 
 ### Customize module loading
@@ -360,7 +410,7 @@ VM::loadModuleFn = []( const char* mod ) -> char* {
 };
 ```
 
-### Customize heap allocation & garbage collection
+### Customize heap allocation and garbage collection
 
 You can use your own allocation/free functions assigning them to the `wrenpp::VM::allocateFn` and `wrenpp::VM::freeFn` callbacks. `allocateFn` must be a callable with the `void*(std::size_t)` signature, and `freeFn` must be a callable with the `void(void*)` signature. By default, the callbacks are just set to the system malloc/free:
 
@@ -390,9 +440,6 @@ The minimum heap size is the heap size, in bytes, below which collections will n
 
 ## TODO:
 
-* Assert when an object pointer is misaligned
-* Add function to get the value returned by the wren method.
-  * A Value class is needed. Has template methods to get the actual value on the Wren stack.
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
 * There needs to be better error handling for not finding a method.
