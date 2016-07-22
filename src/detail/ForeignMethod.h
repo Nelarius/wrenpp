@@ -2,7 +2,7 @@
 #define FOREIGNMETHOD_H_INCLUDED
 
 extern "C" {
-    #include <wren.h>
+    #include "wren.h"
 }
 #include "ForeignObject.h"
 #include <string>

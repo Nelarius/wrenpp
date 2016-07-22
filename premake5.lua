@@ -28,6 +28,9 @@ workspace "wrenpp"
         defines { "NDEBUG" }
         optimize "On"
 
+    filter "not action:vs*"
+        buildoptions { "-std=c++14" }
+
     project "lib"
         kind "StaticLib"
         language "C++"
@@ -36,7 +39,6 @@ workspace "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
-        flags { "C++14" }
         files { "src/**.cpp", "src/**.h" }
         includedirs { "src" }
 
@@ -45,7 +47,7 @@ workspace "wrenpp"
         language "C++"
         targetdir "bin"
         targetname "test"
-        flags { "C++14" }
+        architecture "x86"
         files { "test/**.cpp", "test/***.h", "test/**.wren" }
         includedirs { "src", "test" }
         if _OPTIONS["include"] then
@@ -59,7 +61,6 @@ workspace "wrenpp"
 
         filter "configurations:Debug"
             debugdir "bin"
-            filter {}
 
         filter { "action:vs*", "Debug" }
             if _OPTIONS["link"] then
@@ -77,7 +78,7 @@ workspace "wrenpp"
             end
             links { "lib", "wren_static" }
 
-        filter { "action:gmake" }
+        filter { "not action:vs*" }
             if _OPTIONS["link"] then
                 libdirs {
                     _OPTIONS["link"]

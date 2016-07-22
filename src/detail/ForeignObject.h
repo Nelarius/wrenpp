@@ -3,7 +3,7 @@
 
 #include "detail/TypeId.h"
 extern "C" {
-#include <wren.h>
+    #include "wren.h"
 }
 #include <cstdint>
 #include <cstdlib>
