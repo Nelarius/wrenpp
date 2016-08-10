@@ -6,7 +6,6 @@ extern "C" {
 }
 #include "detail/ForeignMethod.h"
 #include "detail/ForeignClass.h"
-#include "detail/ForeignMethod.h"
 #include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
 #include "detail/ChunkAllocator.h"
