@@ -192,8 +192,6 @@ int main() {
 
 Both the type of the function (in the case of `cos` the type is `double(double)`, for instance, and could be used instead of `decltype(&cos)`) and the reference to the function have to be provided to `bindFunction` as template arguments. As arguments, `bindFunction` needs to be provided with a boolean which is true, when the foreign method is static, false otherwise. Finally, the method signature is passed.
 
-> The free function needs to call functions like `wrenGetArgumentDouble`, `wrenGetArgumentString` to access the arguments passed to the method. When you register the free function, Wren++ wraps the free function and generates the appropriate `wrenGetArgument*` function calls during compile time. Similarly, if a function returns a value, the call to the appropriate `wrenReturn*` function is inserted at compile time.
-
 ### Foreign classes
 
 Free functions don't get us very far if we want there to be some state on a per-object basis. Foreign classes can be registered by using `bindClass` on a module context. Let's look at an example. Say we have the following Wren class representing a 3-vector:
@@ -272,12 +270,12 @@ If your class or struct has public fields you wish to expose, you can do so by u
 ```cpp
 wrenpp::beginModule( "main" )
   .bindClass< Vec3, float, float, float >( "Vec3" )
-    .bindGetter< decltype(&Vec3::x), &Vec3::x >( "x" )
-    .bindSetter< decltype(&Vec3::x), &Vec3::x >( "x=(_)" )
-    .bindGetter< decltype(&Vec3::y), &Vec3::y >( "y" )
-    .bindSetter< decltype(&Vec3::y), &Vec3::y >( "y=(_)" )
-    .bindGetter< decltype(&Vec3::z), &Vec3::z >( "z" )
-    .bindSetter< decltype(&Vec3::z), &Vec3::z >( "z=(_)" );
+    .bindGetter< decltype(Vec3::x), &Vec3::x >( "x" )
+    .bindSetter< decltype(Vec3::x), &Vec3::x >( "x=(_)" )
+    .bindGetter< decltype(Vec3::y), &Vec3::y >( "y" )
+    .bindSetter< decltype(Vec3::y), &Vec3::y >( "y=(_)" )
+    .bindGetter< decltype(Vec3::z), &Vec3::z >( "z" )
+    .bindSetter< decltype(Vec3::z), &Vec3::z >( "z=(_)" );
 ```
 
 Getters and setters are implicitly assumed to be non-static methods.
@@ -292,16 +290,16 @@ Using `registerMethod` allows you to bind a class method to a Wren foreign metho
 int main() {
   wrenpp::beginModule( "main" )
     .bindClass< Vec3, float, float, float >( "Vec3" )
-      // properties
-      .bindGetter< decltype(&Vec3::x), &Vec3::x >( "x" )
-      .bindSetter< decltype(&Vec3::x), &Vec3::x >( "x=(_)" )
-      .bindGetter< decltype(&Vec3::y), &Vec3::y >( "y" )
-      .bindSetter< decltype(&Vec3::y), &Vec3::y >( "y=(_)" )
-      .bindGetter< decltype(&Vec3::z), &Vec3::z >( "z" )
-      .bindSetter< decltype(&Vec3::z), &Vec3::z >( "z=(_)" )
+      // properties as before
+      .bindGetter< decltype(Vec3::x), &Vec3::x >( "x" )
+      .bindSetter< decltype(Vec3::x), &Vec3::x >( "x=(_)" )
+      .bindGetter< decltype(Vec3::y), &Vec3::y >( "y" )
+      .bindSetter< decltype(Vec3::y), &Vec3::y >( "y=(_)" )
+      .bindGetter< decltype(Vec3::z), &Vec3::z >( "z" )
+      .bindSetter< decltype(Vec3::z), &Vec3::z >( "z=(_)" )
       // methods
-      .bindMethod< decltype(Vec3::norm), &Vec3::norm >( false, "norm()" )
-      .bindMethod< decltype(Vec3::dot), &Vec3::dot >( false, "dot(_)" )
+      .bindMethod< decltype(&Vec3::norm), &Vec3::norm >( false, "norm()" )
+      .bindMethod< decltype(&Vec3::dot), &Vec3::dot >( false, "dot(_)" )
     .endClass()
   .endModule();
 
@@ -353,9 +351,9 @@ Here's what the binding code looks like. Note that ImGui::End is trivial to bind
 wrenpp::beginModule( "builtin/imgui" )
   .beginClass( "Imgui" )
     // windows & their formatting
-    .bindCFunction( true, "begin(_)", VM::begin )
+    .bindCFunction( true, "begin(_)", &VM::begin )
     .bindFunction< decltype(&ImGui::End), &ImGui::End>( true, "end()" )
-    .bindCFunction( true, "sliderFloat(_,_,_,_)", VM::sliderFloat)
+    .bindCFunction( true, "sliderFloat(_,_,_,_)", &VM::sliderFloat)
   .endClass();
 ```
 
