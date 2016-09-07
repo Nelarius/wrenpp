@@ -36,9 +36,9 @@ Known issues:
 
 ## Build
 
-Clone the repository using `git clone https://github.com/nelarius/wrenpp.git`. The easiest way to build the project is to include the contents of the `src/` folder in your project, since there's so little code. Just remember to compile with C++14 features turned on!
+Clone the repository using `git clone https://github.com/nelarius/wrenpp.git`. The entire library consists just of `Wren++.h` and `Wren++.cpp`, and so the easiest way to use the library is just to include them in your project directly. Just remember to compile with C++14 features turned on!
 
-Alternatively, you can build the static library with premake:
+Alternatively, you can use premake to generate a build file for the static library:
 
 ```sh
 premake5 vs2015 --include=<path to wren.h>
@@ -48,7 +48,7 @@ If you want to build the tests as well, then you need to include the location of
 
 ```sh
 premake5 vs2015 --include=<path to wren.h> --link=<path to wren/lib>
-``` 
+```
 
 ## At a glance
 
@@ -410,7 +410,7 @@ VM::loadModuleFn = []( const char* mod ) -> char* {
 
 ### Customize heap allocation and garbage collection
 
-You can bind your own allocator to Wren by providing the following generic allocation function:
+You can bind your own allocator to Wren by providing the following generic allocation function (which is set to `std::realloc` by default):
 
 `wrenpp::VM::reallocateFn = std::realloc;`
 

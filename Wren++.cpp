@@ -1,6 +1,4 @@
-
 #include "Wren++.h"
-#include "File.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp, memcpy
 #include <cstdio>
@@ -222,7 +220,7 @@ LoadModuleFn VM::loadModuleFn = [](const char* mod) -> char* {
     path += ".wren";
     std::string source;
     try {
-        source = wrenpp::fileToString(path);
+        source = wrenpp::detail::fileToString(path);
     }
     catch (const std::exception&) {
         return NULL;

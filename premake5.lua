@@ -39,7 +39,7 @@ workspace "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
-        files { "src/**.cpp", "src/**.h" }
+        files { "Wren++.cpp", "Wren++.h" }
         includedirs { "src" }
 
     project "test"
@@ -47,8 +47,8 @@ workspace "wrenpp"
         language "C++"
         targetdir "bin"
         targetname "test"
-        files { "src/**.cpp", "test/**.cpp", "test/***.h", "test/**.wren" }
-        includedirs { "src", "test" }
+        files { "Wren++.cpp", "test/**.cpp", "test/***.h", "test/**.wren" }
+        includedirs { "./", "test" }
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end

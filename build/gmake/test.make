@@ -16,7 +16,7 @@ ifeq ($(config),debug)
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Debug/test
   DEFINES += -DDEBUG
-  INCLUDES += -I../../src -I../../test -I../../../wren/src/include
+  INCLUDES += -I../.. -I../../test -I../../../wren/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g -std=c++14
@@ -43,7 +43,7 @@ ifeq ($(config),release)
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Release/test
   DEFINES += -DNDEBUG
-  INCLUDES += -I../../src -I../../test -I../../../wren/src/include
+  INCLUDES += -I../.. -I../../test -I../../../wren/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
   ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2 -std=c++14
@@ -144,7 +144,7 @@ $(GCH): $(PCH)
 	$(SILENT) $(CXX) -x c++-header $(ALL_CXXFLAGS) -o "$@" -MF "$(@:%.gch=%.d)" -c "$<"
 endif
 
-$(OBJDIR)/Wren++.o: ../../src/Wren++.cpp
+$(OBJDIR)/Wren++.o: ../../Wren++.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/Test.o: ../../test/Test.cpp
