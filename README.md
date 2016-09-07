@@ -410,19 +410,11 @@ VM::loadModuleFn = []( const char* mod ) -> char* {
 
 ### Customize heap allocation and garbage collection
 
-You can use your own allocation/free functions assigning them to the `wrenpp::VM::allocateFn` and `wrenpp::VM::freeFn` callbacks. `allocateFn` must be a callable with the `void*(std::size_t)` signature, and `freeFn` must be a callable with the `void(void*)` signature. By default, the callbacks are just set to the system malloc/free:
+You can bind your own allocator to Wren by providing the following generic allocation function:
 
-```cpp
-wrenpp::VM::allocateFn = std::malloc;
+`wrenpp::VM::reallocateFn = std::realloc;`
 
-wrenpp::VM::freeFn = std::free;
-```
-
-Wren++ uses the allocation and free function to allocate large chunks of memory at a time. The `chunkSize` parameter specifies how much memory is reserved at a time, in bytes. The default value for the block size is 5 MiB.
-
-`wrenpp::VM::chunkSize = 0x500000u;`
-
-The purpose of allocating memory chunks is to avoid expensive system calls for allocating memory, if you're using the default malloc and free. Wren++ contains a small memory manager, which emulates malloc/free/realloc within the memory chunks. These are the functions that are actually passed to Wren as callbacks. The memory manager tries to keep fragmentation low by always allocating blocks of memory which are powers of two in size. This means that the blocks are frequently larger than necessary, but it also means that realloc calls often don't require a memory move. As a result, Wren usually runs slightly faster (around 5%) under Wren++. Currently, the memory manager uses a first-fit policy to determine which free memory blocks are to be reused.
+`reallocateFn` needs to be a callable of type `void*(void* memory, std::size_t newSize)`. To allocate memory, `memory` is null and `newSize` is the desired size. To free memory, `memory` is the allocated pointer, and `newSize` is zero. To grow an existing allocation, `memory` is the already allocated memory, and `newSize` is the desired size. The function should return the same pointer if it was able to grow the allocation in place. The new pointer is returned if the allocation was moved. To shrink an allocation, `memory` is the already allocated pointer, and `newSize` is the desired size. The same pointer is returned.
 
 The initial heap size is the number of bytes Wren will have allocated before triggering the first garbage collection. By default, it's 10 MiB.
 

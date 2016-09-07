@@ -47,8 +47,7 @@ workspace "wrenpp"
         language "C++"
         targetdir "bin"
         targetname "test"
-        architecture "x86"
-        files { "test/**.cpp", "test/***.h", "test/**.wren" }
+        files { "src/**.cpp", "test/**.cpp", "test/***.h", "test/**.wren" }
         includedirs { "src", "test" }
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }

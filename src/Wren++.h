@@ -8,7 +8,6 @@ extern "C" {
 #include "detail/ForeignClass.h"
 #include "detail/ForeignObject.h"
 #include "detail/ForeignProperty.h"
-#include "detail/ChunkAllocator.h"
 #include <string>
 #include <functional>   // for std::hash
 #include <cassert>
@@ -22,8 +21,7 @@ namespace wrenpp {
 using FunctionPtr   = WrenForeignMethodFn;
 using LoadModuleFn  = std::function< char*( const char* ) >;
 using WriteFn       = std::function< void( WrenVM*, const char* ) >;
-using AllocateFn    = std::function<void*(std::size_t)>;
-using FreeFn        = std::function<void(void*)>;
+using ReallocateFn  = std::function<void*(void*, std::size_t)>;
 using ErrorFn       = std::function<void(WrenErrorType, const char*, int, const char*)>;
 
 namespace detail {
@@ -43,24 +41,16 @@ class Method;
 // enum defined in wren.h
 class Value {
 public:
-    Value(detail::ChunkAllocator* alloc, bool val)   : allocator_{ alloc }, valueType_{ WREN_TYPE_BOOL }, string_{ nullptr } { set_(val); }
-    Value(detail::ChunkAllocator* alloc, float val)  : allocator_{ alloc }, valueType_{ WREN_TYPE_NUM }, string_{ nullptr } { set_(val); }
-    Value(detail::ChunkAllocator* alloc, double val) : allocator_{ alloc }, valueType_{ WREN_TYPE_NUM }, string_{ nullptr } { set_(val); }
-    Value(detail::ChunkAllocator* alloc, int val)    : allocator_{ alloc }, valueType_{ WREN_TYPE_NUM }, string_{ nullptr } { set_(val); }
-    Value(detail::ChunkAllocator* alloc, unsigned int val) : allocator_{ alloc }, valueType_{ WREN_TYPE_NUM }, string_{ nullptr } { set_(val); }
-    Value(detail::ChunkAllocator* alloc, const char* str)  : allocator_{ alloc }, valueType_{ WREN_TYPE_STRING }, string_{ nullptr } {
-        string_ = (char*)allocator_->alloc(std::strlen(str));
-        std::strcpy(string_, str);
-    }
-    template<typename T> Value(detail::ChunkAllocator* alloc, T* t) : allocator_{ alloc }, valueType_{ WREN_TYPE_FOREIGN }, string_{ nullptr } {
-        std::memcpy(storage_, &t, sizeof(T*));
-    }
     Value() = default;
-    ~Value() {
-        if (string_) {
-            allocator_->free(string_);
-        }
-    }
+    ~Value();
+
+    Value(bool);
+    Value(float);
+    Value(double);
+    Value(int);
+    Value(unsigned int);
+    Value(const char*);
+    template<typename T> Value(T*);
 
     template<typename T>
     T as() const;
@@ -72,41 +62,10 @@ private:
     template<typename T>
     void set_(T&& t);
 
-    detail::ChunkAllocator* allocator_{ nullptr };
     WrenType                valueType_{ WREN_TYPE_UNKNOWN };
     char*                   string_{ nullptr };
     std::uint8_t            storage_[8]{0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
 };
-
-template<typename T>
-void Value::set_(T&& t) {
-    static_assert(sizeof(T) <= 8, "The type is invalid!");
-    std::memcpy(storage_, &t, sizeof(T));
-}
-
-template<>
-inline float Value::as<float>() const {
-    assert(valueType_ == WREN_TYPE_NUM);
-    return *reinterpret_cast<const float*>(&storage_[0]);
-}
-
-template<>
-inline double Value::as<double>() const {
-    assert(valueType_ == WREN_TYPE_NUM);
-    return *reinterpret_cast<const double*>(&storage_[0]);
-}
-
-template<>
-inline bool Value::as<bool>() const {
-    assert(valueType_ == WREN_TYPE_BOOL);
-    return *reinterpret_cast<const bool*>(&storage_[0]);
-}
-
-template<>
-inline const char* Value::as<const char*>() const {
-    assert(valueType_ == WREN_TYPE_STRING);
-    return string_;
-}
 
 /**
  * Note that this class stores a reference to the owning VM instance!
@@ -230,8 +189,7 @@ class VM {
 
         static LoadModuleFn loadModuleFn;
         static WriteFn      writeFn;
-        static AllocateFn   allocateFn;
-        static FreeFn       freeFn;
+        static ReallocateFn reallocateFn;
         static ErrorFn      errorFn;
         static std::size_t  initialHeapSize;
         static std::size_t  minHeapSize;
@@ -247,8 +205,43 @@ class VM {
         void setState_();
 
         WrenVM*	               vm_;
-        detail::ChunkAllocator allocator_;
 };
+
+template<typename T>
+Value::Value(T* t)
+    :   valueType_{ WREN_TYPE_FOREIGN }, string_{ nullptr } {
+    std::memcpy(storage_, &t, sizeof(T*));
+}
+
+template<>
+inline float Value::as<float>() const {
+    assert(valueType_ == WREN_TYPE_NUM);
+    return *reinterpret_cast<const float*>(&storage_[0]);
+}
+
+template<typename T>
+void Value::set_(T&& t) {
+    static_assert(sizeof(T) <= 8, "The type is invalid!");
+    std::memcpy(storage_, &t, sizeof(T));
+}
+
+template<>
+inline double Value::as<double>() const {
+    assert(valueType_ == WREN_TYPE_NUM);
+    return *reinterpret_cast<const double*>(&storage_[0]);
+}
+
+template<>
+inline bool Value::as<bool>() const {
+    assert(valueType_ == WREN_TYPE_BOOL);
+    return *reinterpret_cast<const bool*>(&storage_[0]);
+}
+
+template<>
+inline const char* Value::as<const char*>() const {
+    assert(valueType_ == WREN_TYPE_STRING);
+    return string_;
+}
 
 template< typename... Args >
 Value Method::operator()( Args... args ) const {
@@ -265,10 +258,10 @@ Value Method::operator()( Args... args ) const {
     WrenType type = wrenGetSlotType(vm_->vm(), 0);
 
     switch (type) {
-    case WREN_TYPE_BOOL: return Value(&vm_->allocator_, wrenGetSlotBool(vm_->vm(), 0));
-    case WREN_TYPE_NUM:  return Value(&vm_->allocator_, wrenGetSlotDouble(vm_->vm(), 0));
-    case WREN_TYPE_STRING:  return Value(&vm_->allocator_, wrenGetSlotString(vm_->vm(), 0));
-    case WREN_TYPE_FOREIGN: return Value(&vm_->allocator_, wrenGetSlotForeign(vm_->vm(), 0));
+    case WREN_TYPE_BOOL: return Value(wrenGetSlotBool(vm_->vm(), 0));
+    case WREN_TYPE_NUM:  return Value(wrenGetSlotDouble(vm_->vm(), 0));
+    case WREN_TYPE_STRING:  return Value(wrenGetSlotString(vm_->vm(), 0));
+    case WREN_TYPE_FOREIGN: return Value(wrenGetSlotForeign(vm_->vm(), 0));
     default: assert("Invalid Wren type"); break;
     }
 

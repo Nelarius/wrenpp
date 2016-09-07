@@ -1,7 +1,6 @@
 
 #include "Wren++.h"
 #include "File.h"
-#include "detail/ChunkAllocator.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp, memcpy
 #include <cstdio>
@@ -55,11 +54,8 @@ void errorFnWrapper(WrenErrorType type, const char* module, int line, const char
     wrenpp::VM::errorFn(type, module, line, message);
 }
 
-wrenpp::detail::ChunkAllocator* allocator{ nullptr };
-
 void* reallocateFnWrapper(void* memory, std::size_t newSize) {
-    assert(allocator != nullptr);
-    return allocator->realloc(memory, newSize);
+    return wrenpp::VM::reallocateFn(memory, newSize);
 }
 
 }
@@ -77,6 +73,43 @@ void registerClass(const std::string& mod, std::string cName, WrenForeignClassMe
     boundForeignClasses.insert(std::make_pair(hash, methods));
 }
 
+}
+
+Value::Value(bool val)
+    :   valueType_{ WREN_TYPE_BOOL }, string_{ nullptr } {
+    set_(val);
+}
+
+Value::Value(float val)
+    :   valueType_{ WREN_TYPE_NUM }, string_{ nullptr } {
+    set_(val);
+}
+
+Value::Value(double val)
+    :   valueType_{ WREN_TYPE_NUM }, string_{ nullptr } {
+    set_(val);
+}
+
+Value::Value(int val)
+    :   valueType_{ WREN_TYPE_NUM }, string_{ nullptr } {
+    set_(val);
+}
+
+Value::Value(unsigned int val)
+    :   valueType_{ WREN_TYPE_NUM }, string_{ nullptr } {
+    set_(val);
+}
+
+Value::Value(const char* str)
+    :   valueType_{ WREN_TYPE_STRING }, string_{ nullptr } {
+    string_ = (char*)VM::reallocateFn(nullptr, std::strlen(str));
+    std::strcpy(string_, str);
+}
+
+Value::~Value() {
+    if (string_) {
+        VM::reallocateFn(string_, 0u);
+    }
 }
 
 Method::Method(VM* vm, WrenHandle* variable, WrenHandle* method)
@@ -211,9 +244,7 @@ ErrorFn VM::errorFn = [](WrenErrorType type, const char* module, int line, const
     fflush(stdout);
 };
 
-AllocateFn VM::allocateFn = std::malloc;
-
-FreeFn VM::freeFn = std::free;
+ReallocateFn VM::reallocateFn = std::realloc;
 
 std::size_t VM::initialHeapSize = 0xA00000u;
 
@@ -224,8 +255,7 @@ int VM::heapGrowthPercent = 50;
 std::size_t VM::chunkSize = 0x500000u;
 
 VM::VM()
-    : vm_{ nullptr },
-    allocator_{} {
+    : vm_{ nullptr } {
     setState_();
 
     WrenConfiguration configuration{};
@@ -243,14 +273,12 @@ VM::VM()
 }
 
 VM::VM(VM&& other )
-    : vm_{ other.vm_ },
-    allocator_{ std::move(other.allocator_) } {
+    : vm_{ other.vm_ } {
     other.vm_ = nullptr;
 }
 
 VM& VM::operator=(VM&& rhs ) {
     vm_             = rhs.vm_;
-    allocator_      = std::move(rhs.allocator_);
     rhs.vm_         = nullptr;
     return *this;
 }
@@ -259,7 +287,6 @@ VM::~VM() {
     if ( vm_ != nullptr ) {
         wrenFreeVM( vm_ );
     }
-    allocator = nullptr;
 }
 
 WrenVM* VM::vm() {
@@ -270,7 +297,7 @@ Result VM::executeModule( const std::string& mod ) {
     setState_();
     const std::string source( loadModuleFn( mod.c_str() ) );
     auto res = wrenInterpret( vm_, source.c_str() );
-    
+
     if ( res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR ) {
         return Result::CompileError;
     }
@@ -301,7 +328,7 @@ void VM::collectGarbage() {
     wrenCollectGarbage( vm_ );
 }
 
-Method VM::method( 
+Method VM::method(
     const std::string& mod,
     const std::string& var,
     const std::string& sig
@@ -315,7 +342,7 @@ Method VM::method(
 }
 
 void VM::setState_() {
-    allocator = &allocator_;
+    // TODO: keep this method for now
 }
 
 }

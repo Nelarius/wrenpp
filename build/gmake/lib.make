@@ -16,11 +16,11 @@ ifeq ($(config),debug)
   TARGET = $(TARGETDIR)/libwrenpp.a
   OBJDIR = obj/Debug/lib
   DEFINES += -DDEBUG
-  INCLUDES += -I../../src
+  INCLUDES += -I../../../wren/src/include -I../../src
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS) -std=c++14
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS +=
   LDDEPS +=
@@ -43,15 +43,15 @@ ifeq ($(config),release)
   TARGET = $(TARGETDIR)/libwrenpp.a
   OBJDIR = obj/Release/lib
   DEFINES += -DNDEBUG
-  INCLUDES += -I../../src
+  INCLUDES += -I../../../wren/src/include -I../../src
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS) -std=c++14
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2 -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS +=
   LDDEPS +=
-  ALL_LDFLAGS += $(LDFLAGS) -s
+  ALL_LDFLAGS += $(LDFLAGS) -Wl,-x
   LINKCMD = $(AR) -rcs "$@" $(OBJECTS)
   define PREBUILDCMDS
   endef
@@ -66,7 +66,6 @@ endif
 
 OBJECTS := \
 	$(OBJDIR)/Wren++.o \
-	$(OBJDIR)/ChunkAllocator.o \
 
 RESOURCES := \
 
@@ -125,9 +124,6 @@ $(GCH): $(PCH)
 endif
 
 $(OBJDIR)/Wren++.o: ../../src/Wren++.cpp
-	@echo $(notdir $<)
-	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
-$(OBJDIR)/ChunkAllocator.o: ../../src/detail/ChunkAllocator.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 

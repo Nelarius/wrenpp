@@ -16,15 +16,15 @@ ifeq ($(config),debug)
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Debug/test
   DEFINES += -DDEBUG
-  INCLUDES += -I../../src -I../../test
+  INCLUDES += -I../../src -I../../test -I../../../wren/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS) -std=c++14
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += ../../lib/libwrenpp.a -lwren
   LDDEPS += ../../lib/libwrenpp.a
-  ALL_LDFLAGS += $(LDFLAGS)
+  ALL_LDFLAGS += $(LDFLAGS) -L../../../wren/lib
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -43,15 +43,15 @@ ifeq ($(config),release)
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Release/test
   DEFINES += -DNDEBUG
-  INCLUDES += -I../../src -I../../test
+  INCLUDES += -I../../src -I../../test -I../../../wren/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS) -std=c++14
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2 -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
   LIBS += ../../lib/libwrenpp.a -lwren
   LDDEPS += ../../lib/libwrenpp.a
-  ALL_LDFLAGS += $(LDFLAGS) -s
+  ALL_LDFLAGS += $(LDFLAGS) -L../../../wren/lib -Wl,-x
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -65,6 +65,7 @@ all: $(TARGETDIR) $(OBJDIR) prebuild prelink $(TARGET)
 endif
 
 OBJECTS := \
+	$(OBJDIR)/Wren++.o \
 	$(OBJDIR)/Test.o \
 
 RESOURCES := \
@@ -143,6 +144,9 @@ $(GCH): $(PCH)
 	$(SILENT) $(CXX) -x c++-header $(ALL_CXXFLAGS) -o "$@" -MF "$(@:%.gch=%.d)" -c "$<"
 endif
 
+$(OBJDIR)/Wren++.o: ../../src/Wren++.cpp
+	@echo $(notdir $<)
+	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/Test.o: ../../test/Test.cpp
 	@echo $(notdir $<)
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
