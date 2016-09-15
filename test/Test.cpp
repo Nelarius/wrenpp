@@ -155,9 +155,9 @@ void testStrings() {
 
     wrenpp::beginModule("main")
         .beginClass("StringPrinter")
-            .bindFunction<decltype(printConstRefString), printConstRefString>(true, "print1(_)")
-            .bindFunction<decltype(printValueString), printValueString>(true, "print2(_)")
-            .bindFunction<decltype(printCharString), printCharString>(true, "print3(_)")
+            .bindFunction<decltype(&printConstRefString), printConstRefString>(true, "print1(_)")
+            .bindFunction<decltype(&printValueString), printValueString>(true, "print2(_)")
+            .bindFunction<decltype(&printCharString), printCharString>(true, "print3(_)")
         .endClass();
 
     vm.executeString(
