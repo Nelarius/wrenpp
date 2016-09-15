@@ -100,7 +100,7 @@ Value::Value(unsigned int val)
 
 Value::Value(const char* str)
     :   valueType_{ WREN_TYPE_STRING }, string_{ nullptr } {
-    string_ = (char*)VM::reallocateFn(nullptr, std::strlen(str));
+    string_ = (char*)VM::reallocateFn(nullptr, std::strlen(str) + 1);
     std::strcpy(string_, str);
 }
 
