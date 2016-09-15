@@ -395,6 +395,17 @@ struct WrenSlotAPI< std::string > {
     }
 };
 
+template<>
+struct WrenSlotAPI< const std::string& > {
+    static const char* get(WrenVM* vm, int slot) {
+        return wrenGetSlotString(vm, slot);
+    }
+
+    static void set(WrenVM* vm, int slot, const std::string& str) {
+        wrenSetSlotString(vm, slot, str.c_str());
+    }
+};
+
 struct ExpandType {
     template< typename... T >
     ExpandType( T&&... ) {}

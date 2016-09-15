@@ -138,6 +138,41 @@ void testReturnValues() {
     assert(!strcmp("Hello, world", sval.as<const char*>()));
 }
 
+void printConstRefString(const std::string& str) {
+    std::printf("%s\n", str.c_str());
+}
+
+void printValueString(std::string str) {
+    std::printf("%s\n", str.c_str());
+}
+
+void printCharString(const char* str) {
+    std::printf("%s\n", str);
+}
+
+void testStrings() {
+    wrenpp::VM vm;
+
+    wrenpp::beginModule("main")
+        .beginClass("StringPrinter")
+            .bindFunction<decltype(printConstRefString), printConstRefString>(true, "print1(_)")
+            .bindFunction<decltype(printValueString), printValueString>(true, "print2(_)")
+            .bindFunction<decltype(printCharString), printCharString>(true, "print3(_)")
+        .endClass();
+
+    vm.executeString(
+        "class StringPrinter {\n"
+        "  foreign static print1(str)\n"
+        "  foreign static print2(str)\n"
+        "  foreign static print3(str)\n"
+        "}\n"
+    );
+
+    vm.executeString("StringPrinter.print1(\"passing by const ref works\")");
+    vm.executeString("StringPrinter.print2(\"passing by value works\")");
+    vm.executeString("StringPrinter.print3(\"passing as C string works\")");
+}
+
 int main() {
 
     printf("\nCalling Wren code from C++...\n\n");
@@ -151,6 +186,10 @@ int main() {
     printf("\nTesting return values...\n\n");
 
     testReturnValues();
+
+    printf("\nTesting to see if passing string to C++ works...\n\n");
+
+    testStrings();
 
     return 0;
 }
