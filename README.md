@@ -430,7 +430,6 @@ The minimum heap size is the heap size, in bytes, below which collections will n
 
 ## TODO:
 
-* Use std::aligned_storage in ForeignObjectValue
 * A compile-time method must be devised to assert that a type is registered with Wren. Use static assert, so incorrect code isn't even compiled!
   * For instance, two separate `Type`s. One is used for registration, which iterates `Type` as well. This doesn't work in the case that the user registers different types for multiple `Wren` instances.
 * There needs to be better error handling for not finding a method.

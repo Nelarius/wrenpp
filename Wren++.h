@@ -119,16 +119,9 @@ public:
 template<typename T>
 class ForeignObjectValue : public ForeignObject {
 public:
-    ForeignObjectValue() {
-        if (Padding > 0u) {
-            uintptr_t offset = reinterpret_cast<uintptr_t>(&data_[0]) % alignof(T);
-            if (offset > 0u) {
-                offset = alignof(T) - offset;
-            }
-            assert(offset < Padding);
-            data_[sizeof(data_) - 1u] = uint8_t(offset);
-        }
-    }
+    ForeignObjectValue()
+    : data_()
+    {}
 
     virtual ~ForeignObjectValue() {
         T* obj = static_cast<T*>(objectPtr());
@@ -136,13 +129,7 @@ public:
     }
 
     void* objectPtr() override {
-        if (Padding == 0u) {
-            return &data_[0];
-        }
-        else {
-            // alignment offset is stored in the last byte
-            return &data_[0] + data_[sizeof(data_) - 1u];
-        }
+        return &data_;
     }
 
     template<typename... Args>
@@ -155,9 +142,7 @@ public:
     }
 
 private:
-    using AlignType = std::conditional_t<alignof(T) <= alignof(std::size_t), T, std::size_t>;
-    static constexpr std::size_t Padding = alignof(T) <= alignof(AlignType) ? 0u : alignof(T) - alignof(AlignType) + 1u;
-    alignas(AlignType) std::uint8_t data_[sizeof(T) + Padding];
+    typename std::aligned_storage<sizeof(T), alignof(T)>::type data_;
 };
 
 /*
