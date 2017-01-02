@@ -1,4 +1,3 @@
-
 #include "Wren++.h"
 #include <cmath>
 #include <cstdlib>
@@ -6,23 +5,28 @@
 #include <cassert>
 
 // a small class to test class & method binding with
-struct Vec3 {
+struct Vec3
+{
     float x, y, z;
 
     Vec3(float x, float y, float z)
-        : x{ x }, y{ y }, z{ z } {}
+        : x{ x }, y{ y }, z{ z }
+    {}
 
     Vec3(const Vec3&) = default;
 
-    float norm() const {
+    float norm() const
+    {
         return std::sqrt(x*x + y*y + z*z);
     }
 
-    float dot(const Vec3& rhs) const {
+    float dot(const Vec3& rhs) const
+    {
         return x*rhs.x + y*rhs.y + z*rhs.z;
     }
 
-    Vec3 cross(const Vec3& rhs) const {
+    Vec3 cross(const Vec3& rhs) const
+    {
         return Vec3{
             y*rhs.z - z*rhs.y,
             z*rhs.x - x*rhs.z,
@@ -30,41 +34,49 @@ struct Vec3 {
         };
     }
 
-    Vec3 plus(const Vec3& rhs) const {
+    Vec3 plus(const Vec3& rhs) const
+    {
         return Vec3{ x + rhs.x, y + rhs.y, z + rhs.z };
     }
 };
 
-struct Transform {
+struct Transform
+{
     Vec3 position{ 0.f, 0.f, 0.f };
 };
 
-void CFunctionVectorReference(WrenVM* vm) {
+void CFunctionVectorReference(WrenVM* vm)
+{
     static Vec3 v{ 2.0, 1.0, 1.0 };
     wrenpp::setSlotForeignPtr(vm, 0, &v);
 }
 
-Vec3* returnVec3Ptr() {
+Vec3* returnVec3Ptr()
+{
     static Vec3 v{ 1.f, 1.f, 1.f };
     return &v;
 }
 
-Vec3& returnVec3Ref() {
+Vec3& returnVec3Ref()
+{
     static Vec3 v{ 1.f, 1.f, 1.f };
     return v;
 }
 
-const Vec3* returnVec3ConstPtr() {
+const Vec3* returnVec3ConstPtr()
+{
     static Vec3 v{ 1.f, 1.f, 1.f };
     return &v;
 }
 
-const Vec3& returnVec3ConstRef() {
+const Vec3& returnVec3ConstRef()
+{
     static Vec3 v{ 1.f, 1.f, 1.f };
     return v;
 }
 
-void testMethodCall() {
+void testMethodCall()
+{
     wrenpp::VM wren{};
 
     wren.executeModule("test_method");
@@ -82,38 +94,40 @@ void testMethodCall() {
     passStr(std::string("hello"));
 }
 
-void testClassMethods() {
+void testClassMethods()
+{
 
     wrenpp::beginModule("vector")
         .bindClass<Vec3, float, float, float>("Vec3")
-            .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
-            .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
-            .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
-            .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
-            .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
-            .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
-            .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
-            .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
-            //.bindCFunction(false, "plus(_)", plus)
-            .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
+        .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
+        .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
+        .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
+        .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
+        .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
+        .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
+        .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
+        .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
+        //.bindCFunction(false, "plus(_)", plus)
+        .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
         .endClass()
-    .endModule();
+        .endModule();
     wrenpp::beginModule("main")
         .beginClass("VectorReferences")
-            .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
-            .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
-            .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
-            .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
-            .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
+        .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
+        .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
+        .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
+        .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
+        .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
         .endClass()
-    .endModule();
+        .endModule();
 
     wrenpp::VM wren{};
 
     wren.executeModule("test_vector");
 }
 
-void testReturnValues() {
+void testReturnValues()
+{
     wrenpp::VM vm{};
 
     vm.executeString(
@@ -138,26 +152,30 @@ void testReturnValues() {
     assert(!strcmp("Hello, world", sval.as<const char*>()));
 }
 
-void printConstRefString(const std::string& str) {
+void printConstRefString(const std::string& str)
+{
     std::printf("%s\n", str.c_str());
 }
 
-void printValueString(std::string str) {
+void printValueString(std::string str)
+{
     std::printf("%s\n", str.c_str());
 }
 
-void printCharString(const char* str) {
+void printCharString(const char* str)
+{
     std::printf("%s\n", str);
 }
 
-void testStrings() {
+void testStrings()
+{
     wrenpp::VM vm;
 
     wrenpp::beginModule("main")
         .beginClass("StringPrinter")
-            .bindFunction<decltype(&printConstRefString), printConstRefString>(true, "print1(_)")
-            .bindFunction<decltype(&printValueString), printValueString>(true, "print2(_)")
-            .bindFunction<decltype(&printCharString), printCharString>(true, "print3(_)")
+        .bindFunction<decltype(&printConstRefString), printConstRefString>(true, "print1(_)")
+        .bindFunction<decltype(&printValueString), printValueString>(true, "print2(_)")
+        .bindFunction<decltype(&printCharString), printCharString>(true, "print3(_)")
         .endClass();
 
     vm.executeString(
@@ -173,7 +191,8 @@ void testStrings() {
     vm.executeString("StringPrinter.print3(\"passing as C string works\")");
 }
 
-int main() {
+int main()
+{
 
     printf("\nCalling Wren code from C++...\n\n");
 
