@@ -136,83 +136,40 @@ Value::~Value()
 Method::Method(VM* vm, WrenHandle* variable, WrenHandle* method)
     : vm_(vm),
     method_(method),
-    variable_(variable),
-    refCount_(nullptr)
-{
-    refCount_ = new unsigned;
-    *refCount_ = 1u;
-}
-
-Method::Method(const Method& other)
-    : vm_(other.vm_),
-    method_(other.method_),
-    variable_(other.variable_),
-    refCount_(other.refCount_)
-{
-    retain_();
-}
+    variable_(variable)
+{}
 
 Method::Method(Method&& other)
     : vm_(other.vm_),
     method_(other.method_),
-    variable_(other.variable_),
-    refCount_(other.refCount_)
+    variable_(other.variable_)
 {
     other.vm_ = nullptr;
     other.method_ = nullptr;
     other.variable_ = nullptr;
-    other.refCount_ = nullptr;
 }
 
 Method::~Method()
 {
-    release_();
-}
-
-Method& Method::operator=(const Method& rhs)
-{
-    release_();
-    vm_ = rhs.vm_;
-    method_ = rhs.method_;
-    variable_ = rhs.variable_;
-    refCount_ = rhs.refCount_;
-    retain_();
-    return *this;
+    if (vm_)
+    {
+        assert(method_ && variable_);
+        vm_->setState_();
+        wrenReleaseHandle(vm_->vm(), method_);
+        wrenReleaseHandle(vm_->vm(), variable_);
+    }
 }
 
 Method& Method::operator=(Method&& rhs)
 {
-    release_();
     vm_ = rhs.vm_;
     method_ = rhs.method_;
     variable_ = rhs.variable_;
-    refCount_ = rhs.refCount_;
     rhs.vm_ = nullptr;
     rhs.method_ = nullptr;
     rhs.variable_ = nullptr;
-    rhs.refCount_ = nullptr;
+
     return *this;
-}
-
-void Method::retain_()
-{
-    *refCount_ += 1u;
-}
-
-void Method::release_()
-{
-    if (refCount_)
-    {
-        *refCount_ -= 1u;
-        if (*refCount_ == 0u)
-        {
-            vm_->setState_();   // wrenReelaseValue will cause wren to free memory
-            wrenReleaseHandle(vm_->vm(), method_);
-            wrenReleaseHandle(vm_->vm(), variable_);
-            delete refCount_;
-            refCount_ = nullptr;
-        }
-    }
 }
 
 ModuleContext::ModuleContext(std::string module)

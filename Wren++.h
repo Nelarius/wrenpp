@@ -737,9 +737,6 @@ public:
     T as() const;
 
 private:
-
-    friend class Method;
-
     template<typename T>
     void set_(T&& t);
 
@@ -756,11 +753,11 @@ private:
 class Method
 {
 public:
-    Method(VM*, WrenHandle* variable, WrenHandle* method);
-    Method() = delete;
-    Method(const Method&);
+    Method(VM* vm, WrenHandle* variable, WrenHandle* method);
+    Method() = default;
+    Method(const Method&) = delete;
     Method(Method&&);
-    Method& operator=(const Method&);
+    Method& operator=(const Method&) = delete;
     Method& operator=(Method&&);
     ~Method();
 
@@ -770,13 +767,9 @@ public:
     Value operator()(Args... args) const;
 
 private:
-    void retain_();
-    void release_();
-
-    mutable VM*             vm_;    // this pointer is not managed here
-    mutable WrenHandle*      method_;
-    mutable WrenHandle*      variable_;
-    unsigned*               refCount_;
+    mutable VM*             vm_{ nullptr };
+    mutable WrenHandle*     method_{ nullptr };
+    mutable WrenHandle*     variable_{ nullptr };
 };
 
 class ModuleContext;
@@ -849,7 +842,6 @@ enum class Result
 
 class VM
 {
-
 public:
     VM();
     VM(const VM&) = delete;
@@ -940,6 +932,7 @@ inline const char* Value::as<const char*>() const
 template< typename... Args >
 Value Method::operator()(Args... args) const
 {
+    assert(vm_ && variable_ && method_);
     vm_->setState_();
     constexpr const std::size_t Arity = sizeof...(Args);
     wrenEnsureSlots(vm_->vm(), Arity + 1u);
