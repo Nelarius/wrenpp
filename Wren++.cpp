@@ -57,7 +57,7 @@ void writeFnWrapper(WrenVM* vm, const char* text)
     wrenpp::VM::writeFn(vm, text);
 }
 
-void errorFnWrapper(WrenErrorType type, const char* module, int line, const char* message)
+void errorFnWrapper(WrenVM*, WrenErrorType type, const char* module, int line, const char* message)
 {
     wrenpp::VM::errorFn(type, module, line, message);
 }
