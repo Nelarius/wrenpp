@@ -21,11 +21,10 @@ extern "C"
 namespace wrenpp
 {
 
-using FunctionPtr = WrenForeignMethodFn;
-using LoadModuleFn = std::function< char*(const char*) >;
-using WriteFn = std::function< void(WrenVM*, const char*) >;
-using ReallocateFn = std::function<void*(void*, std::size_t)>;
-using ErrorFn = std::function<void(WrenErrorType, const char*, int, const char*)>;
+using LoadModuleFn  = std::function< char*(const char*) >;
+using WriteFn       = std::function< void(const char*) >;
+using ReallocateFn  = std::function< void*(void*, std::size_t) >;
+using ErrorFn       = std::function< void(WrenErrorType, const char*, int, const char*) >;
 
 namespace detail
 {
@@ -684,7 +683,7 @@ void finalize(void* bytes)
 
 void registerFunction(
     WrenVM* vm, const std::string& mod, const std::string& clss,
-    bool isStatic, std::string sig, FunctionPtr function
+    bool isStatic, std::string sig, WrenForeignMethodFn function
 );
 void registerClass(
     WrenVM* vm, const std::string& mod, std::string clss, WrenForeignClassMethods methods
@@ -783,7 +782,7 @@ public:
 
     template< typename F, F f >
     ClassContext& bindFunction(bool isStatic, std::string signature);
-    ClassContext& bindCFunction(bool isStatic, std::string signature, FunctionPtr function);
+    ClassContext& bindCFunction(bool isStatic, std::string signature, WrenForeignMethodFn function);
 
     ModuleContext& endClass();
 
@@ -808,7 +807,7 @@ public:
     RegisteredClassContext& bindGetter(std::string signature);
     template< typename U, U T::*Field >
     RegisteredClassContext& bindSetter(std::string signature);
-    RegisteredClassContext& bindCFunction(bool isStatic, std::string signature, FunctionPtr function);
+    RegisteredClassContext& bindCFunction(bool isStatic, std::string signature, WrenForeignMethodFn function);
 };
 
 class ModuleContext
@@ -1027,7 +1026,7 @@ RegisteredClassContext<T>& RegisteredClassContext<T>::bindSetter(std::string s)
 }
 
 template< typename T >
-RegisteredClassContext<T>& RegisteredClassContext<T>::bindCFunction(bool isStatic, std::string s, FunctionPtr function)
+RegisteredClassContext<T>& RegisteredClassContext<T>::bindCFunction(bool isStatic, std::string s, WrenForeignMethodFn function)
 {
     detail::registerFunction(
         module_.vm_,

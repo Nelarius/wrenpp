@@ -374,17 +374,19 @@ If the return type of a bound method or function is a reference or pointer to an
 
 ## Customize VM behavior
 
+The following customizations are affect all VMs.
+
 ### Customize printing
 
-You can provide your own implementation for `System.print` by assigning a callable object with the signature `void(WrenVM*, const char*)` to `wrenpp::VM::writeFn`. By default, `writeFn` is implemented as follows:
+You can provide your own implementation for `System.print` by assigning a callable object with the signature `void(const char*)` to `wrenpp::VM::writeFn`. By default, `writeFn` is implemented simply as:
 
 ```cpp
-VM::writeFn = []( WrenVM* vm, const char* text ) -> void { printf( text ) };
+WriteFn VM::writeFn = []( const char* text ) -> void { std::cout << text; };
 ```
 
 ### Customize error printing
 
-You can provide your own function to route error messages. Assign a callable object with the signature `void(WrenErrorType, const char*, int, const char*)` (see wren.h for the signature of `WrenErrorFn`) to `wrenpp::VM::errorFn`. By default, Wren++ prints errors to `stdout` as
+You can provide your own function to route error messages. Assign a callable object with the signature `void(WrenErrorType, const char*, int, const char*)` (for the error type, module name, line number, and message, respectively) to `wrenpp::VM::errorFn`. By default, Wren++ styles the errors to `stdout` as
 
 ```
 WREN_ERROR_COMPILE in main:15 > Error at 'Vec3': Variable is used but not defined.

@@ -1,8 +1,8 @@
 #include "Wren++.h"
 #include <cstdlib>  // for malloc
 #include <cstring>  // for strcmp, memcpy
-#include <cstdio>
 #include <cassert>
+#include <iostream>
 
 namespace
 {
@@ -59,7 +59,7 @@ char* loadModuleFnWrapper(WrenVM* vm, const char* mod)
 
 void writeFnWrapper(WrenVM* vm, const char* text)
 {
-    wrenpp::VM::writeFn(vm, text);
+    wrenpp::VM::writeFn(text);
 }
 
 void errorFnWrapper(WrenVM*, WrenErrorType type, const char* module, int line, const char* message)
@@ -79,7 +79,7 @@ namespace wrenpp
 
 namespace detail
 {
-void registerFunction(WrenVM* vm, const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function)
+void registerFunction(WrenVM* vm, const std::string& mod, const std::string& cName, bool isStatic, std::string sig, WrenForeignMethodFn function)
 {
     BoundState* boundState = (BoundState*)wrenGetUserData(vm);
     std::size_t hash = detail::hashMethodSignature(mod.c_str(), cName.c_str(), isStatic, sig.c_str());
@@ -195,7 +195,7 @@ ClassContext::ClassContext(std::string c, ModuleContext& mod)
     class_(c)
 {}
 
-ClassContext& ClassContext::bindCFunction(bool isStatic, std::string signature, FunctionPtr function)
+ClassContext& ClassContext::bindCFunction(bool isStatic, std::string signature, WrenForeignMethodFn function)
 {
     detail::registerFunction(module_.vm_, module_.name_, class_, isStatic, signature, function);
     return *this;
@@ -225,17 +225,15 @@ LoadModuleFn VM::loadModuleFn = [](const char* mod) -> char*
     return buffer;
 };
 
-WriteFn VM::writeFn = [](WrenVM* vm, const char* text) -> void
+WriteFn VM::writeFn = [](const char* text) -> void
 {
-    printf("%s", text);
-    fflush(stdout);
+    std::cout << text;
 };
 
 ErrorFn VM::errorFn = [](WrenErrorType type, const char* module, int line, const char* message) -> void
 {
     const char* typeStr = errorTypeToString(type);
-    printf("%s in %s:%i > %s\n", typeStr, module, line, message);
-    fflush(stdout);
+    std::cout << typeStr << " in " << module << ":" << line << " > " << message << std::endl;
 };
 
 ReallocateFn VM::reallocateFn = std::realloc;
