@@ -96,32 +96,31 @@ void testMethodCall()
 
 void testClassMethods()
 {
-
-    wrenpp::beginModule("vector")
-        .bindClass<Vec3, float, float, float>("Vec3")
-        .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
-        .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
-        .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
-        .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
-        .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
-        .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
-        .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
-        .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
-        //.bindCFunction(false, "plus(_)", plus)
-        .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
-        .endClass()
-        .endModule();
-    wrenpp::beginModule("main")
-        .beginClass("VectorReferences")
-        .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
-        .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
-        .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
-        .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
-        .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
-        .endClass()
-        .endModule();
-
     wrenpp::VM wren{};
+
+    wren.beginModule("vector")
+        .bindClass<Vec3, float, float, float>("Vec3")
+            .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
+            .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
+            .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
+            .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
+            .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
+            .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
+            .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
+            .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
+            //.bindCFunction(false, "plus(_)", plus)
+            .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
+        .endClass()
+    .endModule();
+    wren.beginModule("main")
+        .beginClass("VectorReferences")
+            .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
+            .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
+            .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
+            .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
+            .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
+        .endClass()
+    .endModule();
 
     wren.executeModule("test_vector");
 }
@@ -171,11 +170,11 @@ void testStrings()
 {
     wrenpp::VM vm;
 
-    wrenpp::beginModule("main")
+    vm.beginModule("main")
         .beginClass("StringPrinter")
-        .bindFunction<decltype(&printConstRefString), printConstRefString>(true, "print1(_)")
-        .bindFunction<decltype(&printValueString), printValueString>(true, "print2(_)")
-        .bindFunction<decltype(&printCharString), printCharString>(true, "print3(_)")
+            .bindFunction<decltype(&printConstRefString), printConstRefString>(true, "print1(_)")
+            .bindFunction<decltype(&printValueString), printValueString>(true, "print2(_)")
+            .bindFunction<decltype(&printCharString), printCharString>(true, "print3(_)")
         .endClass();
 
     vm.executeString(
