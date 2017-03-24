@@ -12,7 +12,6 @@ Wren++ currently provides:
 Known issues:
 - Not type-safe. It's undefined what happens when you try to bind code that returns a type which hasn't itself been bound (most likely a crash is going to happen)
 - Wren access from C++ is rather minimal
-* Calling Wren methods from C++, which themselves call foreign methods, doesn't work at the moment and will cause a segfault. This is due to a known [issue](https://github.com/munificent/wren/issues/362) in Wren.
 
 [![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
 
@@ -154,9 +153,7 @@ Wren++ allows you to bind C++ functions and methods to Wren classes. You provide
 
 ### Foreign methods
 
-You can implement a Wren foreign method as a stateless free function in C++. Wren++ offers an easy to use wrapper over the functions. Note that only primitive types and `std::string` work for now. Support for registered types will be provided later once the custom type registration feature is complete.
-
-Here's how you could implement a simple math library in Wren by binding the C++ standard math library functions.
+You can implement a Wren foreign method as a stateless free function in C++. Wren++ offers an easy to use wrapper over the functions. Here's how you could implement a simple math library in Wren by binding the C++ standard math library functions.
 
 math.wren:
 ```dart
