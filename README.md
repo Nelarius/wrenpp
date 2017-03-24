@@ -150,7 +150,7 @@ printf("%s\n", greeting.as<const char*>());
 
 **TODO:** improve
 
-Wren++ allows you to bind C++ functions and methods to Wren classes. This is done by storing the names or signatures along with the function pointers, so that Wren can find them. That is, you bind all your code once, after which all your Wren instances can use them.
+Wren++ allows you to bind C++ functions and methods to Wren classes. You provide the VM instance with the name of the foreign method and the corresponding C++ function pointer. These are then looked up by the VM when it encounters a foreign method in source code.
 
 ### Foreign methods
 
@@ -174,7 +174,8 @@ main.cpp:
 
 int main() {
 
-  wrenpp::beginModule( "math" )
+  wrenpp::VM vm;
+  vm.beginModule( "math" )
     .beginClass( "Math" )
       .bindFunction< decltype(&cos), &cos >( true, "cos(_)" )
       .bindFunction< decltype(&sin), &sin >( true, "sin(_)" )
@@ -183,7 +184,6 @@ int main() {
     .endClass()
   .endModule();
 
-  wrenpp::VM vm;
   vm.executeString( "import \"math\" for Math\nSystem.print( Math.cos(0.12345) )" );
 
   return 0;
@@ -253,7 +253,8 @@ A class is bound by writing `bindClass` instead of `beginClass`. This binds the 
 #include "Wren++.h"
 
 int main() {
-  wrenpp::beginModule( "main" )
+  wrenpp::VM vm;
+  vm.beginModule( "main" )
     .bindClass< Vec3, float, float, float >( "Vec3" );
     // you can now construct Vec3 in Wren
 
@@ -268,7 +269,7 @@ Pass the class type, and constructor argument types to `bindClass`. Even though 
 If your class or struct has public fields you wish to expose, you can do so by using `bindGetter` and `bindSetter`. This will automatically generate a function which returns the value of the field to Wren.
 
 ```cpp
-wrenpp::beginModule( "main" )
+vm.beginModule( "main" )
   .bindClass< Vec3, float, float, float >( "Vec3" )
     .bindGetter< decltype(Vec3::x), &Vec3::x >( "x" )
     .bindSetter< decltype(Vec3::x), &Vec3::x >( "x=(_)" )
@@ -288,7 +289,8 @@ Using `registerMethod` allows you to bind a class method to a Wren foreign metho
 #include "Wren++.h"
 
 int main() {
-  wrenpp::beginModule( "main" )
+  wrenpp::VM vm;
+  vm.beginModule( "main" )
     .bindClass< Vec3, float, float, float >( "Vec3" )
       // properties as before
       .bindGetter< decltype(Vec3::x), &Vec3::x >( "x" )
@@ -348,7 +350,7 @@ void sliderFloat(WrenVM* vm) {
 Here's what the binding code looks like. Note that ImGui::End is trivial to bind as it takes no arguments.
 
 ```cpp
-wrenpp::beginModule( "builtin/imgui" )
+vm.beginModule( "builtin/imgui" )
   .beginClass( "Imgui" )
     // windows & their formatting
     .bindCFunction( true, "begin(_)", &VM::begin )

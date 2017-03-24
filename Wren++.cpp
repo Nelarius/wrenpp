@@ -7,8 +7,11 @@
 namespace
 {
 
-std::unordered_map< std::size_t, WrenForeignMethodFn > boundForeignMethods{};
-std::unordered_map< std::size_t, WrenForeignClassMethods > boundForeignClasses{};
+struct BoundState
+{
+    std::unordered_map< std::size_t, WrenForeignMethodFn > methods{};
+    std::unordered_map< std::size_t, WrenForeignClassMethods > classes{};
+};
 
 WrenForeignMethodFn foreignMethodProvider(WrenVM* vm,
     const char* module,
@@ -16,8 +19,9 @@ WrenForeignMethodFn foreignMethodProvider(WrenVM* vm,
     bool isStatic,
     const char* signature)
 {
-    auto it = boundForeignMethods.find(wrenpp::detail::hashMethodSignature(module, className, isStatic, signature));
-    if (it == boundForeignMethods.end())
+    auto* boundState = (BoundState*)wrenGetUserData(vm);
+    auto it = boundState->methods.find(wrenpp::detail::hashMethodSignature(module, className, isStatic, signature));
+    if (it == boundState->methods.end())
     {
         return NULL;
     }
@@ -27,8 +31,9 @@ WrenForeignMethodFn foreignMethodProvider(WrenVM* vm,
 
 WrenForeignClassMethods foreignClassProvider(WrenVM* vm, const char* m, const char* c)
 {
-    auto it = boundForeignClasses.find(wrenpp::detail::hashClassSignature(m, c));
-    if (it == boundForeignClasses.end())
+    auto* boundState = (BoundState*)wrenGetUserData(vm);
+    auto it = boundState->classes.find(wrenpp::detail::hashClassSignature(m, c));
+    if (it == boundState->classes.end())
     {
         return WrenForeignClassMethods{ nullptr, nullptr };
     }
@@ -74,16 +79,18 @@ namespace wrenpp
 
 namespace detail
 {
-void registerFunction(const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function)
+void registerFunction(WrenVM* vm, const std::string& mod, const std::string& cName, bool isStatic, std::string sig, FunctionPtr function)
 {
+    BoundState* boundState = (BoundState*)wrenGetUserData(vm);
     std::size_t hash = detail::hashMethodSignature(mod.c_str(), cName.c_str(), isStatic, sig.c_str());
-    boundForeignMethods.insert(std::make_pair(hash, function));
+    boundState->methods.insert(std::make_pair(hash, function));
 }
 
-void registerClass(const std::string& mod, std::string cName, WrenForeignClassMethods methods)
+void registerClass(WrenVM* vm, const std::string& mod, std::string cName, WrenForeignClassMethods methods)
 {
+    BoundState* boundState = (BoundState*)wrenGetUserData(vm);
     std::size_t hash = detail::hashClassSignature(mod.c_str(), cName.c_str());
-    boundForeignClasses.insert(std::make_pair(hash, methods));
+    boundState->classes.insert(std::make_pair(hash, methods));
 }
 
 }
@@ -154,7 +161,6 @@ Method::~Method()
     if (vm_)
     {
         assert(method_ && variable_);
-        vm_->setState_();
         wrenReleaseHandle(vm_->vm(), method_);
         wrenReleaseHandle(vm_->vm(), variable_);
     }
@@ -172,35 +178,26 @@ Method& Method::operator=(Method&& rhs)
     return *this;
 }
 
-ModuleContext::ModuleContext(std::string module)
-    : name_(module)
-{}
-
 ClassContext ModuleContext::beginClass(std::string c)
 {
-    return ClassContext(c, this);
+    return ClassContext(c, *this);
 }
 
 void ModuleContext::endModule() {}
 
-ModuleContext beginModule(std::string mod)
-{
-    return ModuleContext{ mod };
-}
-
 ModuleContext& ClassContext::endClass()
 {
-    return *module_;
+    return module_;
 }
 
-ClassContext::ClassContext(std::string c, ModuleContext* mod)
+ClassContext::ClassContext(std::string c, ModuleContext& mod)
     : module_(mod),
     class_(c)
 {}
 
 ClassContext& ClassContext::bindCFunction(bool isStatic, std::string signature, FunctionPtr function)
 {
-    detail::registerFunction(module_->name_, class_, isStatic, signature, function);
+    detail::registerFunction(module_.vm_, module_.name_, class_, isStatic, signature, function);
     return *this;
 }
 
@@ -254,8 +251,6 @@ std::size_t VM::chunkSize = 0x500000u;
 VM::VM()
     : vm_{ nullptr }
 {
-    setState_();
-
     WrenConfiguration configuration{};
     wrenInitConfiguration(&configuration);
     configuration.reallocateFn = reallocateFnWrapper;
@@ -267,6 +262,8 @@ VM::VM()
     configuration.bindForeignClassFn = foreignClassProvider;
     configuration.writeFn = writeFnWrapper;
     configuration.errorFn = errorFnWrapper;
+    configuration.userData = new BoundState();
+
     vm_ = wrenNewVM(&configuration);
 }
 
@@ -287,6 +284,7 @@ VM::~VM()
 {
     if (vm_ != nullptr)
     {
+        delete (BoundState*)wrenGetUserData(vm_);
         wrenFreeVM(vm_);
     }
 }
@@ -298,7 +296,6 @@ WrenVM* VM::vm()
 
 Result VM::executeModule(const std::string& mod)
 {
-    setState_();
     const std::string source(loadModuleFn(mod.c_str()));
     auto res = wrenInterpret(vm_, source.c_str());
 
@@ -317,7 +314,6 @@ Result VM::executeModule(const std::string& mod)
 
 Result VM::executeString(const std::string& code)
 {
-    setState_();
     auto res = wrenInterpret(vm_, code.c_str());
 
     if (res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR)
@@ -344,7 +340,6 @@ Method VM::method(
     const std::string& sig
 )
 {
-    setState_();
     wrenEnsureSlots(vm_, 1);
     wrenGetVariable(vm_, mod.c_str(), var.c_str(), 0);
     WrenHandle* variable = wrenGetSlotHandle(vm_, 0);
@@ -352,9 +347,9 @@ Method VM::method(
     return Method(this, variable, handle);
 }
 
-void VM::setState_()
+ModuleContext VM::beginModule(std::string name)
 {
-    // TODO: keep this method for now
+    return ModuleContext(vm_, name);
 }
 
 }
