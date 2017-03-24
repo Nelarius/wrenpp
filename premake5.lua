@@ -22,7 +22,7 @@ workspace "wrenpp"
     -- global configuration
     filter "configurations:Debug"
         defines { "DEBUG" }
-        flags { "Symbols" }
+        symbols "On"
 
     filter "configurations:Release"
         defines { "NDEBUG" }
