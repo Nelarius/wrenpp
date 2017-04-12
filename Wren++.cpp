@@ -230,10 +230,17 @@ WriteFn VM::writeFn = [](const char* text) -> void
     std::cout << text;
 };
 
-ErrorFn VM::errorFn = [](WrenErrorType type, const char* module, int line, const char* message) -> void
+ErrorFn VM::errorFn = [](WrenErrorType type, const char* module_name, int line, const char* message) -> void
 {
     const char* typeStr = errorTypeToString(type);
-    std::cout << typeStr << " in " << module << ":" << line << " > " << message << std::endl;
+    if (module_name)
+    {
+        std::cout << typeStr << " in " << module_name << ":" << line << "> " << message << std::endl;
+    }
+    else
+    {
+        std::cout << typeStr << "> " << message << std::endl;
+    }
 };
 
 ReallocateFn VM::reallocateFn = std::realloc;
