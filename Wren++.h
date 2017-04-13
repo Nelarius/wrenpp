@@ -737,12 +737,14 @@ public:
 
 private:
     template<typename T>
-    void set_(T&& t);
+    void set(T&& t);
 
-    WrenType                valueType_{ WREN_TYPE_UNKNOWN };
+    WrenType                type_{ WREN_TYPE_NULL };
     char*                   string_{ nullptr };
     std::uint8_t            storage_[8]{ 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u };
 };
+
+extern Value null;
 
 /**
  * Note that this class stores a reference to the owning VM instance!
@@ -890,7 +892,7 @@ private:
 
 template<typename T>
 Value::Value(T* t)
-    : valueType_{ WREN_TYPE_FOREIGN }, string_{ nullptr }
+    : type_{ WREN_TYPE_FOREIGN }, string_{ nullptr }
 {
     std::memcpy(storage_, &t, sizeof(T*));
 }
@@ -898,12 +900,12 @@ Value::Value(T* t)
 template<>
 inline float Value::as<float>() const
 {
-    assert(valueType_ == WREN_TYPE_NUM);
+    assert(type_ == WREN_TYPE_NUM);
     return *reinterpret_cast<const float*>(&storage_[0]);
 }
 
 template<typename T>
-void Value::set_(T&& t)
+void Value::set(T&& t)
 {
     static_assert(sizeof(T) <= 8, "The type is invalid!");
     std::memcpy(storage_, &t, sizeof(T));
@@ -912,21 +914,21 @@ void Value::set_(T&& t)
 template<>
 inline double Value::as<double>() const
 {
-    assert(valueType_ == WREN_TYPE_NUM);
+    assert(type_ == WREN_TYPE_NUM);
     return *reinterpret_cast<const double*>(&storage_[0]);
 }
 
 template<>
 inline bool Value::as<bool>() const
 {
-    assert(valueType_ == WREN_TYPE_BOOL);
+    assert(type_ == WREN_TYPE_BOOL);
     return *reinterpret_cast<const bool*>(&storage_[0]);
 }
 
 template<>
 inline const char* Value::as<const char*>() const
 {
-    assert(valueType_ == WREN_TYPE_STRING);
+    assert(type_ == WREN_TYPE_STRING);
     return string_;
 }
 
@@ -941,20 +943,23 @@ Value Method::operator()(Args... args) const
     std::tuple<Args...> tuple = std::make_tuple(args...);
     detail::passArgumentsToWren(vm_->vm(), tuple, std::make_index_sequence<Arity> {});
 
-    wrenCall(vm_->vm(), method_);
+    auto result = wrenCall(vm_->vm(), method_);
 
-    WrenType type = wrenGetSlotType(vm_->vm(), 0);
-
-    switch (type)
+    if (result == WREN_RESULT_SUCCESS)
     {
-        case WREN_TYPE_BOOL: return Value(wrenGetSlotBool(vm_->vm(), 0));
-        case WREN_TYPE_NUM:  return Value(wrenGetSlotDouble(vm_->vm(), 0));
-        case WREN_TYPE_STRING:  return Value(wrenGetSlotString(vm_->vm(), 0));
-        case WREN_TYPE_FOREIGN: return Value(wrenGetSlotForeign(vm_->vm(), 0));
-        default: assert("Invalid Wren type"); break;
+        WrenType type = wrenGetSlotType(vm_->vm(), 0);
+
+        switch (type)
+        {
+            case WREN_TYPE_BOOL: return Value(wrenGetSlotBool(vm_->vm(), 0));
+            case WREN_TYPE_NUM:  return Value(wrenGetSlotDouble(vm_->vm(), 0));
+            case WREN_TYPE_STRING:  return Value(wrenGetSlotString(vm_->vm(), 0));
+            case WREN_TYPE_FOREIGN: return Value(wrenGetSlotForeign(vm_->vm(), 0));
+            default: assert("Invalid Wren type"); break;
+        }
     }
 
-    return Value();
+    return null;
 }
 
 template< typename T, typename... Args >

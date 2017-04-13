@@ -100,7 +100,7 @@ class Foo {
 }
 ```
 
-you can call the static method `say` from C++ by using `void Method::operator( Args&&... )`,
+you can call the static method `say` from C++ by using the variadic template method `operator()`,
 
 ```cpp
 wrenpp::VM vm{};
@@ -146,8 +146,6 @@ printf("%s\n", greeting.as<const char*>());
 ```
 
 ## Accessing Cpp from Wren
-
-**TODO:** improve
 
 Wren++ allows you to bind C++ functions and methods to Wren classes. You provide the VM instance with the name of the foreign method and the corresponding C++ function pointer. These are then looked up by the VM when it encounters a foreign method in source code.
 

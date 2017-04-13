@@ -95,38 +95,40 @@ void registerClass(WrenVM* vm, const std::string& mod, std::string cName, WrenFo
 
 }
 
+Value null = Value();
+
 Value::Value(bool val)
-    : valueType_{ WREN_TYPE_BOOL }, string_{ nullptr }
+    : type_{ WREN_TYPE_BOOL }, string_{ nullptr }
 {
-    set_(val);
+    set(val);
 }
 
 Value::Value(float val)
-    : valueType_{ WREN_TYPE_NUM }, string_{ nullptr }
+    : type_{ WREN_TYPE_NUM }, string_{ nullptr }
 {
-    set_(val);
+    set(val);
 }
 
 Value::Value(double val)
-    : valueType_{ WREN_TYPE_NUM }, string_{ nullptr }
+    : type_{ WREN_TYPE_NUM }, string_{ nullptr }
 {
-    set_(val);
+    set(val);
 }
 
 Value::Value(int val)
-    : valueType_{ WREN_TYPE_NUM }, string_{ nullptr }
+    : type_{ WREN_TYPE_NUM }, string_{ nullptr }
 {
-    set_(val);
+    set(val);
 }
 
 Value::Value(unsigned int val)
-    : valueType_{ WREN_TYPE_NUM }, string_{ nullptr }
+    : type_{ WREN_TYPE_NUM }, string_{ nullptr }
 {
-    set_(val);
+    set(val);
 }
 
 Value::Value(const char* str)
-    : valueType_{ WREN_TYPE_STRING }, string_{ nullptr }
+    : type_{ WREN_TYPE_STRING }, string_{ nullptr }
 {
     string_ = (char*)VM::reallocateFn(nullptr, std::strlen(str) + 1);
     std::strcpy(string_, str);
