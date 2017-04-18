@@ -106,6 +106,7 @@ template<typename T>
 const char* getWrenClassString()
 {
     std::uint32_t id = getTypeId<T>();
+    assert(id < classNameStorage().size());
     return classNameStorage()[id].c_str();
 }
 
@@ -113,6 +114,7 @@ template<typename T>
 const char* getWrenModuleString()
 {
     std::uint32_t id = getTypeId<T>();
+    assert(id < moduleNameStorage().size());
     return moduleNameStorage()[id].c_str();
 }
 
@@ -153,7 +155,6 @@ public:
     static void setInSlot(WrenVM* vm, int slot, Args... arg)
     {
         wrenEnsureSlots(vm, slot + 1);
-        // get the foreign class value here somehow, and stick it in slot Slot
         wrenGetVariable(vm, getWrenModuleString<T>(), getWrenClassString<T>(), slot);
         ForeignObjectValue<T>* val = new (wrenSetSlotNewForeign(vm, slot, slot, sizeof(ForeignObjectValue<T>))) ForeignObjectValue<T>();
         new (val->objectPtr()) T{ std::forward<Args>(arg)... };
