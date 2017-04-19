@@ -854,7 +854,9 @@ public:
     VM& operator=(VM&&);
     ~VM();
 
-    WrenVM* vm();
+    inline WrenVM* ptr() { return vm_; }
+
+    inline operator WrenVM*() const { return vm_; }
 
     Result executeModule(const std::string&);
     Result executeString(const std::string&);
@@ -938,24 +940,24 @@ Value Method::operator()(Args... args) const
 {
     assert(vm_ && variable_ && method_);
     constexpr const std::size_t Arity = sizeof...(Args);
-    wrenEnsureSlots(vm_->vm(), Arity + 1u);
-    wrenSetSlotHandle(vm_->vm(), 0, variable_);
+    wrenEnsureSlots(vm_->ptr(), Arity + 1u);
+    wrenSetSlotHandle(vm_->ptr(), 0, variable_);
 
     std::tuple<Args...> tuple = std::make_tuple(args...);
-    detail::passArgumentsToWren(vm_->vm(), tuple, std::make_index_sequence<Arity> {});
+    detail::passArgumentsToWren(vm_->ptr(), tuple, std::make_index_sequence<Arity> {});
 
-    auto result = wrenCall(vm_->vm(), method_);
+    auto result = wrenCall(vm_->ptr(), method_);
 
     if (result == WREN_RESULT_SUCCESS)
     {
-        WrenType type = wrenGetSlotType(vm_->vm(), 0);
+        WrenType type = wrenGetSlotType(vm_->ptr(), 0);
 
         switch (type)
         {
-            case WREN_TYPE_BOOL: return Value(wrenGetSlotBool(vm_->vm(), 0));
-            case WREN_TYPE_NUM:  return Value(wrenGetSlotDouble(vm_->vm(), 0));
-            case WREN_TYPE_STRING:  return Value(wrenGetSlotString(vm_->vm(), 0));
-            case WREN_TYPE_FOREIGN: return Value(wrenGetSlotForeign(vm_->vm(), 0));
+            case WREN_TYPE_BOOL: return Value(wrenGetSlotBool(vm_->ptr(), 0));
+            case WREN_TYPE_NUM:  return Value(wrenGetSlotDouble(vm_->ptr(), 0));
+            case WREN_TYPE_STRING:  return Value(wrenGetSlotString(vm_->ptr(), 0));
+            case WREN_TYPE_FOREIGN: return Value(wrenGetSlotForeign(vm_->ptr(), 0));
             default: assert("Invalid Wren type"); break;
         }
     }

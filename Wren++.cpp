@@ -163,8 +163,8 @@ Method::~Method()
     if (vm_)
     {
         assert(method_ && variable_);
-        wrenReleaseHandle(vm_->vm(), method_);
-        wrenReleaseHandle(vm_->vm(), variable_);
+        wrenReleaseHandle(vm_->ptr(), method_);
+        wrenReleaseHandle(vm_->ptr(), variable_);
     }
 }
 
@@ -294,11 +294,6 @@ VM::~VM()
         delete (BoundState*)wrenGetUserData(vm_);
         wrenFreeVM(vm_);
     }
-}
-
-WrenVM* VM::vm()
-{
-    return vm_;
 }
 
 Result VM::executeModule(const std::string& mod)
