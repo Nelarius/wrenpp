@@ -18,6 +18,13 @@ workspace "wrenpp"
         location( "build/" .. _ACTION )
     end
     configurations { "Debug", "Release" }
+    platforms { "Win32", "x64" }
+
+    filter "platforms:Win32"
+        architecture "x86"
+
+    filter "platforms:x64"
+        architecture "x86_64"
 
     -- global configuration
     filter "configurations:Debug"
@@ -52,6 +59,11 @@ workspace "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
         end
+        if _OPTIONS["link"] then
+                libdirs {
+                    _OPTIONS["link"]
+                }
+            end
 
         filter "files:**.wren"
             buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
@@ -62,25 +74,10 @@ workspace "wrenpp"
             debugdir "bin"
 
         filter { "action:vs*", "Debug" }
-            if _OPTIONS["link"] then
-                libdirs {
-                    _OPTIONS["link"] .. "/Debug"
-                }
-            end
             links { "lib", "wren_static_d" }
 
         filter { "action:vs*", "Release"}
-            if _OPTIONS["link"] then
-                libdirs {
-                    _OPTIONS["link"] .. "/Release"
-                }
-            end
             links { "lib", "wren_static" }
 
         filter { "not action:vs*" }
-            if _OPTIONS["link"] then
-                libdirs {
-                    _OPTIONS["link"]
-                }
-            end
             links { "lib", "wren" }
