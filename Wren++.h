@@ -970,11 +970,14 @@ RegisteredClassContext<T> ModuleContext::bindClass(std::string className)
 {
     WrenForeignClassMethods wrapper{ &detail::allocate< T, Args... >, &detail::finalize< T > };
     detail::registerClass(vm_, name_, className, wrapper);
-    // store the name and module
-    assert(detail::classNameStorage().size() == detail::getTypeId<T>());
-    assert(detail::moduleNameStorage().size() == detail::getTypeId<T>());
-    detail::bindTypeToModuleName<T>(name_);
-    detail::bindTypeToClassName<T>(className);
+
+    // store the name and module if not already done
+    if (detail::classNameStorage().size() == detail::getTypeId<T>())
+    {
+        assert(detail::classNameStorage().size() == detail::moduleNameStorage().size());
+        detail::bindTypeToModuleName<T>(name_);
+        detail::bindTypeToClassName<T>(className);
+    }
     return RegisteredClassContext<T>(className, *this);
 }
 
