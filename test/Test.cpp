@@ -42,6 +42,10 @@ struct Vec3
 
 struct Transform
 {
+    Transform(const Vec3& p)
+        : position(p)
+    { }
+
     Vec3 position{ 0.f, 0.f, 0.f };
 };
 
@@ -75,6 +79,40 @@ const Vec3& returnVec3ConstRef()
     return v;
 }
 
+void bindVectorModule(wrenpp::VM& vm)
+{
+    vm.beginModule("vector")
+        .bindClass<Vec3, float, float, float>("Vec3")
+            .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
+            .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
+            .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
+            .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
+            .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
+            .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
+            .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
+            .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
+            .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
+        .endClass()
+    .endModule();
+    vm.beginModule("main")
+        .beginClass("VectorReferences")
+            .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
+            .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
+            .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
+            .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
+            .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
+        .endClass()
+    .endModule();
+}
+
+void bindTransformModule(wrenpp::VM& vm)
+{
+    vm.beginModule("transform")
+        .bindClass<Transform, Vec3>("Transform")
+            .bindSetter<decltype(Transform::position), &Transform::position>("position=(_)")
+            .bindGetter<decltype(Transform::position), &Transform::position>("position");
+}
+
 void testMethodCall()
 {
     wrenpp::VM wren{};
@@ -96,33 +134,17 @@ void testMethodCall()
 
 void testClassMethods()
 {
-    wrenpp::VM wren{};
+    wrenpp::VM vm;
+    bindVectorModule(vm);
+    vm.executeModule("test_vector");
+}
 
-    wren.beginModule("vector")
-        .bindClass<Vec3, float, float, float>("Vec3")
-            .bindGetter< decltype(Vec3::x), &Vec3::x >("x")
-            .bindSetter< decltype(Vec3::x), &Vec3::x >("x=(_)")
-            .bindGetter< decltype(Vec3::y), &Vec3::y >("y")
-            .bindSetter< decltype(Vec3::y), &Vec3::y >("y=(_)")
-            .bindGetter< decltype(Vec3::z), &Vec3::z >("z")
-            .bindSetter< decltype(Vec3::z), &Vec3::z >("z=(_)")
-            .bindMethod< decltype(&Vec3::norm), &Vec3::norm >(false, "norm()")
-            .bindMethod< decltype(&Vec3::dot), &Vec3::dot >(false, "dot(_)")
-            //.bindCFunction(false, "plus(_)", plus)
-            .bindMethod< decltype(&Vec3::plus), &Vec3::plus>(false, "plus(_)")
-        .endClass()
-    .endModule();
-    wren.beginModule("main")
-        .beginClass("VectorReferences")
-            .bindCFunction(true, "getCFunction()", CFunctionVectorReference)
-            .bindFunction<decltype(&returnVec3Ptr), &returnVec3Ptr>(true, "getPtr()")
-            .bindFunction<decltype(&returnVec3Ref), &returnVec3Ref>(true, "getRef()")
-            .bindFunction<decltype(&returnVec3ConstPtr), &returnVec3ConstPtr>(true, "getConstPtr()")
-            .bindFunction<decltype(&returnVec3ConstRef), returnVec3ConstRef>(true, "getConstRef()")
-        .endClass()
-    .endModule();
-
-    wren.executeModule("test_vector");
+void testProperties()
+{
+    wrenpp::VM vm;
+    bindVectorModule(vm);
+    bindTransformModule(vm);
+    vm.executeModule("test_properties");
 }
 
 void testReturnValues()
@@ -193,19 +215,23 @@ void testStrings()
 int main()
 {
 
-    printf("\nCalling Wren code from C++...\n\n");
+    std::printf("\nCalling Wren code from C++...\n\n");
 
     testMethodCall();
 
-    printf("\nTesting method calls...\n\n");
+    std::printf("\nTesting method calls...\n\n");
 
     testClassMethods();
 
-    printf("\nTesting return values...\n\n");
+    std::printf("\nTesting properties...\n\n");
+
+    testProperties();
+
+    std::printf("\nTesting return values...\n\n");
 
     testReturnValues();
 
-    printf("\nTesting to see if passing string to C++ works...\n\n");
+    std::printf("\nTesting to see if passing string to C++ works...\n\n");
 
     testStrings();
 

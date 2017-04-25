@@ -35,7 +35,7 @@ class TestRunner {
         var t = Test.new(name, body)
         t.try()
         if (t.error) {
-            System.print("Test \"%(name)\" failed with %(fiber.error)")
+            System.print("Test \"%(name)\" failed with %(t.error)")
         } else {
             System.print("Test \"%(name)\" OK")
         }
