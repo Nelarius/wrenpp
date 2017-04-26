@@ -170,13 +170,16 @@ Method::~Method()
 
 Method& Method::operator=(Method&& rhs)
 {
-    vm_ = rhs.vm_;
-    method_ = rhs.method_;
-    variable_ = rhs.variable_;
-    rhs.vm_ = nullptr;
-    rhs.method_ = nullptr;
-    rhs.variable_ = nullptr;
-
+    if (&rhs != this)
+    {
+        vm_ = rhs.vm_;
+        method_ = rhs.method_;
+        variable_ = rhs.variable_;
+        rhs.vm_ = nullptr;
+        rhs.method_ = nullptr;
+        rhs.variable_ = nullptr;
+    }
+        
     return *this;
 }
 
@@ -282,8 +285,11 @@ VM::VM(VM&& other)
 
 VM& VM::operator=(VM&& rhs)
 {
-    vm_ = rhs.vm_;
-    rhs.vm_ = nullptr;
+    if (&rhs != this)
+    {
+        vm_ = rhs.vm_;
+        rhs.vm_ = nullptr;
+    }
     return *this;
 }
 
