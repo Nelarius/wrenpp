@@ -624,12 +624,32 @@ struct ForeignMethodWrapper< R(C::*)(Args...) const, m >
  // See this link for more about writing a metaprogramming type is_sharable<t>:
  // http://anthony.noided.media/blog/programming/c++/ruby/2016/05/12/mruby-cpp-and-template-magic.html
 
+template<bool isClass>
+struct SetFieldInSlot
+{
+    template<typename T>
+    static void set(WrenVM* vm, int slot, T& obj)
+    {
+        ForeignObjectPtr<T>::setInSlot(vm, slot, &obj);
+    }
+};
+
+template<>
+struct SetFieldInSlot<false>
+{
+    template<typename T>
+    static void set(WrenVM* vm, int slot, T value)
+    {
+        WrenSlotAPI<T>::set(vm, slot, value);
+    }
+};
+
 template< typename T, typename U, U T::*Field >
 void propertyGetter(WrenVM* vm)
 {
     ForeignObject* objWrapper = static_cast<ForeignObject*>(wrenGetSlotForeign(vm, 0));
-    const T* obj = static_cast<const T*>(objWrapper->objectPtr());
-    WrenSlotAPI< U >::set(vm, 0, obj->*Field);
+    T* obj = static_cast<T*>(objWrapper->objectPtr());
+    SetFieldInSlot<std::is_class<U>::value>::set(vm, 0, obj->*Field);
 }
 
 template< typename T, typename U, U T::*Field >
