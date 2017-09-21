@@ -1,4 +1,3 @@
-
 newoption {
     trigger     = "include",
     value       = "path",
@@ -34,6 +33,9 @@ workspace "wrenpp"
     filter "configurations:Release"
         defines { "NDEBUG" }
         optimize "On"
+
+    filter "action:vs*"
+        defines { "_CRT_SECURE_NO_WARNINGS" }
 
     filter "not action:vs*"
         buildoptions { "-std=c++14" }
