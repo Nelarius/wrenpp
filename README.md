@@ -7,7 +7,7 @@ Wren++ currently provides:
 - A RAII wrapper for the Wren virtual machine
 - Automatic binding code generation for any C++ function and class
 - Convenient access for calling Wren class methods from C++
-- Template-based -- no macros!
+- Uses C++14 template metaprogramming -- no macros!
 
 Known issues:
 - Not type-safe. It's undefined what happens when you try to bind code that returns a type which hasn't itself been bound (most likely a crash is going to happen)
