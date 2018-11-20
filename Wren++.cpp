@@ -305,7 +305,7 @@ VM::~VM()
 Result VM::executeModule(const std::string& mod)
 {
     const std::string source(loadModuleFn(mod.c_str()));
-    auto res = wrenInterpret(vm_, source.c_str());
+    auto res = wrenInterpret(vm_, mod.c_str(), source.c_str());
 
     if (res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR)
     {
@@ -322,7 +322,7 @@ Result VM::executeModule(const std::string& mod)
 
 Result VM::executeString(const std::string& code)
 {
-    auto res = wrenInterpret(vm_, code.c_str());
+    auto res = wrenInterpret(vm_, "main", code.c_str());
 
     if (res == WrenInterpretResult::WREN_RESULT_COMPILE_ERROR)
     {
