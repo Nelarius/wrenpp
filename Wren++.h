@@ -12,7 +12,6 @@ extern "C" {
 #include <cstring> // for memcpy, strcpy
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
 #include <sys/stat.h>
 #include <vector>
 #include <type_traits>
