@@ -1,6 +1,8 @@
 
 # Wren++
 
+[![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
+
 A C++ wrapper for the [Wren programming language](http://munificent.github.io/wren/), in the spirit of LuaBridge and Luabind. Both Wren and this library are still under development, so breaking changes will occasionally be introduced.
 
 Wren++ currently provides:
@@ -12,8 +14,6 @@ Wren++ currently provides:
 Known issues:
 - Not type-safe. It's undefined what happens when you try to bind code that returns a type which hasn't itself been bound (most likely a crash is going to happen)
 - Wren access from C++ is rather minimal
-
-[![Build Status](https://travis-ci.org/Nelarius/wrenpp.svg?branch=master)](https://travis-ci.org/Nelarius/wrenpp)
 
 ## Table of contents
 * [Build](#build)
