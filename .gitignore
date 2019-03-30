@@ -1,28 +1,57 @@
-# C++
-#Compiled object files
-*.o
-*.lo
-*.slo
 
-#Compiled dynamic libraries
-*.so
-*.dylib
+### C ###
+# Prerequisites
+*.d
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
 *.dll
+*.so
+*.so.*
+*.dylib
 
 # Executables
+*.exe
 *.out
 *.app
-*.exe
+*.i*86
+*.x86_64
+*.hex
 
-# CodeLite project files
-#.codelite/
-#.clang/
-#*.project
-#Makefile
-# I don't think I need this file cluttering the repository.
-# Codelite will generate it anyway based on the project file.
-wrenly.mk
-wrenly.txt
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf
 
 # Project files/folders
 .vscode
