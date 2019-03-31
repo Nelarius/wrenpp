@@ -11,19 +11,14 @@ newoption {
 }
 
 workspace "wrenpp"
+    local project_location = ""
     if _ACTION then
-        -- guard this in case the user is calling `premake5 --help`
-        -- in which case there will be no action
-        location( "build/" .. _ACTION )
+        project_location = "build/" .._ACTION
     end
-    configurations { "Debug", "Release" }
-    platforms { "Win32", "x64" }
 
-    filter "platforms:Win32"
-        architecture "x86"
+    configurations { "Debug", "Release", "Test" }
 
-    filter "platforms:x64"
-        architecture "x86_64"
+    architecture "x86_64"
 
     -- global configuration
     filter "configurations:Debug"
@@ -41,9 +36,10 @@ workspace "wrenpp"
         buildoptions { "-std=c++14" }
 
     project "lib"
+        location(project_location)
         kind "StaticLib"
         language "C++"
-        targetdir "lib/"
+        targetdir "lib/%{cfg.buildcfg}"
         targetname "wrenpp"
         if _OPTIONS["include"] then
             includedirs { _OPTIONS["include"] }
@@ -52,9 +48,10 @@ workspace "wrenpp"
         includedirs { "src" }
 
     project "test"
+        location(project_location)
         kind "ConsoleApp"
         language "C++"
-        targetdir "bin"
+        targetdir "bin/%{cfg.buildcfg}"
         targetname "test"
         files { "Wren++.cpp", "test/**.cpp", "test/***.h", "test/**.wren" }
         includedirs { "./", "test" }
@@ -62,18 +59,20 @@ workspace "wrenpp"
             includedirs { _OPTIONS["include"] }
         end
         if _OPTIONS["link"] then
-                libdirs {
-                    _OPTIONS["link"]
-                }
-            end
+            libdirs {
+                _OPTIONS["link"]
+            }
+        end
+
+        prebuildcommands { "{MKDIR} %{cfg.targetdir}" }
 
         filter "files:**.wren"
-            buildcommands { "{COPY} ../../test/%{file.name} ../../bin" }
-            buildoutputs { "../../bin/%{file.name}" }
-            filter {}
+            buildcommands { "{COPY} %{file.abspath} %{cfg.targetdir}" }
+            buildoutputs { "%{cfg.targetdir}/%{file.name}" }
+        filter {}
 
         filter "configurations:Debug"
-            debugdir "bin"
+            debugdir "bin/%{cfg.buildcfg}"
 
         filter { "action:vs*", "Debug" }
             links { "lib", "wren_static_d" }
