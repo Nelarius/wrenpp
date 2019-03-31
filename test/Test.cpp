@@ -1,8 +1,8 @@
 #include "Wren++.h"
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
-#include <cassert>
 
 // a small class to test class & method binding with
 struct Vec3
@@ -101,16 +101,16 @@ void testMethodCall()
     wrenpp::VM wren{};
 
     wren.executeModule("test_method");
-    auto passNum = wren.method("main", "passNumber", "call(_)");
+    auto passNum = wren.method("test_method", "passNumber", "call(_)");
     passNum(5.0);
     passNum(5.f);
     passNum(5);
     passNum(5u);
 
-    auto passBool = wren.method("main", "passBool", "call(_)");
+    auto passBool = wren.method("test_method", "passBool", "call(_)");
     passBool(true);
 
-    auto passStr = wren.method("main", "passString", "call(_)");
+    auto passStr = wren.method("test_method", "passString", "call(_)");
     passStr("hello");
     passStr(std::string("hello"));
 }
