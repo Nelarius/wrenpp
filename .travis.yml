@@ -34,6 +34,4 @@ install:
  - export LIBRARY_PATH=$PWD/wren-master/lib
 
 script:
- - cd build/gmake
- - make all CXX=$COMPILER
-
+ - make config=release all CXX=$COMPILER

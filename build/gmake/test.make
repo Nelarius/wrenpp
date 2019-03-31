@@ -11,55 +11,112 @@ endif
 .PHONY: clean prebuild prelink
 
 ifeq ($(config),debug)
-  RESCOMP = windres
-  TARGETDIR = ../../bin
+  ifeq ($(origin CC), default)
+    CC = clang
+  endif
+  ifeq ($(origin CXX), default)
+    CXX = clang++
+  endif
+  ifeq ($(origin AR), default)
+    AR = ar
+  endif
+  TARGETDIR = ../../bin/Debug
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Debug/test
   DEFINES += -DDEBUG
-  INCLUDES += -I../.. -I../../test -I../../../wren/src/include
+  INCLUDES += -I../.. -I../../test -I../../wren-master/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -g -std=c++14
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -g -std=c++14
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../../lib/libwrenpp.a -lwren
-  LDDEPS += ../../lib/libwrenpp.a
-  ALL_LDFLAGS += $(LDFLAGS) -L../../../wren/lib
+  LIBS += ../../lib/Debug/libwrenpp.a -lwren
+  LDDEPS += ../../lib/Debug/libwrenpp.a
+  ALL_LDFLAGS += $(LDFLAGS) -L../../wren-master/lib -m64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
+	@echo Running prebuild commands
+	mkdir -p ../../bin/Debug
   endef
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
   endef
-all: $(TARGETDIR) $(OBJDIR) prebuild prelink $(TARGET)
+all: prebuild prelink $(TARGET)
 	@:
 
 endif
 
 ifeq ($(config),release)
-  RESCOMP = windres
-  TARGETDIR = ../../bin
+  ifeq ($(origin CC), default)
+    CC = clang
+  endif
+  ifeq ($(origin CXX), default)
+    CXX = clang++
+  endif
+  ifeq ($(origin AR), default)
+    AR = ar
+  endif
+  TARGETDIR = ../../bin/Release
   TARGET = $(TARGETDIR)/test
   OBJDIR = obj/Release/test
   DEFINES += -DNDEBUG
-  INCLUDES += -I../.. -I../../test -I../../../wren/src/include
+  INCLUDES += -I../.. -I../../test -I../../wren-master/src/include
   FORCE_INCLUDE +=
   ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
-  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -O2 -std=c++14
-  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CFLAGS)
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -O2 -std=c++14
   ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
-  LIBS += ../../lib/libwrenpp.a -lwren
-  LDDEPS += ../../lib/libwrenpp.a
-  ALL_LDFLAGS += $(LDFLAGS) -L../../../wren/lib -Wl,-x
+  LIBS += ../../lib/Release/libwrenpp.a -lwren
+  LDDEPS += ../../lib/Release/libwrenpp.a
+  ALL_LDFLAGS += $(LDFLAGS) -L../../wren-master/lib -m64
   LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
   define PREBUILDCMDS
+	@echo Running prebuild commands
+	mkdir -p ../../bin/Release
   endef
   define PRELINKCMDS
   endef
   define POSTBUILDCMDS
   endef
-all: $(TARGETDIR) $(OBJDIR) prebuild prelink $(TARGET)
+all: prebuild prelink $(TARGET)
+	@:
+
+endif
+
+ifeq ($(config),test)
+  ifeq ($(origin CC), default)
+    CC = clang
+  endif
+  ifeq ($(origin CXX), default)
+    CXX = clang++
+  endif
+  ifeq ($(origin AR), default)
+    AR = ar
+  endif
+  TARGETDIR = ../../bin/Test
+  TARGET = $(TARGETDIR)/test
+  OBJDIR = obj/Test/test
+  DEFINES +=
+  INCLUDES += -I../.. -I../../test -I../../wren-master/src/include
+  FORCE_INCLUDE +=
+  ALL_CPPFLAGS += $(CPPFLAGS) -MMD -MP $(DEFINES) $(INCLUDES)
+  ALL_CFLAGS += $(CFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++14
+  ALL_CXXFLAGS += $(CXXFLAGS) $(ALL_CPPFLAGS) -m64 -std=c++14
+  ALL_RESFLAGS += $(RESFLAGS) $(DEFINES) $(INCLUDES)
+  LIBS += ../../lib/Test/libwrenpp.a -lwren
+  LDDEPS += ../../lib/Test/libwrenpp.a
+  ALL_LDFLAGS += $(LDFLAGS) -L../../wren-master/lib -m64
+  LINKCMD = $(CXX) -o "$@" $(OBJECTS) $(RESOURCES) $(ALL_LDFLAGS) $(LIBS)
+  define PREBUILDCMDS
+	@echo Running prebuild commands
+	mkdir -p ../../bin/Test
+  endef
+  define PRELINKCMDS
+  endef
+  define POSTBUILDCMDS
+  endef
+all: prebuild prelink $(TARGET)
 	@:
 
 endif
@@ -74,21 +131,37 @@ CUSTOMFILES := \
 
 ifeq ($(config),debug)
   CUSTOMFILES += \
-	../../../../bin/assert.wren \
-	../../../../bin/test.wren \
-	../../../../bin/test_method.wren \
-	../../../../bin/test_vector.wren \
-	../../../../bin/vector.wren \
+	../../bin/Debug/assert.wren \
+	../../bin/Debug/test.wren \
+	../../bin/Debug/test_method.wren \
+	../../bin/Debug/test_properties.wren \
+	../../bin/Debug/test_vector.wren \
+	../../bin/Debug/transform.wren \
+	../../bin/Debug/vector.wren \
 
 endif
 
 ifeq ($(config),release)
   CUSTOMFILES += \
-	../../../../bin/assert.wren \
-	../../../../bin/test.wren \
-	../../../../bin/test_method.wren \
-	../../../../bin/test_vector.wren \
-	../../../../bin/vector.wren \
+	../../bin/Release/assert.wren \
+	../../bin/Release/test.wren \
+	../../bin/Release/test_method.wren \
+	../../bin/Release/test_properties.wren \
+	../../bin/Release/test_vector.wren \
+	../../bin/Release/transform.wren \
+	../../bin/Release/vector.wren \
+
+endif
+
+ifeq ($(config),test)
+  CUSTOMFILES += \
+	../../bin/Test/assert.wren \
+	../../bin/Test/test.wren \
+	../../bin/Test/test_method.wren \
+	../../bin/Test/test_properties.wren \
+	../../bin/Test/test_vector.wren \
+	../../bin/Test/transform.wren \
+	../../bin/Test/vector.wren \
 
 endif
 
@@ -102,24 +175,13 @@ endif
 
 $(TARGET): $(GCH) ${CUSTOMFILES} $(OBJECTS) $(LDDEPS) $(RESOURCES)
 	@echo Linking test
-	$(SILENT) $(LINKCMD)
-	$(POSTBUILDCMDS)
-
-$(TARGETDIR):
-	@echo Creating $(TARGETDIR)
 ifeq (posix,$(SHELLTYPE))
 	$(SILENT) mkdir -p $(TARGETDIR)
 else
 	$(SILENT) mkdir $(subst /,\\,$(TARGETDIR))
 endif
-
-$(OBJDIR):
-	@echo Creating $(OBJDIR)
-ifeq (posix,$(SHELLTYPE))
-	$(SILENT) mkdir -p $(OBJDIR)
-else
-	$(SILENT) mkdir $(subst /,\\,$(OBJDIR))
-endif
+	$(SILENT) $(LINKCMD)
+	$(POSTBUILDCMDS)
 
 clean:
 	@echo Cleaning test
@@ -141,64 +203,134 @@ ifneq (,$(PCH))
 $(OBJECTS): $(GCH) $(PCH)
 $(GCH): $(PCH)
 	@echo $(notdir $<)
+ifeq (posix,$(SHELLTYPE))
+	$(SILENT) mkdir -p $(OBJDIR)
+else
+	$(SILENT) mkdir $(subst /,\\,$(OBJDIR))
+endif
 	$(SILENT) $(CXX) -x c++-header $(ALL_CXXFLAGS) -o "$@" -MF "$(@:%.gch=%.d)" -c "$<"
 endif
 
 $(OBJDIR)/Wren++.o: ../../Wren++.cpp
 	@echo $(notdir $<)
+ifeq (posix,$(SHELLTYPE))
+	$(SILENT) mkdir -p $(OBJDIR)
+else
+	$(SILENT) mkdir $(subst /,\\,$(OBJDIR))
+endif
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 $(OBJDIR)/Test.o: ../../test/Test.cpp
 	@echo $(notdir $<)
+ifeq (posix,$(SHELLTYPE))
+	$(SILENT) mkdir -p $(OBJDIR)
+else
+	$(SILENT) mkdir $(subst /,\\,$(OBJDIR))
+endif
 	$(SILENT) $(CXX) $(ALL_CXXFLAGS) $(FORCE_INCLUDE) -o "$@" -MF "$(@:%.o=%.d)" -c "$<"
 ifeq ($(config),debug)
-../../../../bin/assert.wren: ../../test/assert.wren
+../../bin/Debug/assert.wren: ../../test/assert.wren
 	@echo "Building ../../test/assert.wren"
-	$(SILENT) cp -rf ../../test/assert.wren ../../bin
+	$(SILENT) cp -rf ../../test/assert.wren ../../bin/Debug
 endif
 ifeq ($(config),release)
-../../../../bin/assert.wren: ../../test/assert.wren
+../../bin/Release/assert.wren: ../../test/assert.wren
 	@echo "Building ../../test/assert.wren"
-	$(SILENT) cp -rf ../../test/assert.wren ../../bin
+	$(SILENT) cp -rf ../../test/assert.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/assert.wren: ../../test/assert.wren
+	@echo "Building ../../test/assert.wren"
+	$(SILENT) cp -rf ../../test/assert.wren ../../bin/Test
 endif
 ifeq ($(config),debug)
-../../../../bin/test.wren: ../../test/test.wren
+../../bin/Debug/test.wren: ../../test/test.wren
 	@echo "Building ../../test/test.wren"
-	$(SILENT) cp -rf ../../test/test.wren ../../bin
+	$(SILENT) cp -rf ../../test/test.wren ../../bin/Debug
 endif
 ifeq ($(config),release)
-../../../../bin/test.wren: ../../test/test.wren
+../../bin/Release/test.wren: ../../test/test.wren
 	@echo "Building ../../test/test.wren"
-	$(SILENT) cp -rf ../../test/test.wren ../../bin
+	$(SILENT) cp -rf ../../test/test.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/test.wren: ../../test/test.wren
+	@echo "Building ../../test/test.wren"
+	$(SILENT) cp -rf ../../test/test.wren ../../bin/Test
 endif
 ifeq ($(config),debug)
-../../../../bin/test_method.wren: ../../test/test_method.wren
+../../bin/Debug/test_method.wren: ../../test/test_method.wren
 	@echo "Building ../../test/test_method.wren"
-	$(SILENT) cp -rf ../../test/test_method.wren ../../bin
+	$(SILENT) cp -rf ../../test/test_method.wren ../../bin/Debug
 endif
 ifeq ($(config),release)
-../../../../bin/test_method.wren: ../../test/test_method.wren
+../../bin/Release/test_method.wren: ../../test/test_method.wren
 	@echo "Building ../../test/test_method.wren"
-	$(SILENT) cp -rf ../../test/test_method.wren ../../bin
+	$(SILENT) cp -rf ../../test/test_method.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/test_method.wren: ../../test/test_method.wren
+	@echo "Building ../../test/test_method.wren"
+	$(SILENT) cp -rf ../../test/test_method.wren ../../bin/Test
 endif
 ifeq ($(config),debug)
-../../../../bin/test_vector.wren: ../../test/test_vector.wren
-	@echo "Building ../../test/test_vector.wren"
-	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin
+../../bin/Debug/test_properties.wren: ../../test/test_properties.wren
+	@echo "Building ../../test/test_properties.wren"
+	$(SILENT) cp -rf ../../test/test_properties.wren ../../bin/Debug
 endif
 ifeq ($(config),release)
-../../../../bin/test_vector.wren: ../../test/test_vector.wren
-	@echo "Building ../../test/test_vector.wren"
-	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin
+../../bin/Release/test_properties.wren: ../../test/test_properties.wren
+	@echo "Building ../../test/test_properties.wren"
+	$(SILENT) cp -rf ../../test/test_properties.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/test_properties.wren: ../../test/test_properties.wren
+	@echo "Building ../../test/test_properties.wren"
+	$(SILENT) cp -rf ../../test/test_properties.wren ../../bin/Test
 endif
 ifeq ($(config),debug)
-../../../../bin/vector.wren: ../../test/vector.wren
-	@echo "Building ../../test/vector.wren"
-	$(SILENT) cp -rf ../../test/vector.wren ../../bin
+../../bin/Debug/test_vector.wren: ../../test/test_vector.wren
+	@echo "Building ../../test/test_vector.wren"
+	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin/Debug
 endif
 ifeq ($(config),release)
-../../../../bin/vector.wren: ../../test/vector.wren
+../../bin/Release/test_vector.wren: ../../test/test_vector.wren
+	@echo "Building ../../test/test_vector.wren"
+	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/test_vector.wren: ../../test/test_vector.wren
+	@echo "Building ../../test/test_vector.wren"
+	$(SILENT) cp -rf ../../test/test_vector.wren ../../bin/Test
+endif
+ifeq ($(config),debug)
+../../bin/Debug/transform.wren: ../../test/transform.wren
+	@echo "Building ../../test/transform.wren"
+	$(SILENT) cp -rf ../../test/transform.wren ../../bin/Debug
+endif
+ifeq ($(config),release)
+../../bin/Release/transform.wren: ../../test/transform.wren
+	@echo "Building ../../test/transform.wren"
+	$(SILENT) cp -rf ../../test/transform.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/transform.wren: ../../test/transform.wren
+	@echo "Building ../../test/transform.wren"
+	$(SILENT) cp -rf ../../test/transform.wren ../../bin/Test
+endif
+ifeq ($(config),debug)
+../../bin/Debug/vector.wren: ../../test/vector.wren
 	@echo "Building ../../test/vector.wren"
-	$(SILENT) cp -rf ../../test/vector.wren ../../bin
+	$(SILENT) cp -rf ../../test/vector.wren ../../bin/Debug
+endif
+ifeq ($(config),release)
+../../bin/Release/vector.wren: ../../test/vector.wren
+	@echo "Building ../../test/vector.wren"
+	$(SILENT) cp -rf ../../test/vector.wren ../../bin/Release
+endif
+ifeq ($(config),test)
+../../bin/Test/vector.wren: ../../test/vector.wren
+	@echo "Building ../../test/vector.wren"
+	$(SILENT) cp -rf ../../test/vector.wren ../../bin/Test
 endif
 
 -include $(OBJECTS:%.o=%.d)
