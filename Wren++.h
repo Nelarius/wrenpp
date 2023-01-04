@@ -2,7 +2,7 @@
 #define WRENPP_H_INCLUDED
 
 extern "C" {
-#include "wren.h"
+#include <wren.h>
 }
 #include <string>
 #include <functional> // for std::hash

@@ -54,7 +54,10 @@ inline const char* errorTypeToString(WrenErrorType type)
     }
 }
 
-char* loadModuleFnWrapper(WrenVM* vm, const char* mod) { return wrenpp::VM::loadModuleFn(mod); }
+WrenLoadModuleResult loadModuleFnWrapper(WrenVM* vm, const char* mod)
+{
+    return WrenLoadModuleResult{wrenpp::VM::loadModuleFn(mod), nullptr, nullptr};
+}
 
 void writeFnWrapper(WrenVM* vm, const char* text) { wrenpp::VM::writeFn(text); }
 
@@ -63,7 +66,7 @@ void errorFnWrapper(WrenVM*, WrenErrorType type, const char* module, int line, c
     wrenpp::VM::errorFn(type, module, line, message);
 }
 
-void* reallocateFnWrapper(void* memory, std::size_t newSize)
+void* reallocateFnWrapper(void* memory, std::size_t newSize, void*)
 {
     return wrenpp::VM::reallocateFn(memory, newSize);
 }
