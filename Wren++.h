@@ -2,7 +2,7 @@
 #define WRENPP_H_INCLUDED
 
 extern "C" {
-#include "wren.h"
+#include <wren.h>
 }
 #include <string>
 #include <functional> // for std::hash
@@ -23,6 +23,7 @@ using LoadModuleFn = std::function<char*(const char*)>;
 using WriteFn = std::function<void(const char*)>;
 using ReallocateFn = std::function<void*(void*, std::size_t)>;
 using ErrorFn = std::function<void(WrenErrorType, const char*, int, const char*)>;
+using ReportClassFn = std::function<void(ClassInfo*)>;
 
 namespace detail
 {
@@ -859,6 +860,7 @@ public:
     static WriteFn writeFn;
     static ReallocateFn reallocateFn;
     static ErrorFn errorFn;
+	static ReportClassFn reportClassFn;
     static std::size_t initialHeapSize;
     static std::size_t minHeapSize;
     static int heapGrowthPercent;

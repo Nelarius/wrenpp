@@ -54,7 +54,10 @@ inline const char* errorTypeToString(WrenErrorType type)
     }
 }
 
-char* loadModuleFnWrapper(WrenVM* vm, const char* mod) { return wrenpp::VM::loadModuleFn(mod); }
+WrenLoadModuleResult loadModuleFnWrapper(WrenVM* vm, const char* mod)
+{
+    return WrenLoadModuleResult{wrenpp::VM::loadModuleFn(mod), nullptr, nullptr};
+}
 
 void writeFnWrapper(WrenVM* vm, const char* text) { wrenpp::VM::writeFn(text); }
 
@@ -63,7 +66,12 @@ void errorFnWrapper(WrenVM*, WrenErrorType type, const char* module, int line, c
     wrenpp::VM::errorFn(type, module, line, message);
 }
 
-void* reallocateFnWrapper(void* memory, std::size_t newSize)
+void reportClassFnWrapper(WrenVM*, ClassInfo* classInfo)
+{
+    wrenpp::VM::reportClassFn(classInfo);
+}
+
+void* reallocateFnWrapper(void* memory, std::size_t newSize, void*)
 {
     return wrenpp::VM::reallocateFn(memory, newSize);
 }
@@ -220,6 +228,8 @@ ErrorFn VM::errorFn =
 
 ReallocateFn VM::reallocateFn = std::realloc;
 
+ReportClassFn VM::reportClassFn = [](ClassInfo*) -> void {};
+
 std::size_t VM::initialHeapSize = 0xA00000u;
 
 std::size_t VM::minHeapSize = 0x100000u;
@@ -241,6 +251,7 @@ VM::VM() : vm_{nullptr}
     configuration.bindForeignClassFn = foreignClassProvider;
     configuration.writeFn = writeFnWrapper;
     configuration.errorFn = errorFnWrapper;
+	configuration.reportClassFn = reportClassFnWrapper;
     configuration.userData = new BoundState();
 
     vm_ = wrenNewVM(&configuration);
